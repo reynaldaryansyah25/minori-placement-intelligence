@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import (
+    JSON,
     CheckConstraint,
     ForeignKey,
     ForeignKeyConstraint,
@@ -48,7 +49,23 @@ class Notification(ReferenceMixin, IdentityTimestampMixin, Base):
             name="sent_timestamp",
         ),
         CheckConstraint("sent_at IS NULL OR sent_at >= scheduled_at", name="sent_range"),
+        CheckConstraint(
+            "schedule_revision > 0 AND attempt_count >= 0 AND max_attempts > 0",
+            name="queue_counters",
+        ),
+        CheckConstraint(
+            "(status = 'processing' AND claimed_at IS NOT NULL AND "
+            "lease_expires_at > claimed_at AND claim_token_hash IS NOT NULL) OR "
+            "(status != 'processing' AND claimed_at IS NULL AND lease_expires_at IS NULL)",
+            name="claim_state",
+        ),
+        CheckConstraint(
+            "managed = 0 OR (event_at IS NOT NULL AND available_at IS NOT NULL "
+            "AND placement_stage_id IS NOT NULL)",
+            name="managed_schedule",
+        ),
         Index("ix_notifications_status_scheduled_at", "status", "scheduled_at"),
+        Index("ix_notifications_queue_due", "managed", "status", "available_at"),
     )
 
     deduplication_key: Mapped[str] = mapped_column(String(160), unique=True)
@@ -66,6 +83,19 @@ class Notification(ReferenceMixin, IdentityTimestampMixin, Base):
         enum_type(NotificationStatus, "notification_status"), default=NotificationStatus.PENDING
     )
     sent_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    managed: Mapped[bool] = mapped_column(default=False, server_default="0")
+    dry_run: Mapped[bool] = mapped_column(default=True, server_default="1")
+    available_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    event_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    schedule_revision: Mapped[int] = mapped_column(default=1, server_default="1")
+    schedule_context: Mapped[dict] = mapped_column(JSON, default=dict, server_default="{}")
+    attempt_count: Mapped[int] = mapped_column(default=0, server_default="0")
+    max_attempts: Mapped[int] = mapped_column(default=3, server_default="3")
+    claimed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    lease_expires_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    claim_token_hash: Mapped[str | None] = mapped_column(String(64))
+    processed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    last_error_code: Mapped[str | None] = mapped_column(String(64))
     candidate: Mapped[Candidate] = relationship(
         back_populates="notifications", foreign_keys=[candidate_id]
     )
@@ -88,10 +118,15 @@ class NotificationAttempt(IdentityTimestampMixin, Base):
     __table_args__ = (
         UniqueConstraint("notification_id", "attempt_number"),
         CheckConstraint("attempt_number > 0", name="positive_attempt"),
-        CheckConstraint("finished_at >= attempted_at", name="attempt_range"),
+        CheckConstraint("finished_at IS NULL OR finished_at >= attempted_at", name="attempt_range"),
         CheckConstraint(
-            "(status = 'succeeded' AND error_code IS NULL) OR "
-            "(status = 'failed' AND error_code IS NOT NULL)",
+            "(status = 'processing' AND finished_at IS NULL) OR "
+            "(status != 'processing' AND finished_at IS NOT NULL)",
+            name="attempt_finish",
+        ),
+        CheckConstraint(
+            "(status IN ('succeeded','simulated','processing') AND error_code IS NULL) OR "
+            "(status IN ('failed','abandoned') AND error_code IS NOT NULL)",
             name="error_status",
         ),
     )
@@ -102,7 +137,8 @@ class NotificationAttempt(IdentityTimestampMixin, Base):
     attempt_number: Mapped[int]
     status: Mapped[AttemptStatus] = mapped_column(enum_type(AttemptStatus, "attempt_status"))
     attempted_at: Mapped[datetime] = mapped_column(UTCDateTime())
-    finished_at: Mapped[datetime] = mapped_column(UTCDateTime())
+    finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     error_code: Mapped[str | None] = mapped_column(String(64))
     provider_reference: Mapped[str | None] = mapped_column(String(120))
+    claim_token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
     notification: Mapped[Notification] = relationship(back_populates="attempts")

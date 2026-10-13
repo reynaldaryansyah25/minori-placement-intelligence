@@ -47,6 +47,17 @@ def initialize_env_file() -> None:
             + text[entry.end() :]
         )
     target.write_text(text, encoding="utf-8")
+    token_entry = re.search(r"^INTERNAL_API_TOKEN=(.*)$", text, flags=re.MULTILINE)
+    if token_entry is None:
+        text += "\nINTERNAL_API_TOKEN=" + secrets.token_urlsafe(48) + "\n"
+    elif token_entry.group(1).strip() in {"", '""', "''"}:
+        text = (
+            text[: token_entry.start()]
+            + "INTERNAL_API_TOKEN="
+            + secrets.token_urlsafe(48)
+            + text[token_entry.end() :]
+        )
+    target.write_text(text, encoding="utf-8")
     print("Private .env configured; existing non-empty values preserved.")
 
 

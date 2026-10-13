@@ -71,10 +71,11 @@ class Placement(ReferenceMixin, IdentityTimestampMixin, Base):
 class PlacementStage(IdentityTimestampMixin, Base):
     __tablename__ = "placement_stages"
     __table_args__ = (
-        UniqueConstraint("placement_id", "code"),
-        UniqueConstraint("placement_id", "sequence_number"),
-        UniqueConstraint("id", "placement_id"),
+        UniqueConstraint("placement_id", "code", name="uq_placement_stages_code"),
+        UniqueConstraint("placement_id", "sequence_number", name="uq_placement_stages_sequence"),
+        UniqueConstraint("id", "placement_id", name="uq_placement_stages_owner"),
         CheckConstraint("sequence_number > 0", name="positive_sequence"),
+        CheckConstraint("schedule_revision > 0", name="positive_schedule_revision"),
         CheckConstraint("length(trim(code)) > 0", name="code_not_blank"),
         CheckConstraint(
             "due_at IS NULL OR (scheduled_at IS NOT NULL AND due_at >= scheduled_at)",
@@ -102,6 +103,7 @@ class PlacementStage(IdentityTimestampMixin, Base):
     code: Mapped[str] = mapped_column(String(64))
     step_type: Mapped[PlacementStepType] = mapped_column(enum_type(PlacementStepType, "step_type"))
     sequence_number: Mapped[int]
+    schedule_revision: Mapped[int] = mapped_column(default=1, server_default="1")
     status: Mapped[PlacementStepStatus] = mapped_column(
         enum_type(PlacementStepStatus, "step_status"), default=PlacementStepStatus.PENDING
     )

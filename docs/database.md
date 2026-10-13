@@ -128,6 +128,7 @@ erDiagram
         int sequence_number
         datetime scheduled_at
         datetime completed_at
+        int schedule_revision
     }
     NOTIFICATIONS {
         UUID id PK
@@ -136,6 +137,9 @@ erDiagram
         UUID placement_stage_id FK
         string deduplication_key UK
         datetime scheduled_at
+        datetime available_at
+        datetime lease_expires_at
+        string status
     }
     NOTIFICATION_ATTEMPTS {
         UUID id PK
@@ -156,7 +160,8 @@ erDiagram
 Audit memakai referensi polimorfik logis `entity_type + entity_id`, tanpa foreign key
 fisik. Identitas resource tetap tersimpan sebagai riwayat audit. Repository audit
 dan notification attempt hanya menyediakan append/read; tidak ada update/delete.
-Context audit dibatasi ke synthetic, fixture, dan reason_code. Ini batas antarmuka
+Context audit dibatasi ke synthetic/fixture, kode alasan, status, timestamp
+administratif, schedule_revision, dan nomor attempt. Ini batas antarmuka
 repository, bukan mekanisme pencegah perubahan SQL langsung.
 
 ## Constraints dan data yang sengaja tidak disimpan
@@ -196,7 +201,8 @@ diterima pemberi kerja. Kebutuhan sertifikasi dan skill memakai kode yang sama d
 kode pada kandidat. Nilai program titp, ssw, dan engineer merupakan kategori internal;
 fixture persyaratan bukan penetapan kelayakan visa atau ketentuan hukum. Matching
 mengevaluasi persyaratan pemberi kerja dan menyimpan explanation deterministik;
-kuota terpakai dan alokasi placement tidak dihitung otomatis.
+ranking tidak mengalokasikan placement. PlacementService memeriksa kuota terpakai
+dalam transaksi ketika staf membuat placement dari match approved.
 
 ## Data access dan transaksi
 
@@ -225,7 +231,7 @@ penggantian profil dengan recompute. Lihat [kontrak HTTP](api.md).
 
 ## Migrasi dan seed
 
-Urutan revisi adalah `foundation -> placement_database -> explainable_matching`.
+Urutan revisi adalah `foundation -> placement_database -> explainable_matching -> placement_reminders`.
 Revisi bisnis berada di business_tables.py dan matching berada di matching_evaluations.py.
 Upgrade matching menambahkan satu tabel dan empat kolom opsional/default tanpa
 rebuild tabel kandidat, lowongan, atau matches. Upgrade bisnis menambah tabel serta
@@ -239,6 +245,40 @@ Jika seluruh tambahan kosong, target eksplisit placement_database dapat dipakai
 tanpa menghapus data lama. Dengan data bisnis lama, target yang lebih rendah atau
 relatif ditolak sebelum perubahan skema untuk menghindari DDL parsial SQLite.
 Revisi foundation dan placement_database tidak diubah.
+
+## Perluasan placement dan reminder
+
+placement_reminders.py tidak membuat model/tabel duplikat. PlacementStage mendapat
+schedule_revision positif. Notification mendapat snapshot jadwal dan field queue:
+managed, dry_run, available_at, event_at, schedule_revision, schedule_context,
+attempt_count, max_attempts, claimed_at, lease_expires_at, claim_token_hash,
+processed_at, last_error_code. Counter nonnegatif, claim processing wajib memiliki
+lease valid, dan managed reminder wajib memiliki activity/event/availability.
+Index managed/status/available_at mendukung pengambilan antrean.
+
+NotificationAttempt menambah claim_token_hash unik nullable. finished_at nullable
+hanya untuk processing; terminal attempt wajib selesai. Claim membuka attempt dan
+callback/recovery memfinalisasinya melalui queue adapter. Port attempt umum tetap
+append/read; retry berikutnya tidak menimpa attempt terminal. Status simulated dan
+abandoned membedakan simulasi serta kehilangan lease dari keberhasilan nyata.
+Audit entity_type kini menerima match dan placement_stage.
+
+Data legacy notification default managed=false sehingga tidak dikirim worker;
+dry_run=true dan counter nol tidak mengubah status/sent_at legacy. Seluruh UUID,
+foreign keys composite, attempts, placement, dan keputusan matching lama tetap
+dipertahankan. Medical hanya metadata administratif.
+
+Batch migration SQLite memakai transaksi DDL eksplisit, foreign key enforcement
+dimatikan hanya pada koneksi migrasi, lalu foreign_key_check diperiksa sebelum
+commit. Enforcement kembali aktif sesudahnya. Snapshot schema aktivitas membekukan
+seluruh constraint dan memberi nama unik terpisah untuk code/sequence/owner; nama
+constraint lama yang bertabrakan tidak boleh hilang akibat reflection batch.
+
+Downgrade menolak data reminder/claim/decision baru sebelum perubahan apa pun.
+Database kosong dapat round-trip; database legacy tanpa data baru dapat kembali
+ke explainable_matching. Guard juga melindungi downgrade lebih dalam ketika ada
+matching history. Semua migration sebelumnya dipertahankan. Lihat
+[aturan placement/reminder](placements_reminders.md).
 
 ## Penyimpanan evaluasi mesin
 

@@ -1,6 +1,7 @@
 """SQLite engine with bounded waits and explicit session ownership."""
 
 from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 from sqlalchemy import Engine, create_engine, event
@@ -9,6 +10,20 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from minori.core.config import PROJECT_ROOT, Settings
+
+
+@contextmanager
+def immediate_transaction(session: Session):
+    """Reserve SQLite's writer before quota or queue reads; commit or rollback as one unit."""
+    if session.in_transaction():
+        raise RuntimeError("An immediate transaction requires a fresh session")
+    try:
+        session.connection().exec_driver_sql("BEGIN IMMEDIATE")
+        yield
+        session.commit()
+    except BaseException:
+        session.rollback()
+        raise
 
 
 def resolve_database_url(value: str, root: Path = PROJECT_ROOT) -> URL:

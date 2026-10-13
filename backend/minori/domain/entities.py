@@ -163,6 +163,7 @@ class PlacementStageData:
     due_at: datetime | None = None
     completed_at: datetime | None = None
     location: str | None = None
+    schedule_revision: int = 1
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -182,6 +183,19 @@ class NotificationData:
     placement_id: UUID | None = None
     placement_stage_id: UUID | None = None
     sent_at: datetime | None = None
+    managed: bool = False
+    dry_run: bool = True
+    available_at: datetime | None = None
+    event_at: datetime | None = None
+    schedule_revision: int = 1
+    schedule_context: dict[str, str | int | None] = field(default_factory=dict)
+    attempt_count: int = 0
+    max_attempts: int = 3
+    claimed_at: datetime | None = None
+    lease_expires_at: datetime | None = None
+    claim_token_hash: str | None = None
+    processed_at: datetime | None = None
+    last_error_code: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -195,9 +209,10 @@ class NotificationAttemptData:
     attempt_number: int
     status: AttemptStatus
     attempted_at: datetime
-    finished_at: datetime
+    finished_at: datetime | None
     error_code: str | None = None
     provider_reference: str | None = None
+    claim_token_hash: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

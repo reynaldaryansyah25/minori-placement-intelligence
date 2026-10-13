@@ -37,15 +37,30 @@ def run_migrations_online() -> None:
     database = Database(settings)
     try:
         with database.engine.connect() as connection:
-            context.configure(
-                connection=connection,
-                target_metadata=target_metadata,
-                render_as_batch=True,
-                compare_type=True,
-                render_item=render_type,
-            )
-            with context.begin_transaction():
-                context.run_migrations()
+            # SQLite batch rebuilds referenced tables. Disable FK enforcement only for
+            # this migration connection, use transactional DDL, and validate before commit.
+            connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
+            connection.commit()
+            try:
+                connection.exec_driver_sql("BEGIN IMMEDIATE")
+                context.configure(
+                    connection=connection,
+                    target_metadata=target_metadata,
+                    render_as_batch=True,
+                    compare_type=True,
+                    render_item=render_type,
+                )
+                with context.begin_transaction():
+                    context.run_migrations()
+                if connection.exec_driver_sql("PRAGMA foreign_key_check").all():
+                    raise RuntimeError("Migration produced foreign key violations")
+                connection.commit()
+            except BaseException:
+                connection.rollback()
+                raise
+            finally:
+                connection.exec_driver_sql("PRAGMA foreign_keys=ON")
+                connection.commit()
     finally:
         database.dispose()
 

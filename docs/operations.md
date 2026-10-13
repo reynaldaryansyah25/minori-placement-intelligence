@@ -90,6 +90,26 @@ docker compose start
 serta mempertahankan volume. Penghapusan volume menghilangkan database, credentials,
 dan workflow tersimpan; lakukan hanya jika memang ingin menghapus data tersebut.
 
+## Operasional reminder
+
+BUSINESS_TIMEZONE default Asia/Jakarta, REMINDER_DELIVERY_TIME default 09:00,
+dan NOTIFICATION_DRY_RUN default true. INTERNAL_API_TOKEN minimal 32 karakter
+dibuat secara privat oleh bootstrap; jangan mencetak atau commit token. Endpoint
+internal dan mutasi staf menolak akses jika token belum diisi. Compose meneruskan
+konfigurasi ini hanya ke backend. Zona waktu n8n yang sudah ada tidak diubah.
+
+```sh
+python scripts/verify_reminders.py
+python scripts/reminder_worker.py --generate --simulate
+docker compose run --rm --no-deps backend python scripts/verify_reminders.py
+```
+
+Script verifikasi menjalankan server HTTP/database sementara terisolasi, membuktikan
+alur lengkap, dan menghentikannya setelah selesai. Worker memakai API backend yang
+sudah berjalan serta token dari environment. Lease recovery berjalan ketika
+generate/claim/recover/due dipanggil; tidak ada dispatcher background saat startup.
+Lihat [kebijakan reminder](placements_reminders.md) dan [API](api.md).
+
 ## Dependency
 
 Sumber dependency langsung adalah `pyproject.toml`. `requirements.lock` menyimpan

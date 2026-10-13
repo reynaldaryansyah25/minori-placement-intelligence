@@ -1,9 +1,11 @@
 """Environment-backed application settings with explicit validation."""
 
 import os
+from datetime import time
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal, Self
+from zoneinfo import ZoneInfo
 
 from pydantic import AnyHttpUrl, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -35,6 +37,41 @@ class Settings(BaseSettings):
     nine_router_model: str | None = None
     llm_timeout_seconds: float = Field(default=30, gt=0, le=300)
     llm_max_retries: int = Field(default=2, ge=0, le=5)
+    business_timezone: str = "Asia/Jakarta"
+    reminder_delivery_time: time = time(9, 0)
+    notification_dry_run: bool = True
+    notification_lease_seconds: int = Field(default=120, ge=10, le=3600)
+    notification_max_attempts: int = Field(default=3, ge=1, le=20)
+    notification_retry_base_seconds: int = Field(default=60, ge=1, le=86400)
+    notification_retry_max_seconds: int = Field(default=3600, ge=1, le=86400)
+    internal_api_token: SecretStr | None = None
+
+    @field_validator("business_timezone")
+    @classmethod
+    def validate_timezone(cls, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except (ValueError, KeyError) as error:
+            raise ValueError("Unknown business timezone") from error
+        return value
+
+    @field_validator("reminder_delivery_time")
+    @classmethod
+    def validate_delivery_time(cls, value: time) -> time:
+        if value.tzinfo is not None or value.second or value.microsecond:
+            raise ValueError("Reminder delivery time must be local HH:MM")
+        return value
+
+    @field_validator("internal_api_token", mode="before")
+    @classmethod
+    def validate_internal_token(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                return None
+            if len(value) < 32:
+                raise ValueError("Internal API token must have at least 32 characters")
+        return value
 
     @field_validator("database_url")
     @classmethod

@@ -13,6 +13,16 @@ class AuditContext(InputSchema):
     synthetic: bool = False
     fixture: Code | None = None
     reason_code: Code | None = None
+    previous_status: Code | None = None
+    new_status: Code | None = None
+    schedule_revision: int | None = None
+    previous_scheduled_at: str | None = None
+    scheduled_at: str | None = None
+    previous_due_at: str | None = None
+    due_at: str | None = None
+    previous_planned_departure_at: str | None = None
+    planned_departure_at: str | None = None
+    attempt_number: int | None = None
 
 
 class AuditLogCreate(InputSchema):

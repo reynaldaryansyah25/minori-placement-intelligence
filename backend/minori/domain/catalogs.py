@@ -91,11 +91,17 @@ class NotificationStatus(StrEnum):
     SENT = "sent"
     FAILED = "failed"
     CANCELLED = "cancelled"
+    PROCESSING = "processing"
+    SIMULATED = "simulated"
+    MISSED = "missed"
 
 
 class AttemptStatus(StrEnum):
     SUCCEEDED = "succeeded"
     FAILED = "failed"
+    PROCESSING = "processing"
+    SIMULATED = "simulated"
+    ABANDONED = "abandoned"
 
 
 class AuditEntityType(StrEnum):
@@ -103,3 +109,5 @@ class AuditEntityType(StrEnum):
     VACANCY = "vacancy"
     PLACEMENT = "placement"
     NOTIFICATION = "notification"
+    MATCH = "match"
+    PLACEMENT_STAGE = "placement_stage"

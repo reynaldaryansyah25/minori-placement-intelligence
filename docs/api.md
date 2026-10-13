@@ -72,3 +72,68 @@ $eligible = $result.results | Where-Object eligibility_status -eq ELIGIBLE
 $vacancyId = $eligible[0].vacancy_id
 Invoke-RestMethod "http://127.0.0.1:8000/matching/vacancies/$vacancyId/ranking"
 ```
+
+## Placement, aktivitas, dan reminder
+
+Semua POST/PATCH/DELETE berikut serta seluruh /internal/reminders memerlukan
+Authorization: Bearer <INTERNAL_API_TOKEN>. Token berasal dari environment dan
+bootstrap menghasilkan token privat. Belum dikonfigurasi: 503; salah/hilang: 401.
+Shared token ini belum merupakan sistem akun/role staf.
+
+| Method | Path | Kontrak |
+| --- | --- | --- |
+| POST | /matching/decisions | candidate_id, vacancy_id, decision approved/rejected, actor_reference, reason_code opsional |
+| POST | /placements | reference, match_id approved, actor_reference, planned_departure_at opsional |
+| GET | /placements | query pada reference placement/kandidat; filter status/candidate_id/vacancy_id; limit/offset |
+| GET | /placements/{placement_id} | Detail placement |
+| PATCH | /placements/{placement_id} | actor_reference; status/planned_departure_at/actual_departure_at opsional |
+| DELETE | /placements/{placement_id} | Body actor_reference; pembatalan logis, history dipertahankan |
+| GET | /placements/{placement_id}/activities | Daftar aktivitas administratif |
+| POST | /placements/{placement_id}/activities | actor_reference, code, step_type, sequence_number; scheduled_at/due_at/location opsional |
+| PATCH | /placements/{placement_id}/activities/{activity_id} | actor_reference; status/scheduled_at/due_at/completed_at/location opsional |
+| GET | /audit-logs | Filter entity_type/entity_id; limit/offset |
+| GET | /reminders | Filter status/due_before/placement_id; limit/offset |
+| GET | /reminders/{notification_id} | Status, jadwal, mode, jumlah attempt dan error code aman |
+| GET | /reminders/{notification_id}/attempts | Riwayat attempt dengan limit/offset |
+| POST | /internal/reminders/generate | Tanpa body; sinkronisasi reminder dengan aktivitas |
+| POST | /internal/reminders/recover | Tanpa body; recovery lease dan invalidasi reminder |
+| GET | /internal/reminders/due | Maintenance lalu reminder due; limit/offset |
+| POST | /internal/reminders/claim | Body {} atau notification_id; ClaimRead atau null bila tidak tersedia |
+| POST | /internal/reminders/{notification_id}/complete | claim_token, outcome simulated/sent; provider_reference wajib untuk sent |
+| POST | /internal/reminders/{notification_id}/fail | claim_token dan error_code enum aman |
+| POST | /internal/reminders/simulate | Body {} atau notification_id; claim + dry-run completion, hasil atau null |
+
+Sukses memakai 200. UUID tidak ditemukan: 404. Transisi ilegal, kuota habis,
+approval belum ada, claim invalid, atau konflik constraint: 409. Input, offset,
+timezone, atau field tidak dikenal: 422. Gangguan SQLite: 503 tanpa SQL/exception
+provider. Jadwal baru/perubahan harus di masa depan.
+
+GET /reminders?due_before adalah filter baca. GET internal/due juga menjalankan
+maintenance agar expired/inactive tidak ditawarkan. ClaimRead memuat notification,
+claim_token, message {subject, body}. Token asli hanya ada pada respons claim;
+GET history tidak memuat claim hash atau body pesan. Provider kelak dipanggil
+setelah claim selesai dan diikuti callback; claim bukan bukti pengiriman.
+
+Status notification: pending, processing, simulated, sent, failed, cancelled,
+missed. Simulated memiliki sent_at null. Status attempt: processing, simulated,
+succeeded, failed, abandoned. finished_at null hanya saat processing. Failure
+menerima error code enum termasuk PROVIDER_UNAVAILABLE, PROVIDER_TIMEOUT,
+PROVIDER_REJECTED; teks error bebas ditolak.
+
+Contoh body aktivitas:
+
+```json
+{
+  "actor_reference": "staff.synthetic",
+  "code": "INTERVIEW",
+  "step_type": "interview",
+  "sequence_number": 1,
+  "scheduled_at": "2026-10-16T14:00:00+07:00",
+  "location": "Ruang Contoh"
+}
+```
+
+Sesuaikan tanggal menjadi masa depan. Medical menggunakan step_type medical_check
+tanpa field hasil/diagnosis. Documents memakai scheduled_at untuk awal pengumpulan
+dan due_at sebagai deadline. Lihat [placement/reminder](placements_reminders.md)
+untuk aturan kalender, retry, idempotensi, dan batas pengiriman eksternal.

@@ -28,6 +28,7 @@ class PlacementStageCreate(InputSchema):
     code: Code = Field(max_length=64)
     step_type: PlacementStepType
     sequence_number: StrictInt = Field(gt=0)
+    schedule_revision: StrictInt = Field(default=1, gt=0)
     status: PlacementStepStatus = PlacementStepStatus.PENDING
     scheduled_at: AwareDatetime | None = None
     due_at: AwareDatetime | None = None

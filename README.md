@@ -7,6 +7,8 @@ persistensi, migrasi, adapter 9Router, konsol Streamlit, dan workflow n8n manual
 Database bisnis, schemas, repository, migrasi, dan seed idempotent tersedia.
 Explainable matching deterministik tersedia melalui domain engine, service, dan API.
 Kelayakan mesin dipisahkan dari keputusan staf dan history evaluasi dipertahankan.
+Placement Management dan Reminder Backend tersedia dengan approval manusia,
+validasi kuota, antrean claim/lease/retry, dan dry-run sebagai default.
 
 ## Struktur repository
 
@@ -23,7 +25,7 @@ minori-placement-intelligence/
 │   │   ├── db/models/           # 14 tabel ORM; engine, session, inspection, seeding
 │   │   ├── integrations/nine_router/
 │   │   └── main.py
-│   └── alembic/versions/        # foundation.py, business_tables.py, matching_evaluations.py
+│   └── alembic/versions/        # Migrasi bisnis, matching, dan placement_reminders.py
 ├── frontend/
 │   ├── minori_frontend/         # UI dan HTTP client
 │   └── .streamlit/config.toml
@@ -159,6 +161,7 @@ dipanggil otomatis saat startup, health check, atau pembukaan frontend. Instance
 python scripts/verify.py
 python scripts/smoke_test.py
 python scripts/verify_matching.py --base-url http://127.0.0.1:8000
+python scripts/verify_reminders.py
 ```
 
 Pemeriksaan mencakup dependency, lint, format, batas arsitektur, settings, response
@@ -175,4 +178,5 @@ instance atau kredensial LLM pengguna.
 Panduan lebih lanjut: [arsitektur](docs/architecture.md),
 [struktur database dan ERD](docs/database.md),
 [algoritma matching](docs/matching.md), [kontrak API](docs/api.md),
+[placement dan reminder](docs/placements_reminders.md),
 [operasional](docs/operations.md), dan [pedoman pengembangan](AGENTS.md).

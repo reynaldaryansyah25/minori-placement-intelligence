@@ -42,6 +42,7 @@ SQLAlchemy memakai engine sinkron, session per request, foreign keys aktif,
 oleh worker thread FastAPI. Semua perubahan skema melalui Alembic. Revisi
 `foundation` mencatat versi awal dan `placement_database` menambahkan 13 tabel bisnis.
 `explainable_matching` menambahkan riwayat evaluasi dan input preferensi opsional.
+`placement_reminders` memperluas model yang sama untuk lifecycle penempatan dan queue.
 Lihat [struktur database dan ERD](database.md). WAL membantu
 akses baca/tulis, tetapi SQLite tetap memiliki satu writer pada satu waktu. Gunakan
 volume lokal untuk file SQLite dan jalankan satu worker backend dalam konfigurasi ini.
@@ -63,6 +64,14 @@ satu transaksi untuk batch dan penggantian aggregate beserta recompute. API hany
 memvalidasi transport, memanggil service, dan menerjemahkan error HTTP.
 Evaluasi tersimpan terpisah dari Match staf. Ranking membaca data/waktu terkini;
 GET tidak menulis history. Lihat [algoritma](matching.md) dan [API](api.md).
+
+PlacementService menerima approval staf eksplisit serta memvalidasi kuota dan
+transisi. ReminderService menghasilkan intent, mengelola lease/retry, dan memproses
+dry-run. Service disusun melalui ReminderCoordinator domain, tanpa import service
+lain atau framework. DI memberikan factory BEGIN IMMEDIATE untuk mutasi placement
+dan queue. Conditional UPDATE bersama writer lock SQLite menegakkan claim eksklusif.
+Network provider tidak berada dalam transaksi. Token internal berasal dari environment.
+Lihat [placement/reminder](placements_reminders.md).
 
 Acuan: [router modular FastAPI](https://fastapi.tiangolo.com/tutorial/bigger-applications/),
 [SQLite SQLAlchemy](https://docs.sqlalchemy.org/en/20/dialects/sqlite.html),

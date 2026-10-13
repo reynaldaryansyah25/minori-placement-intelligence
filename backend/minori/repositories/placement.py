@@ -1,12 +1,15 @@
 """Concrete placement repositories returning detached domain values."""
 
+from __future__ import annotations
+
 from dataclasses import asdict
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from minori.db.models import Placement, PlacementStage
+from minori.db.models import Candidate, Placement, PlacementStage
+from minori.domain.catalogs import PlacementStatus
 from minori.domain.entities import (
     PlacementData,
     PlacementRecord,
@@ -58,6 +61,60 @@ class SqlAlchemyPlacementRepository:
         self._session.flush()
         return to_record(row, PlacementRecord)
 
+    def get_by_pair(self, candidate_id, vacancy_id):
+        row = self._session.scalar(
+            select(Placement).where(
+                Placement.candidate_id == candidate_id, Placement.vacancy_id == vacancy_id
+            )
+        )
+        return None if row is None else to_record(row, PlacementRecord)
+
+    def list(
+        self, *, query=None, status=None, candidate_id=None, vacancy_id=None, limit=100, offset=0
+    ):
+        pagination(limit, offset)
+        statement = select(Placement)
+        if status is not None:
+            statement = statement.where(Placement.status == status)
+        if candidate_id is not None:
+            statement = statement.where(Placement.candidate_id == candidate_id)
+        if vacancy_id is not None:
+            statement = statement.where(Placement.vacancy_id == vacancy_id)
+        if query:
+            escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            pattern = f"%{escaped}%"
+            statement = statement.join(Candidate).where(
+                or_(
+                    Placement.reference.ilike(pattern, escape="\\"),
+                    Candidate.reference.ilike(pattern, escape="\\"),
+                )
+            )
+        rows = self._session.scalars(
+            statement.order_by(Placement.created_at, Placement.id).limit(limit).offset(offset)
+        ).all()
+        return [to_record(row, PlacementRecord) for row in rows]
+
+    def capacity_used(self, vacancy_id):
+        return self._session.scalar(
+            select(func.count())
+            .select_from(Placement)
+            .where(
+                Placement.vacancy_id == vacancy_id, Placement.status != PlacementStatus.CANCELLED
+            )
+        )
+
+    def candidate_active(self, candidate_id):
+        return bool(
+            self._session.scalar(
+                select(func.count())
+                .select_from(Placement)
+                .where(
+                    Placement.candidate_id == candidate_id,
+                    Placement.status.in_([PlacementStatus.PREPARING, PlacementStatus.IN_PROGRESS]),
+                )
+            )
+        )
+
 
 class SqlAlchemyPlacementStageRepository:
     """Persistence operations; flush writes and leave commit/rollback to the caller."""
@@ -71,6 +128,16 @@ class SqlAlchemyPlacementStageRepository:
         self._session.add(row)
         self._session.flush()
         return to_record(row, PlacementStageRecord)
+
+    def list(self, *, limit=100, offset=0):
+        pagination(limit, offset)
+        rows = self._session.scalars(
+            select(PlacementStage)
+            .order_by(PlacementStage.created_at, PlacementStage.id)
+            .limit(limit)
+            .offset(offset)
+        ).all()
+        return [to_record(row, PlacementStageRecord) for row in rows]
 
     def get(self, identifier: UUID) -> PlacementStageRecord | None:
         row = self._session.get(PlacementStage, identifier)
