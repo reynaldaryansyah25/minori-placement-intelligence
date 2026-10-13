@@ -1,62 +1,43 @@
-# Hasil verifikasi database MINORI
+# Hasil verifikasi Matching Engine MINORI
 
-Dijalankan pada 13 Oktober 2026, Asia/Bangkok (UTC+07:00). Verifikasi lokal terakhir
-pukul 19:15; verifikasi container pukul 19:10 dan Alembic check Linux pukul 19:12.
+Dijalankan pada 13 Oktober 2026, Asia/Bangkok (UTC+07:00). Pemeriksaan lokal
+terakhir selesai pukul 20:14; smoke lokal pukul 20:16; verifikasi API dan
+container final pukul 20:18. Seluruh angka di bawah berasal dari eksekusi nyata.
 
 ## Hasil nyata
 
-- **95 tes lulus**, tanpa skip, dalam **33.94 detik** pada pemeriksaan terakhir.
-- Coverage gabungan statement/branch menurut pytest-cov: **96%**.
-- Ruff check lulus; Ruff format check melaporkan **87 files already formatted**.
-- pip check lokal, backend Docker, dan frontend Docker: **No broken requirements found**.
-- Alembic upgrade head sukses, dengan urutan foundation -> placement_database.
-- Alembic check lokal dan di Linux Docker: **No new upgrade operations detected**.
-- SQLite lokal dan Docker: foreign keys aktif, WAL, integrity check ok, dan tidak
-  ada pelanggaran foreign key. Database berada pada head migration yang sebenarnya.
-- Seed pertama menghasilkan 35 record dataset tingkat atas, beserta anak aggregate
-  dan audit; keseluruhan **85 baris bisnis pada 13 tabel**. Seed berikutnya membuat
-  **0 record baru**; jumlah setiap tabel tetap sama. Ini dijalankan di lokal dan Docker.
-- Tes seeding membandingkan seluruh UUID di semua tabel serta menjaga penyuntingan
-  kandidat. Kegagalan fixture mengembalikan seluruh insert melalui rollback.
-- Tes migrasi mempertahankan data existing_records dari sebelum upgrade, mendukung
-  rollback database kosong, dan menolak downgrade berisi data sebelum DROP apa pun.
-- Image backend/frontend berhasil dibangun. Backend, frontend, dan n8n healthy pada
-  volume yang sudah tersedia; tidak ada penghapusan volume.
-- Smoke test lokal: backend HTTP 200, database ok, Streamlit health ok, frontend HTTP 200.
-- Verifikasi container: frontend dan n8n dapat mengakses backend; head dan data bisnis
-  terverifikasi. Layanan dibiarkan berjalan di localhost.
-- Dependencies dan requirements.lock tetap menggunakan versi yang sebelumnya terpasang.
+- **186 tes lulus**, tanpa skip, dalam **112.99 detik** pada run final.
+- Coverage gabungan statement/branch: **97%** (2097 statements, 260 branches).
+- Ruff check lulus; format check: **103 files already formatted**.
+- pip check lokal, image backend, dan image frontend: tidak ada dependency rusak.
+- scripts/verify.py selesai dengan exit code 0, passed=true dan seed_idempotent=true.
+- Alembic upgrade dan check lokal/Docker lulus; **No new upgrade operations detected**.
+- Head database adalah explainable_matching, setelah foundation dan placement_database.
+- SQLite lokal/Docker: integrity_check=ok, foreign_keys=1, WAL, tanpa pelanggaran FK.
+- Seluruh **40 pasangan** diuji di domain, SQLite, FastAPI TestClient, API dari host,
+  dan API dari dalam backend Docker. Pengulangan identik mempertahankan evaluation ID.
+- Hasil fixture: **2 ELIGIBLE, 2 NEEDS_REVIEW, 36 NOT_ELIGIBLE**.
+- Matching tidak mengubah empat Match manual, keputusan approved/rejected, source,
+  reviewed_at, score manual lama, maupun relasi placement.
+- Seed lokal/Docker dijalankan dua kali; seluruh record lama dipertahankan dan
+  masing-masing pengulangan Docker menambahkan **0 record baru**.
+- Image backend/frontend final berhasil dibangun dan dijalankan. Ketiga layanan
+  yang sudah tersedia healthy. Volume data dipertahankan.
+- API HTTP diverifikasi untuk POST evaluasi, GET history/detail, explanation,
+  dan ranking. PUT/recompute atomik, input invalid, 404, konflik 409, dan error
+  database 503 diverifikasi dengan integration tests.
+- Smoke lokal: backend HTTP 200/database ok, Streamlit health ok/frontend HTTP 200.
+- Dependencies, requirements.lock, konfigurasi 9Router, workflow n8n, dan frontend
+  bisnis tidak diubah. Tidak ada penggunaan LLM untuk matching.
 
-## Perintah yang dieksekusi
+## Database dan hasil fixture
 
-```sh
-python -m pytest -q
-python -m ruff check .
-python -m ruff format --check .
-python -m alembic upgrade head
-python -m alembic check
-python scripts/seed_database.py
-python scripts/seed_database.py
-python scripts/check_database.py
-python scripts/verify.py
-python scripts/smoke_test.py
-docker compose config --quiet
-docker compose --progress plain build
-docker compose up -d --no-build --wait --wait-timeout 120
-docker compose exec -T backend python scripts/seed_database.py
-docker compose exec -T backend python scripts/seed_database.py
-docker compose exec -T backend python -m alembic check
-python scripts/verify_containers.py
-```
+Migrasi baru hanya menambahkan tabel match_evaluations serta empat kolom:
+candidates.preferred_prefectures, vacancies.preferred_skills,
+vacancies.preferred_certifications, vacancies.language_test_max_age_months.
+Tabel parent lama tidak direbuild dan data lama tidak dihapus.
 
-Perintah Python lokal memakai interpreter .venv. verify.py juga membandingkan
-keluaran kedua seed dan mencatat seed_idempotent=true. Perintah check_database
-Docker dijalankan oleh verify_containers.py. JSON keluaran kedua seed Docker
-tersimpan sebagai docker_seed_initial.json dan docker_seed_repeat.json.
-
-## Jumlah data lokal dan Docker
-
-| Tabel | Baris |
+| Tabel | Baris lokal dan Docker |
 | --- | --- |
 | candidates | 8 |
 | candidate_language_tests | 9 |
@@ -66,100 +47,134 @@ tersimpan sebagai docker_seed_initial.json dan docker_seed_repeat.json.
 | vacancy_language_requirements | 8 |
 | vacancy_drafts | 2 |
 | matches | 4 |
+| match_evaluations | 40 |
 | placements | 4 |
 | placement_stages | 8 |
 | notifications | 2 |
 | notification_attempts | 2 |
 | audit_logs | 19 |
 
-## Cakupan dan batasan
+Total **125 baris bisnis pada 14 tabel**: 85 baris fixture lama dan 40 evaluasi.
+Alembic version table tidak dihitung sebagai data bisnis.
 
-Candidate dan Vacancy memiliki data bahasa, sertifikasi, pengalaman, program,
-requirements, serta kuota. Match hanya menyimpan asosiasi manual pada fixture;
-score tidak dihitung. Notification dan attempt adalah data sintetis, tanpa dispatcher
-atau pengiriman. Jadwal medical hanya data administratif, tanpa hasil medis.
+Waktu acuan fixture adalah 2026-10-13T00:00:00Z. Ayu/AGRI dan Bagus/FOOD
+eligible dengan score **0.8375**. Citra/CARE dan Damar/WELD needs review karena
+status preparing memerlukan konfirmasi kesiapan. Eka/ENG tidak direkomendasikan
+karena ENG paused; Hana inactive. Seluruh pasangan lain not eligible.
+Ranking live saat pemeriksaan: AGRI hanya Ayu; FOOD hanya Bagus; CARE/WELD/ENG kosong.
+Matriks seluruh pasangan tersedia di ../docs/matching.md dan matching_api.json.
 
-Tidak ada algoritma matching, integrasi LLM tambahan, dashboard bisnis, endpoint CRUD
-bisnis, atau workflow reminder yang ditambahkan. Akses 9Router sebenarnya masih
-belum diuji karena bukan cakupan pekerjaan database ini. Python Code node n8n masih
-memerlukan runner yang tidak disediakan image; pemeriksaan HTTP n8n lulus.
+## Perintah yang dieksekusi
 
-Seed menjamin idempotensi untuk eksekusi berurutan, dan tidak menimpa baris existing.
-Dua seeder konkuren dapat berkonflik pada unique key dan rollback; bukan jaminan
-konkurensi. Audit dan attempt bersifat append-only pada antarmuka repository,
-bukan proteksi terhadap SQL langsung. updated_at ditangani SQLAlchemy, tanpa trigger
-untuk writer SQL eksternal. Tidak ada jaminan otomatis atas eligibility program,
-kuota terpakai, atau transisi status bisnis.
+Interpreter lokal menggunakan .venv/Scripts/python.exe. TEMP dan TMP pada run
+sandbox diarahkan ke test-results/temp dalam workspace.
 
-Angka coverage bukan klaim cakupan sempurna: script Streamlit yang dieksekusi dinamis
-serta subprocess tidak seluruhnya dicatat. Render frontend tetap diuji dengan AppTest.
+```sh
+python -m ruff check .
+python -m ruff format --check .
+python -m pytest tests/unit/test_matching_engine.py tests/integration/test_matching.py -q -x --tb=short
+python -m pytest tests/integration/test_migrations.py tests/integration/test_matching.py -q -x --tb=short
+python scripts/verify.py
+python scripts/smoke_test.py
+python scripts/verify_matching.py --base-url http://127.0.0.1:8000
+
+docker compose config --quiet
+docker compose --progress plain build backend frontend
+docker compose up -d --no-build --wait --wait-timeout 120 backend frontend
+docker compose exec -T backend python -m alembic upgrade head
+docker compose exec -T backend python -m alembic check
+docker compose exec -T backend python scripts/verify_matching.py --base-url http://127.0.0.1:8000
+docker compose exec -T backend python scripts/seed_database.py
+docker compose exec -T backend python scripts/seed_database.py
+python scripts/verify_containers.py
+```
+
+verify.py menjalankan pip check, Ruff, Pytest dengan coverage, upgrade/check Alembic,
+seed dua kali, integritas database, dan verify_matching.py lokal. Container verifier
+menjalankan pemeriksaan database dan dependencies di runtime Linux, serta komunikasi
+HTTP frontend/n8n ke backend yang sudah tersedia.
+
+## Regresi dan kendala yang telah diperbaiki
+
+- Tes awal terhalang izin direktori TEMP Windows di sandbox. TEMP/TMP workspace
+  menyelesaikannya; ini bukan kegagalan instalasi dependency.
+- Alembic check awal menemukan Float migration berbeda dari Double yang dipetakan
+  ORM SQLAlchemy. Storage migration disamakan dan check final lulus.
+- Tes downgrade lama menemukan DDL parsial sebelum migrasi berikutnya menolak data
+  populated. Migrasi baru kini preflight sebelum DROP; target foundation/base/-2
+  menolak tanpa mengubah tabel, head, atau data. Upgrade graph populated tetap
+  mempertahankan seluruh relasi serta score manual lama.
+- Pemeriksaan Ruff awal menemukan format/import; seluruh temuan telah diperbaiki.
+
 Tidak ada kegagalan verifikasi wajib yang masih tersisa.
+
+## Cakupan dan batas operasional
+
+Eligibility memeriksa program, status, deadline, alternatif bahasa, riwayat tes,
+sertifikasi valid, skill wajib, dan union pengalaman relevan. Scoring memakai
+0.35 bahasa + 0.30 pengalaman + 0.20 tambahan + 0.15 preferensi/kesiapan; total hanya
+bagi eligible. Detail normalisasi dan reason codes ada di ../docs/matching.md.
+
+Matching menilai data pemberi kerja dan profil yang tercatat; keaslian dokumen,
+keputusan imigrasi, dan alokasi kuota tidak ditentukan otomatis. Preferensi lokasi
+kosong mendapat nilai netral 0.5. Riwayat as_of memakai profil saat request, bukan
+rekonstruksi profil historis. History append-only melalui repository, tanpa proteksi
+terhadap SQL langsung. Request konkuren dapat memerlukan retry akibat constraint
+atau writer SQLite.
+
+Recompute otomatis berada pada service/PUT API. Writer SQL eksternal perlu memanggil
+POST evaluasi. GET history menandai hasil stale, dan ranking/explanation selalu memakai
+data serta waktu terkini sehingga inactive/paused/closed/deadline lewat tidak menjadi
+rekomendasi aktif. Tidak ada watcher database, workflow reminder, dashboard bisnis,
+atau integrasi LLM tambahan. Pengaturan repository GitHub tidak diubah.
 
 ## File baru
 
 ```text
-backend/alembic/versions/business_tables.py
-backend/minori/db/inspection.py
-backend/minori/db/models/__init__.py
-backend/minori/db/models/audit.py
-backend/minori/db/models/candidate.py
-backend/minori/db/models/common.py
-backend/minori/db/models/match.py
-backend/minori/db/models/notification.py
-backend/minori/db/models/placement.py
-backend/minori/db/models/vacancy.py
-backend/minori/db/seeding.py
-backend/minori/domain/catalogs.py
-backend/minori/domain/entities.py
-backend/minori/domain/errors.py
-backend/minori/domain/repositories.py
-backend/minori/repositories/audit.py
-backend/minori/repositories/candidate.py
-backend/minori/repositories/mapping.py
-backend/minori/repositories/match.py
-backend/minori/repositories/notification.py
-backend/minori/repositories/placement.py
-backend/minori/repositories/provider.py
-backend/minori/repositories/vacancy.py
-backend/minori/schemas/audit.py
-backend/minori/schemas/candidate.py
-backend/minori/schemas/common.py
-backend/minori/schemas/match.py
-backend/minori/schemas/notification.py
-backend/minori/schemas/placement.py
-backend/minori/schemas/vacancy.py
-data/dummy/placement_data.json
-data/dummy/vacancies.json
-docs/database.md
-scripts/seed_database.py
-tests/integration/test_business_models.py
-tests/integration/test_business_repositories.py
-tests/integration/test_seeding.py
-tests/unit/test_business_schemas.py
+backend/alembic/versions/matching_evaluations.py
+backend/minori/api/routes/matching.py
+backend/minori/db/models/matching_evaluation.py
+backend/minori/domain/eligibility.py
+backend/minori/domain/matching.py
+backend/minori/domain/matching_engine.py
+backend/minori/domain/scoring.py
+backend/minori/repositories/matching.py
+backend/minori/schemas/matching.py
+backend/minori/services/matching.py
+docs/api.md
+docs/matching.md
+scripts/verify_matching.py
+tests/integration/test_matching.py
+tests/unit/test_matching_engine.py
+tests/unit/test_matching_service.py
 ```
 
 ## File diperbarui
 
 ```text
-.dockerignore
 Dockerfile
 README.md
-backend/alembic/env.py
 backend/minori/api/dependencies.py
-backend/minori/db/base.py
-data/README.md
-data/dummy/candidates.json
+backend/minori/db/models/__init__.py
+backend/minori/db/models/candidate.py
+backend/minori/db/models/match.py
+backend/minori/db/models/vacancy.py
+backend/minori/domain/entities.py
+backend/minori/main.py
+backend/minori/repositories/provider.py
+backend/minori/schemas/candidate.py
+backend/minori/schemas/match.py
+backend/minori/schemas/vacancy.py
 docs/architecture.md
+docs/database.md
 docs/operations.md
-scripts/check_database.py
 scripts/verify.py
-scripts/verify_containers.py
 test-results/verification.md
-tests/conftest.py
 tests/integration/test_migrations.py
 ```
 
-Struktur dan ERD lengkap tersedia di ../docs/database.md. Bukti runtime disimpan dalam
-checks.json, pytest.xml, tests.log, coverage.xml, coverage/index.html, database.log,
-seed_initial.log, seed_repeat.log, smoke.json, containers.json, dan kedua JSON seed Docker.
-Artefak runtime tersebut diabaikan Git; ringkasan ini dapat di-commit tanpa kredensial.
+Total: **16 file baru dan 19 file diperbarui**. Bukti runtime diabaikan Git:
+checks.json, tests.log, pytest.xml, coverage.xml/HTML, matching.log,
+matching_api.json, docker_matching.json, database.log, seed logs, smoke.json,
+containers.json, docker_build.log, docker_start.log, docker_migration logs,
+dan kedua JSON seed Docker. Ringkasan ini tidak menyimpan credentials atau data nyata.

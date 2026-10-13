@@ -38,6 +38,9 @@ class Candidate(ReferenceMixin, IdentityTimestampMixin, Base):
     education_level: Mapped[str] = mapped_column(String(80))
     domicile_city: Mapped[str] = mapped_column(String(80))
     skills: Mapped[list[str]] = mapped_column(JSON, default=list)
+    preferred_prefectures: Mapped[list[str]] = mapped_column(
+        JSON, default=list, server_default="[]"
+    )
     status: Mapped[CandidateStatus] = mapped_column(
         enum_type(CandidateStatus, "candidate_status"),
         default=CandidateStatus.REGISTERED,

@@ -80,6 +80,7 @@ class CandidateCreate(InputSchema):
     domicile_city: str = Field(min_length=1, max_length=80)
     status: CandidateStatus = CandidateStatus.REGISTERED
     skills: list[Code] = Field(default_factory=list, max_length=50)
+    preferred_prefectures: list[str] = Field(default_factory=list, max_length=47)
     language_tests: list[LanguageTestCreate] = Field(default_factory=list, max_length=30)
     certifications: list[CertificationCreate] = Field(default_factory=list, max_length=50)
     experiences: list[ExperienceCreate] = Field(default_factory=list, max_length=50)
@@ -91,14 +92,19 @@ class CandidateCreate(InputSchema):
             [(item.code, item.issued_on) for item in self.certifications],
             [(item.employer_name, item.role, item.started_on) for item in self.experiences],
             self.skills,
+            [item.casefold() for item in self.preferred_prefectures],
         ]
         if any(len(group) != len(set(group)) for group in groups):
             raise ValueError("Duplicate candidate qualifications or skills")
+        if any(not item.strip() or len(item) > 80 for item in self.preferred_prefectures):
+            raise ValueError("Prefecture preferences must contain 1..80 characters")
+        self.preferred_prefectures = [item.strip() for item in self.preferred_prefectures]
         return self
 
     def to_domain(self, data_type=CandidateData) -> CandidateData:
         values = self.model_dump(exclude={"language_tests", "certifications", "experiences"})
         values["skills"] = tuple(self.skills)
+        values["preferred_prefectures"] = tuple(self.preferred_prefectures)
         return data_type(
             **values,
             language_tests=tuple(item.to_domain(LanguageTestData) for item in self.language_tests),

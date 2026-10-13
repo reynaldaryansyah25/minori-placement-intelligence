@@ -41,6 +41,7 @@ SQLAlchemy memakai engine sinkron, session per request, foreign keys aktif,
 `busy_timeout` terbatas, dan WAL untuk file database. Route health sinkron diproses
 oleh worker thread FastAPI. Semua perubahan skema melalui Alembic. Revisi
 `foundation` mencatat versi awal dan `placement_database` menambahkan 13 tabel bisnis.
+`explainable_matching` menambahkan riwayat evaluasi dan input preferensi opsional.
 Lihat [struktur database dan ERD](database.md). WAL membantu
 akses baca/tulis, tetapi SQLite tetap memiliki satu writer pada satu waktu. Gunakan
 volume lokal untuk file SQLite dan jalankan satu worker backend dalam konfigurasi ini.
@@ -53,6 +54,15 @@ enkripsi n8n hanya ke n8n. Log aplikasi tidak mencetak bodies, secrets, atau set
 timeout dan retry yang eksplisit dari environment. Adapter menyediakan kontrak
 teks dasar tanpa prompt bisnis. Tes menggunakan server HTTP lokal dengan key serta
 model fiktif. Akses 9Router sebenarnya membutuhkan instance dan kredensial pengguna.
+
+Matching berada pada modul domain/eligibility.py, scoring.py, matching_engine.py,
+dan matching.py untuk values/ports. Service matching hanya mengimpor domain dan
+standard library; transaksi diterima sebagai factory context manager dari DI.
+Adapter evaluation melakukan append/read tanpa commit, sementara service memakai
+satu transaksi untuk batch dan penggantian aggregate beserta recompute. API hanya
+memvalidasi transport, memanggil service, dan menerjemahkan error HTTP.
+Evaluasi tersimpan terpisah dari Match staf. Ranking membaca data/waktu terkini;
+GET tidak menulis history. Lihat [algoritma](matching.md) dan [API](api.md).
 
 Acuan: [router modular FastAPI](https://fastapi.tiangolo.com/tutorial/bigger-applications/),
 [SQLite SQLAlchemy](https://docs.sqlalchemy.org/en/20/dialects/sqlite.html),

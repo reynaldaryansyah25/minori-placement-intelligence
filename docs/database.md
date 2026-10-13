@@ -1,6 +1,6 @@
 # Struktur database MINORI
 
-Database aplikasi memiliki 13 tabel bisnis, dengan metadata SQLAlchemy pada
+Database aplikasi memiliki 14 tabel bisnis, dengan metadata SQLAlchemy pada
 `backend/minori/db/models/`. Semua tabel menggunakan UUID sebagai primary key,
 `created_at` dan `updated_at`. SQLite menyimpan UUID sebagai CHAR(32) dan timestamp
 sebagai UTC; adapter mengembalikan datetime yang sadar zona waktu. Input timestamp
@@ -8,14 +8,15 @@ tanpa offset ditolak. Tanggal sertifikasi, tes, dan pengalaman memakai tipe date
 
 | Tabel | Isi utama dan identitas unik |
 | --- | --- |
-| candidates | reference, full_name, preferred_program, education_level, domicile_city, skills, status; reference unik |
+| candidates | reference, full_name, preferred_program, education_level, domicile_city, skills, preferred_prefectures, status; reference unik |
 | candidate_language_tests | candidate_id, test_type, level, taken_on, score; unik kandidat + tes + tanggal |
 | candidate_certifications | candidate_id, code, name, issuer, issued_on, expires_on; unik kandidat + kode + tanggal terbit |
 | candidate_experiences | candidate_id, employer_name, sector, role, started_on, ended_on; unik kandidat + perusahaan + peran + tanggal mulai |
-| vacancies | reference, title, employer_name, program, sector, prefecture, quota, minimum_experience_months, required_skills, required_certifications, status, application_deadline; reference unik |
+| vacancies | reference, title, employer_name, program, sector, prefecture, quota, minimum_experience_months, required_skills, required_certifications, preferred_skills, preferred_certifications, language_test_max_age_months, status, application_deadline; reference unik |
 | vacancy_language_requirements | vacancy_id, test_type, minimum_level; satu persyaratan per jenis tes pada lowongan |
 | vacancy_drafts | reference, source_channel, source_reference, proposed_data, status, published_vacancy_id; sumber dan reference unik, satu draft terbit per lowongan |
 | matches | candidate_id, vacancy_id, status, source, score, reviewed_at; pasangan kandidat + lowongan unik |
+| match_evaluations | candidate_id, vacancy_id, eligibility_status, total_score, evaluated_at, algorithm_version, input_fingerprint, explanation; unik pasangan + fingerprint + waktu + versi |
 | placements | reference, candidate_id, vacancy_id, match_id, status, planned_departure_at, actual_departure_at; reference dan pasangan kandidat + lowongan unik |
 | placement_stages | placement_id, code, step_type, sequence_number, status, scheduled_at, due_at, completed_at, location; kode dan urutan unik per placement |
 | notifications | reference, deduplication_key, candidate_id, placement_id, placement_stage_id, template_code, scheduled_at, channel, status, sent_at; reference dan deduplication_key unik |
@@ -33,7 +34,9 @@ erDiagram
     CANDIDATES ||--o{ CANDIDATE_CERTIFICATIONS : has
     CANDIDATES ||--o{ CANDIDATE_EXPERIENCES : has
     CANDIDATES ||--o{ MATCHES : associated
+    CANDIDATES ||--o{ MATCH_EVALUATIONS : evaluated
     VACANCIES ||--o{ MATCHES : associated
+    VACANCIES ||--o{ MATCH_EVALUATIONS : evaluated
     VACANCIES ||--o{ VACANCY_LANGUAGE_REQUIREMENTS : accepts
     VACANCIES |o--o| VACANCY_DRAFTS : publication
     CANDIDATES ||--o{ PLACEMENTS : owns
@@ -98,6 +101,17 @@ erDiagram
         UUID vacancy_id FK
         float score
         string source
+    }
+    MATCH_EVALUATIONS {
+        UUID id PK
+        UUID candidate_id FK
+        UUID vacancy_id FK
+        string eligibility_status
+        float total_score
+        datetime evaluated_at
+        string algorithm_version
+        string input_fingerprint
+        JSON explanation
     }
     PLACEMENTS {
         UUID id PK
@@ -180,8 +194,9 @@ dalam referensi resmi. Kedua skala tidak dikonversi atau diurutkan secara silang
 Baris language requirement pada satu lowongan merupakan alternatif jenis tes yang
 diterima pemberi kerja. Kebutuhan sertifikasi dan skill memakai kode yang sama dengan
 kode pada kandidat. Nilai program titp, ssw, dan engineer merupakan kategori internal;
-fixture persyaratan bukan penetapan kelayakan visa atau ketentuan hukum. Belum ada
-perhitungan eligibility, score, kuota terpakai, atau matching.
+fixture persyaratan bukan penetapan kelayakan visa atau ketentuan hukum. Matching
+mengevaluasi persyaratan pemberi kerja dan menyimpan explanation deterministik;
+kuota terpakai dan alokasi placement tidak dihitung otomatis.
 
 ## Data access dan transaksi
 
@@ -205,16 +220,44 @@ with database.session_factory.begin() as session:
 Get mengembalikan None bila tidak ditemukan. Update/archive yang tidak menemukan
 record melempar RecordNotFoundError. Identitas reference dan pemilik history tidak
 dapat diganti oleh replace. List mendukung pagination 1..100 dengan urutan stabil.
-Tidak ada endpoint bisnis baru, dispatcher notification, atau reminder scheduler.
+Matching menyediakan endpoint evaluasi, history, ranking, explanation, dan
+penggantian profil dengan recompute. Lihat [kontrak HTTP](api.md).
 
 ## Migrasi dan seed
 
-Urutan revisi adalah `foundation -> placement_database` melalui
-`backend/alembic/versions/business_tables.py`. Upgrade hanya menambah tabel serta
+Urutan revisi adalah `foundation -> placement_database -> explainable_matching`.
+Revisi bisnis berada di business_tables.py dan matching berada di matching_evaluations.py.
+Upgrade matching menambahkan satu tabel dan empat kolom opsional/default tanpa
+rebuild tabel kandidat, lowongan, atau matches. Upgrade bisnis menambah tabel serta
 indexes; migration foundation dipertahankan. Downgrade menolak database yang masih
 memiliki baris bisnis sebelum menghapus tabel apa pun. Downgrade SQL offline ditolak
 karena pemeriksaan data memerlukan koneksi. Database kosong dapat di-rollback dan
 di-upgrade lagi untuk pengujian.
+
+Downgrade matching menolak history atau preferensi yang sudah dikonfigurasi.
+Jika seluruh tambahan kosong, target eksplisit placement_database dapat dipakai
+tanpa menghapus data lama. Dengan data bisnis lama, target yang lebih rendah atau
+relatif ditolak sebelum perubahan skema untuk menghindari DDL parsial SQLite.
+Revisi foundation dan placement_database tidak diubah.
+
+## Penyimpanan evaluasi mesin
+
+MatchEvaluation memakai foreign key RESTRICT ke kandidat dan lowongan, index
+pasangan/waktu dan lowongan/eligibility, CHECK enum dan score 0..1. Total score wajib
+ada hanya bagi ELIGIBLE. Dua hasil lain menyimpan null total, dengan komponen
+diagnostik tetap pada explanation JSON. UUID dan timestamps mengikuti model lama.
+Riwayat append/read melalui repository; proteksi terhadap SQL langsung tidak ditambahkan.
+
+Tidak ada FK ke Match karena evaluasi dapat terjadi sebelum asosiasi staf dibuat.
+API menggabungkan keputusan staf lewat pasangan kandidat/lowongan unik. Field
+matches.status/source/score/reviewed_at tidak dimodifikasi oleh matching.
+input_fingerprint dan algorithm_version mengidentifikasi input/kebijakan evaluasi.
+
+preferred_prefectures, preferred_skills, dan preferred_certifications memiliki
+default array kosong sehingga data lama tetap terbaca. language_test_max_age_months
+nullable dan harus positif bila diisi. Preferensi opsional dipakai hanya untuk
+scoring; umur tes opsional digunakan untuk evidence bahasa. Detail rumus, freshness,
+dan batas transaksi tersedia di [algoritma matching](matching.md).
 
 ```sh
 python -m alembic upgrade head

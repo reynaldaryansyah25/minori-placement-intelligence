@@ -73,6 +73,7 @@ class CandidateData:
     language_tests: tuple[LanguageTestData, ...] = ()
     certifications: tuple[CertificationData, ...] = ()
     experiences: tuple[ExperienceData, ...] = ()
+    preferred_prefectures: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -95,6 +96,9 @@ class VacancyData:
     language_requirements: tuple[LanguageRequirementData, ...] = ()
     status: VacancyStatus = VacancyStatus.OPEN
     application_deadline: datetime | None = None
+    preferred_skills: tuple[str, ...] = ()
+    preferred_certifications: tuple[str, ...] = ()
+    language_test_max_age_months: int | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -129,7 +133,7 @@ class MatchData:
 
 @dataclass(frozen=True, kw_only=True)
 class MatchRecord(MatchData, RecordMetadata):
-    """Stored association; no matching or scoring algorithm is provided."""
+    """Staff association and legacy score, independent of machine evaluation history."""
 
 
 @dataclass(frozen=True, kw_only=True)

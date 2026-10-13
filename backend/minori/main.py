@@ -8,6 +8,7 @@ from fastapi import FastAPI
 
 from minori import __version__
 from minori.api.routes.health import router as health_router
+from minori.api.routes.matching import router as matching_router
 from minori.core.config import Settings, get_settings
 from minori.core.logging import configure_logging
 from minori.db.session import Database
@@ -41,4 +42,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     application.state.settings = configuration
     application.include_router(health_router)
+    application.include_router(matching_router)
     return application

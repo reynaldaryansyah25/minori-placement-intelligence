@@ -8,6 +8,7 @@ from minori.db.models.candidate import (
     CandidateLanguageTest,
 )
 from minori.db.models.match import Match
+from minori.db.models.matching_evaluation import MatchEvaluation
 from minori.db.models.notification import Notification, NotificationAttempt
 from minori.db.models.placement import Placement, PlacementStage
 from minori.db.models.vacancy import Vacancy, VacancyDraft, VacancyLanguageRequirement
@@ -21,6 +22,7 @@ MODEL_TYPES = (
     VacancyLanguageRequirement,
     VacancyDraft,
     Match,
+    MatchEvaluation,
     Placement,
     PlacementStage,
     Notification,
@@ -36,6 +38,7 @@ __all__ = [
     "CandidateExperience",
     "CandidateLanguageTest",
     "Match",
+    "MatchEvaluation",
     "Notification",
     "NotificationAttempt",
     "Placement",

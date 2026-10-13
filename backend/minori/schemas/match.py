@@ -1,4 +1,4 @@
-"""Storage contract for explicitly provided candidate/vacancy associations."""
+"""Staff decisions and legacy scores; machine eligibility has its own evaluation contract."""
 
 from typing import Self
 from uuid import UUID
@@ -25,4 +25,4 @@ class MatchCreate(InputSchema):
 
 
 class MatchRead(MatchCreate, RecordFields):
-    """Stored data; no scoring or matching computation occurs."""
+    """Staff decision snapshot; matching never overwrites these fields."""

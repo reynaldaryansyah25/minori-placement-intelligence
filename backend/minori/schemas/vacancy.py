@@ -37,6 +37,9 @@ class VacancyCreate(InputSchema):
     minimum_experience_months: StrictInt = Field(default=0, ge=0)
     required_skills: list[Code] = Field(default_factory=list, max_length=50)
     required_certifications: list[Code] = Field(default_factory=list, max_length=50)
+    preferred_skills: list[Code] = Field(default_factory=list, max_length=50)
+    preferred_certifications: list[Code] = Field(default_factory=list, max_length=50)
+    language_test_max_age_months: StrictInt | None = Field(default=None, gt=0, le=1200)
     language_requirements: list[LanguageRequirementCreate] = Field(
         default_factory=list, max_length=2
     )
@@ -48,6 +51,8 @@ class VacancyCreate(InputSchema):
         groups = [
             self.required_skills,
             self.required_certifications,
+            self.preferred_skills,
+            self.preferred_certifications,
             [item.test_type for item in self.language_requirements],
         ]
         if any(len(items) != len(set(items)) for items in groups):
@@ -58,6 +63,8 @@ class VacancyCreate(InputSchema):
         values = self.model_dump(exclude={"language_requirements"})
         values["required_skills"] = tuple(self.required_skills)
         values["required_certifications"] = tuple(self.required_certifications)
+        values["preferred_skills"] = tuple(self.preferred_skills)
+        values["preferred_certifications"] = tuple(self.preferred_certifications)
         return data_type(
             **values,
             language_requirements=tuple(

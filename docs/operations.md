@@ -30,6 +30,7 @@ python -m alembic current
 python scripts/seed_database.py
 python scripts/seed_database.py
 python scripts/check_database.py
+python scripts/verify_matching.py
 ```
 
 Untuk perubahan model mendatang, impor model ORM di `backend/alembic/env.py`,
@@ -53,7 +54,8 @@ python scripts/verify_containers.py
 ```
 
 `verify.py` mencatat dependency, lint, format, Pytest, migrasi, drift schema,
-dua eksekusi seed, perbandingan idempotensi, dan query database. Pemeriksaan database
+dua eksekusi seed, perbandingan idempotensi, query database, dan evaluasi fixture
+matching dua kali pada 40 pasangan. Pemeriksaan database
 membandingkan revisi dengan head Alembic dan mencakup seluruh model, foreign keys,
 serta integritas SQLite. Smoke test membuka port lokal sementara, menjalankan backend
 dan Streamlit, memeriksa endpoint HTTP, lalu menghentikan kedua proses.
@@ -64,6 +66,19 @@ Seed Docker dijalankan secara eksplisit dengan
 Jalankan dua kali untuk memeriksa idempotensi. Schema bisnis dan sifat transaksi
 dijelaskan dalam [struktur database](database.md). Downgrade yang akan menghapus
 data bisnis ditolak; jangan menghapus volume untuk memperbarui skema.
+
+Verifikasi API matching setelah backend berjalan:
+
+```sh
+python scripts/verify_matching.py --base-url http://127.0.0.1:8000
+docker compose exec -T backend python scripts/verify_matching.py --base-url http://127.0.0.1:8000
+docker compose exec -T backend python -m alembic check
+```
+
+Script memakai fixture yang belum disunting dengan waktu acuan tetap 13 Oktober
+2026. Endpoint ranking tetap memakai waktu saat request. Di sandbox Windows bila
+direktori TEMP dibatasi, arahkan TEMP/TMP ke direktori test-results/temp dalam
+workspace sebelum verify.py. Direktori ini dan artefak runtime diabaikan Git.
 
 ```sh
 docker compose logs --tail=50 backend frontend n8n

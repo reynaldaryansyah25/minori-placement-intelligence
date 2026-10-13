@@ -23,6 +23,10 @@ class Vacancy(ReferenceMixin, IdentityTimestampMixin, Base):
     __table_args__ = (
         CheckConstraint("quota > 0", name="positive_quota"),
         CheckConstraint("minimum_experience_months >= 0", name="nonnegative_experience"),
+        CheckConstraint(
+            "language_test_max_age_months IS NULL OR language_test_max_age_months > 0",
+            name="positive_language_age",
+        ),
         CheckConstraint("length(trim(title)) > 0", name="title_not_blank"),
         CheckConstraint("length(trim(reference)) > 0", name="reference_not_blank"),
     )
@@ -36,6 +40,11 @@ class Vacancy(ReferenceMixin, IdentityTimestampMixin, Base):
     minimum_experience_months: Mapped[int] = mapped_column(default=0)
     required_skills: Mapped[list[str]] = mapped_column(JSON, default=list)
     required_certifications: Mapped[list[str]] = mapped_column(JSON, default=list)
+    preferred_skills: Mapped[list[str]] = mapped_column(JSON, default=list, server_default="[]")
+    preferred_certifications: Mapped[list[str]] = mapped_column(
+        JSON, default=list, server_default="[]"
+    )
+    language_test_max_age_months: Mapped[int | None]
     status: Mapped[VacancyStatus] = mapped_column(
         enum_type(VacancyStatus, "vacancy_status"), default=VacancyStatus.OPEN, index=True
     )

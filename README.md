@@ -5,7 +5,8 @@ Fondasi sistem AI untuk penempatan tenaga kerja ke Jepang dengan arsitektur
 `minori-placement-intelligence`. Fondasi menyediakan kesehatan layanan, konfigurasi,
 persistensi, migrasi, adapter 9Router, konsol Streamlit, dan workflow n8n manual.
 Database bisnis, schemas, repository, migrasi, dan seed idempotent tersedia.
-Algoritma matching, reminder, extraction, dan dashboard bisnis belum diimplementasikan.
+Explainable matching deterministik tersedia melalui domain engine, service, dan API.
+Kelayakan mesin dipisahkan dari keputusan staf dan history evaluasi dipertahankan.
 
 ## Struktur repository
 
@@ -15,14 +16,14 @@ minori-placement-intelligence/
 │   ├── minori/
 │   │   ├── api/                 # Router dan dependency injection
 │   │   ├── core/                # Settings dan logging
-│   │   ├── domain/              # Value objects dan port
+│   │   ├── domain/              # Eligibility, scoring, ranking, entities dan port
 │   │   ├── services/            # Use case
 │   │   ├── repositories/        # Adapter SQLAlchemy
 │   │   ├── schemas/             # DTO Pydantic
-│   │   ├── db/models/           # 13 tabel ORM; engine, session, inspection, seeding
+│   │   ├── db/models/           # 14 tabel ORM; engine, session, inspection, seeding
 │   │   ├── integrations/nine_router/
 │   │   └── main.py
-│   └── alembic/versions/        # foundation.py dan business_tables.py
+│   └── alembic/versions/        # foundation.py, business_tables.py, matching_evaluations.py
 ├── frontend/
 │   ├── minori_frontend/         # UI dan HTTP client
 │   └── .streamlit/config.toml
@@ -157,11 +158,13 @@ dipanggil otomatis saat startup, health check, atau pembukaan frontend. Instance
 ```sh
 python scripts/verify.py
 python scripts/smoke_test.py
+python scripts/verify_matching.py --base-url http://127.0.0.1:8000
 ```
 
 Pemeriksaan mencakup dependency, lint, format, batas arsitektur, settings, response
 HTTP 200/503, SQLite, migrasi upgrade/downgrade, kontrak request 9Router terhadap
-server lokal, dan render Streamlit. Smoke test menjalankan proses backend serta
+server lokal, render Streamlit, seluruh 40 pasangan matching, scoring, explanation,
+dan API. Smoke test menjalankan proses backend serta
 frontend sebenarnya, memeriksa HTTP, lalu menghentikannya.
 
 Hasil nyata tersedia pada [ringkasan verifikasi](test-results/verification.md).
@@ -171,4 +174,5 @@ instance atau kredensial LLM pengguna.
 
 Panduan lebih lanjut: [arsitektur](docs/architecture.md),
 [struktur database dan ERD](docs/database.md),
+[algoritma matching](docs/matching.md), [kontrak API](docs/api.md),
 [operasional](docs/operations.md), dan [pedoman pengembangan](AGENTS.md).

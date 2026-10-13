@@ -5,9 +5,11 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Session
 
 from minori.domain import repositories as ports
+from minori.domain.matching import EvaluationRepository
 from minori.repositories.audit import SqlAlchemyAuditLogRepository
 from minori.repositories.candidate import SqlAlchemyCandidateRepository
 from minori.repositories.match import SqlAlchemyMatchRepository
+from minori.repositories.matching import SqlAlchemyEvaluationRepository
 from minori.repositories.notification import (
     SqlAlchemyNotificationAttemptRepository,
     SqlAlchemyNotificationRepository,
@@ -28,6 +30,7 @@ class Repositories:
     vacancy: ports.VacancyRepository
     vacancy_draft: ports.VacancyDraftRepository
     match: ports.MatchRepository
+    evaluation: EvaluationRepository
     placement: ports.PlacementRepository
     placement_stage: ports.PlacementStageRepository
     notification: ports.NotificationRepository
@@ -41,6 +44,7 @@ def provide_repositories(session: Session) -> Repositories:
         vacancy=SqlAlchemyVacancyRepository(session),
         vacancy_draft=SqlAlchemyVacancyDraftRepository(session),
         match=SqlAlchemyMatchRepository(session),
+        evaluation=SqlAlchemyEvaluationRepository(session),
         placement=SqlAlchemyPlacementRepository(session),
         placement_stage=SqlAlchemyPlacementStageRepository(session),
         notification=SqlAlchemyNotificationRepository(session),

@@ -71,10 +71,11 @@ def test_additive_upgrade_preserves_existing_unrelated_data(settings):
         engine.dispose()
 
 
-def test_populated_downgrade_is_refused_before_any_data_is_removed(seeded_database):
+@pytest.mark.parametrize("target", ["foundation", "base", "-2"])
+def test_populated_downgrade_is_refused_before_any_data_is_removed(seeded_database, target):
     before = inspect_database(seeded_database)
     with pytest.raises(RuntimeError, match="Refusing downgrade"):
-        command.downgrade(Config(str(ROOT / "alembic.ini")), "foundation")
+        command.downgrade(Config(str(ROOT / "alembic.ini")), target)
     after = inspect_database(seeded_database)
     assert after["counts"] == before["counts"]
     assert after["migration_revision"] == before["migration_revision"]

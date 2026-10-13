@@ -34,6 +34,7 @@ def main() -> None:
         ("seed_initial", [sys.executable, str(ROOT / "scripts/seed_database.py")]),
         ("seed_repeat", [sys.executable, str(ROOT / "scripts/seed_database.py")]),
         ("database", [sys.executable, str(ROOT / "scripts/check_database.py")]),
+        ("matching", [sys.executable, str(ROOT / "scripts/verify_matching.py")]),
     ]
     records = []
     seed_results = {}

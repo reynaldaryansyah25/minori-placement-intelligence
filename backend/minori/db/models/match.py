@@ -1,4 +1,4 @@
-"""Persisted candidate/vacancy associations without a matching algorithm."""
+"""Persisted staff associations, separated from append-only machine evaluations."""
 
 from __future__ import annotations
 
