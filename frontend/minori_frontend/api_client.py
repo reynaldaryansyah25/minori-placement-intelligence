@@ -420,6 +420,9 @@ class BackendClient:
             params={"limit": limit, "offset": offset},
         )
 
+    def get_recipient_routing(self, notification_id: str) -> dict[str, Any]:
+        return self._request("GET", f"/reminders/{notification_id}/routing")
+
     def generate_reminders(self) -> list[dict[str, Any]]:
         return self._request("POST", "/internal/reminders/generate")
 

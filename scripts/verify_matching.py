@@ -17,7 +17,7 @@ AS_OF = datetime(2026, 10, 13, 0, 0, tzinfo=UTC)
 
 
 def check(first, second):
-    assert len(first) == len(second) == 40, "Expected the unchanged 8-candidate/5-vacancy fixture"
+    assert len(first) == len(second) >= 40, "Expected at least the 8-candidate/5-vacancy fixture"
 
     def key(item):
         return item["candidate_reference"], item["vacancy_reference"]
@@ -27,8 +27,34 @@ def check(first, second):
     assert {key(item) for item in first} == {key(item) for item in second}
     assert all(item["candidate_reference"].startswith("DEMO-") for item in first)
     assert all(item["vacancy_reference"].startswith("DEMO-") for item in first)
+
+    # Validate the canonical 8-candidate / 5-vacancy baseline regression fixture
+    baseline_cands = {
+        "DEMO-CAND-AGRI",
+        "DEMO-CAND-FOOD",
+        "DEMO-CAND-CARE",
+        "DEMO-CAND-WELD",
+        "DEMO-CAND-ENG",
+        "DEMO-CAND-HOTEL",
+        "DEMO-CAND-TRAINEE",
+        "DEMO-CAND-INACTIVE",
+    }
+    baseline_vacs = {
+        "DEMO-VAC-AGRI",
+        "DEMO-VAC-FOOD",
+        "DEMO-VAC-CARE",
+        "DEMO-VAC-WELD",
+        "DEMO-VAC-ENG",
+    }
+    baseline_first = [
+        item
+        for item in first
+        if item["candidate_reference"] in baseline_cands
+        and item["vacancy_reference"] in baseline_vacs
+    ]
+    assert len(baseline_first) == 40, "Expected the unchanged 8-candidate/5-vacancy fixture"
     expected = {"ELIGIBLE": 2, "NOT_ELIGIBLE": 36, "NEEDS_REVIEW": 2}
-    assert Counter(item["eligibility_status"] for item in first) == expected
+    assert Counter(item["eligibility_status"] for item in baseline_first) == expected
     for left, right in zip(first, second, strict=True):
         MatchingResultRead.model_validate(left)
         assert left["evaluation_id"] == right["evaluation_id"]
@@ -38,8 +64,8 @@ def check(first, second):
     return {
         "passed": True,
         "as_of": AS_OF.isoformat(),
-        "pairs": 40,
-        "eligibility_counts": expected,
+        "pairs": len(first),
+        "eligibility_counts": Counter(item["eligibility_status"] for item in first),
         "repeat_preserved_ids": True,
         "matrix": [
             {

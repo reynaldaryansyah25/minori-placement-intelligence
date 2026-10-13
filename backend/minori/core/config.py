@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     notification_max_attempts: int = Field(default=3, ge=1, le=20)
     notification_retry_base_seconds: int = Field(default=60, ge=1, le=86400)
     notification_retry_max_seconds: int = Field(default=3600, ge=1, le=86400)
+    demo_notification_recipient: str | None = None
+    notification_delivery_mode: Literal["dry_run", "mailpit", "demo_recipient"] = "dry_run"
+    mailpit_inbox_email: str = "mailpit@minori.local"
     internal_api_token: SecretStr | None = None
     reviewer_api_token: SecretStr | None = None
 
@@ -93,7 +96,11 @@ class Settings(BaseSettings):
         return value
 
     @field_validator(
-        "nine_router_base_url", "nine_router_api_key", "nine_router_model", mode="before"
+        "nine_router_base_url",
+        "nine_router_api_key",
+        "nine_router_model",
+        "demo_notification_recipient",
+        mode="before",
     )
     @classmethod
     def normalize_optional_values(cls, value: object) -> object:

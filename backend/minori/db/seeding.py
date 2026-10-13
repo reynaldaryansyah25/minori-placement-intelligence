@@ -201,12 +201,21 @@ def seed_database(database: Database, fixture_directory: Path | None = None) -> 
     }
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    import sys
+
+    args = sys.argv[1:] if argv is None else argv
+    fixture_dir = None
+    if "--demo" in args or (len(args) > 0 and args[0] == "demo"):
+        fixture_dir = PROJECT_ROOT / "data/demo"
+    elif len(args) > 0 and not args[0].startswith("--"):
+        fixture_dir = Path(args[0])
+
     settings = get_settings()
     if settings.app_env == "production":
         raise SystemExit("Synthetic fixtures are restricted to development and test environments")
     database = Database(settings)
     try:
-        print(json.dumps(seed_database(database), indent=2))
+        print(json.dumps(seed_database(database, fixture_directory=fixture_dir), indent=2))
     finally:
         database.dispose()

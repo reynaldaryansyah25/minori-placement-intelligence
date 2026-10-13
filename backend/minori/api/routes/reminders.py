@@ -16,6 +16,7 @@ from minori.schemas.reminders import (
     ClaimRequest,
     CompletionRequest,
     FailureRequest,
+    RecipientRoutingRead,
     RecoveryRead,
 )
 from minori.services.reminders import ReminderService
@@ -61,6 +62,15 @@ def detail(notification_id: UUID, service: Service):
 )
 def attempts(notification_id: UUID, service: Service, limit: Limit = 100, offset: Offset = 0):
     return invoke(service.attempts, notification_id, limit=limit, offset=offset)
+
+
+@router.get(
+    "/{notification_id}/routing",
+    response_model=RecipientRoutingRead,
+    dependencies=read_auth,
+)
+def recipient_routing(notification_id: UUID, service: Service):
+    return invoke(service.recipient_routing, notification_id)
 
 
 @internal_router.post("/generate", response_model=list[NotificationRead])

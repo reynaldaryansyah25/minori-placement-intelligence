@@ -15,42 +15,47 @@ DANGER = "#B91C1C"
 # --- Status Colors & Badges ---
 STATUS_COLORS: dict[str, dict[str, str]] = {
     # Eligibility
-    "ELIGIBLE": {"bg": "#DCFCE7", "text": "#15803D", "border": "#86EFAC", "label": "Eligible"},
+    "ELIGIBLE": {
+        "bg": "#DCFCE7",
+        "text": "#15803D",
+        "border": "#86EFAC",
+        "label": "Memenuhi Persyaratan",
+    },
     "NEEDS_REVIEW": {
         "bg": "#FEF3C7",
         "text": "#B45309",
         "border": "#FDE68A",
-        "label": "Perlu Review",
+        "label": "Perlu Verifikasi",
     },
     "NOT_ELIGIBLE": {
         "bg": "#FEE2E2",
         "text": "#B91C1C",
         "border": "#FCA5A5",
-        "label": "Tidak Eligible",
+        "label": "Belum Memenuhi Persyaratan",
     },
     # Vacancy
-    "open": {"bg": "#CCFBF1", "text": "#0F766E", "border": "#99F6E4", "label": "Aktif (Open)"},
+    "open": {"bg": "#CCFBF1", "text": "#0F766E", "border": "#99F6E4", "label": "Aktif"},
     "paused": {
         "bg": "#FEF3C7",
         "text": "#B45309",
         "border": "#FDE68A",
-        "label": "Ditunda (Paused)",
+        "label": "Ditunda",
     },
-    "closed": {"bg": "#F1F5F9", "text": "#64748B", "border": "#CBD5E1", "label": "Tutup (Closed)"},
+    "closed": {"bg": "#F1F5F9", "text": "#64748B", "border": "#CBD5E1", "label": "Ditutup"},
     # Candidate
     "registered": {"bg": "#F1F5F9", "text": "#475569", "border": "#CBD5E1", "label": "Terdaftar"},
     "preparing": {
         "bg": "#FEF3C7",
         "text": "#B45309",
         "border": "#FDE68A",
-        "label": "Pelatihan/Persiapan",
+        "label": "Persiapan",
     },
     "ready": {"bg": "#DCFCE7", "text": "#15803D", "border": "#86EFAC", "label": "Siap Ditempatkan"},
     "inactive": {
         "bg": "#F1F5F9",
         "text": "#94A3B8",
         "border": "#CBD5E1",
-        "label": "Nonaktif/Arsip",
+        "label": "Nonaktif",
     },
     # Match Staff Decision
     "proposed": {"bg": "#E0F2FE", "text": "#0369A1", "border": "#BAE6FD", "label": "Diusulkan"},
@@ -72,21 +77,26 @@ STATUS_COLORS: dict[str, dict[str, str]] = {
         "bg": "#DCFCE7",
         "text": "#15803D",
         "border": "#86EFAC",
-        "label": "Selesai/Berangkat",
+        "label": "Selesai",
     },
     "cancelled": {"bg": "#FEE2E2", "text": "#991B1B", "border": "#FCA5A5", "label": "Dibatalkan"},
     # Placement Step
-    "pending": {"bg": "#F1F5F9", "text": "#64748B", "border": "#CBD5E1", "label": "Menunggu"},
+    "pending": {
+        "bg": "#F1F5F9",
+        "text": "#64748B",
+        "border": "#CBD5E1",
+        "label": "Menunggu Pengiriman",
+    },
     "scheduled": {"bg": "#E0F2FE", "text": "#0284C7", "border": "#BAE6FD", "label": "Dijadwalkan"},
     # Reminder Notification
     "simulated": {
         "bg": "#EDE9FE",
         "text": "#6D28D9",
         "border": "#DDD6FE",
-        "label": "Simulasi Dry-Run",
+        "label": "Simulasi Berhasil",
     },
     "sent": {"bg": "#DCFCE7", "text": "#15803D", "border": "#86EFAC", "label": "Terkirim"},
-    "failed": {"bg": "#FEE2E2", "text": "#B91C1C", "border": "#FCA5A5", "label": "Gagal"},
+    "failed": {"bg": "#FEE2E2", "text": "#B91C1C", "border": "#FCA5A5", "label": "Gagal Kirim"},
     "missed": {"bg": "#FEF3C7", "text": "#B45309", "border": "#FDE68A", "label": "Terlewat"},
     "draft": {"bg": "#F1F5F9", "text": "#475569", "border": "#CBD5E1", "label": "Draf"},
     "published": {"bg": "#DCFCE7", "text": "#15803D", "border": "#86EFAC", "label": "Terbit"},

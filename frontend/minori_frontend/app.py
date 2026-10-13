@@ -4,11 +4,8 @@ import streamlit as st
 
 from minori_frontend.api_client import BackendClient
 from minori_frontend.auth import (
-    apply_custom_token,
-    get_current_role,
     get_profile,
     init_auth_state,
-    switch_demo_role,
 )
 from minori_frontend.components.layout import apply_theme
 from minori_frontend.components.navigation import get_navigation_pages
@@ -51,70 +48,41 @@ def main() -> None:
     # Multipage Router
     nav = st.navigation(get_navigation_pages())
 
-    # Sidebar Footer: Session, Role Switching & System Health
+    # Sidebar Footer: Verified Staff Profile & Operational Status
     with st.sidebar:
-        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-        st.markdown(
-            "<div style='font-size: 11px; text-transform: uppercase; color: #94A3B8; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 6px;'>Sesi & Peran Akses</div>",
-            unsafe_allow_html=True,
-        )
-
-        current_role = get_current_role()
-        role_choices = ["admin", "reviewer"]
-        role_labels = {
-            "admin": "HR Staff (Admin/Tulis)",
-            "reviewer": "Reviewer (Read-Only)",
-        }
-
-        selected_role = st.selectbox(
-            "Pilih Peran Demo",
-            options=role_choices,
-            index=role_choices.index(current_role),
-            format_func=lambda r: role_labels[r],
-            label_visibility="collapsed",
-            key="sidebar_role_select",
-        )
-
-        if selected_role != current_role:
-            switch_demo_role(selected_role, settings)
-            st.rerun()
-
+        st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
         profile = get_profile()
         st.markdown(
             f"""
-            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 8px 10px; margin-top: 6px; font-size: 11px;">
-                <div style="font-weight: 600; color: #13263F;">{profile.display_name}</div>
-                <div style="color: #64748B; margin-top: 2px;">{profile.description}</div>
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px; font-size: 12px;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="font-weight: 700; color: #13263F;">{profile.display_name}</div>
+                    <span style="font-size: 10px; font-weight: 600; color: #0F766E; background: #CCFBF1; padding: 2px 6px; border-radius: 4px;">Aktif</span>
+                </div>
+                <div style="color: #64748B; margin-top: 3px; font-size: 11px;">{profile.description}</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        with st.expander("🔑 Masukkan Token Kustom", expanded=False):
-            custom_tok = st.text_input("Bearer Token", type="password", key="custom_token_input")
-            if st.button("Verifikasi & Terapkan", use_container_width=True):
-                if apply_custom_token(custom_tok, client):
-                    st.success("Token berhasil diverifikasi!")
-                    st.rerun()
-                else:
-                    err = st.session_state.get("auth_error", "Token tidak valid")
-                    st.error(err)
-
-        # System Health Badge
+        # Operational System Badge
         try:
-            health = client.get_health()
-            health_color = "#15803D"
-            health_label = f"Connected (v{health.get('version', '0.1.0')})"
+            client.get_health()
+            system_online = True
         except Exception:
-            health_color = "#B91C1C"
-            health_label = "Backend Offline"
+            system_online = False
+
+        status_text = "Sistem Operasional Aktif" if system_online else "Menghubungkan ke Server..."
+        status_color = "#15803D" if system_online else "#B91C1C"
 
         st.markdown(
             f"""
             <div style="border-top: 1px solid #E2E8F0; margin-top: 14px; padding-top: 10px; font-size: 11px; color: #64748B;">
-                <div>Koneksi: <span style="color: {health_color}; font-weight: 600;">● {health_label}</span></div>
-                <div>Database: SQLite WAL (Persisten)</div>
-                <div>Zona Waktu: Asia/Jakarta (WIB)</div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="color: {status_color}; font-size: 10px;">●</span>
+                    <span style="font-weight: 500; color: #334155;">{status_text}</span>
+                </div>
+                <div style="margin-top: 4px; color: #94A3B8;">Waktu Operasional: WIB (UTC+7)</div>
             </div>
             """,
             unsafe_allow_html=True,

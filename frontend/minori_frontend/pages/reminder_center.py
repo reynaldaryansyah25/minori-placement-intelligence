@@ -47,50 +47,50 @@ def render_reminder_page() -> None:
     m1, m2, m3, m4, m5, m6 = st.columns(6)
     with m1:
         render_metric_card(
-            "Pending",
+            "Menunggu Kirim",
             counts.get("pending", 0),
             subtext="Siap dikirim",
-            badge="Queue",
+            badge="Antrean",
             badge_type="info",
         )
     with m2:
         render_metric_card(
-            "Simulated",
+            "Simulasi Sukses",
             counts.get("simulated", 0),
-            subtext="Dry-run selesai",
-            badge="Dry-Run",
+            subtext="Uji coba selesai",
+            badge="Simulasi",
             badge_type="neutral",
         )
     with m3:
         render_metric_card(
-            "Sent",
+            "Terkirim",
             counts.get("sent", 0),
-            subtext="Terkirim nyata",
-            badge="Delivered",
+            subtext="Terkirim sukses",
+            badge="Terkirim",
             badge_type="success",
         )
     with m4:
         render_metric_card(
-            "Processing",
+            "Sedang Diproses",
             counts.get("processing", 0),
-            subtext="Lease aktif worker",
-            badge="Claimed",
+            subtext="Dalam pengiriman",
+            badge="Proses",
             badge_type="warning",
         )
     with m5:
         render_metric_card(
-            "Failed",
+            "Gagal Kirim",
             counts.get("failed", 0),
-            subtext="Gagal/perlu retry",
-            badge="Error",
+            subtext="Perlu pemeriksaan",
+            badge="Gagal",
             badge_type="danger",
         )
     with m6:
         render_metric_card(
-            "Missed",
+            "Terlewat",
             counts.get("missed", 0),
-            subtext="Jadwal terlewat",
-            badge="Expired",
+            subtext="Jadwal terlewati",
+            badge="Kedaluwarsa",
             badge_type="warning",
         )
 
@@ -102,45 +102,45 @@ def render_reminder_page() -> None:
         col_c1, col_c2, col_c3 = st.columns(3)
         with col_c1:
             if st.button(
-                "🔄 Sinkronisasi Aktivitas (Generate)",
+                "🔄 Sinkronisasi Aktivitas",
                 use_container_width=True,
-                help="Menghasilkan pengingat otomatis untuk aktivitas yang baru dijadwalkan",
+                help="Menghasilkan pengingat otomatis untuk jadwal penempatan yang aktif",
             ):
                 try:
                     generated = client.generate_reminders()
-                    show_success(f"{len(generated)} pengingat berhasil disinkronkan!")
+                    show_success(f"{len(generated)} jadwal pengingat berhasil disinkronkan!")
                     st.rerun()
                 except Exception as exc:
                     show_api_error(exc)
         with col_c2:
             if st.button(
-                "🛡️ Pulihkan Lease (Recover)",
+                "🛡️ Rapikan Antrean Tertunda",
                 use_container_width=True,
-                help="Memulihkan antrean yang terhenti akibat worker timeout",
+                help="Memulihkan jadwal antrean yang terhenti",
             ):
                 try:
                     res = client.recover_reminders()
                     show_success(
-                        f"Pemulihan antrean selesai: {res.get('recovered_count', 0)} dipulihkan."
+                        f"Pemeriksaan antrean selesai: {res.get('recovered_count', 0)} item dirapikan."
                     )
                     st.rerun()
                 except Exception as exc:
                     show_api_error(exc)
         with col_c3:
             if st.button(
-                "🧪 Jalankan Simulasi Dry-Run",
+                "🧪 Uji Simulasi Pengiriman",
                 type="primary",
                 use_container_width=True,
-                help="Memproses antrean pending dalam mode simulasi aman",
+                help="Menguji pengiriman notifikasi terdekat secara aman",
             ):
                 try:
                     sim = client.simulate_reminder()
                     if sim:
                         show_success(
-                            f"Simulasi berhasil diproses untuk notifikasi #{sim.get('reference')}!"
+                            f"Simulasi pengiriman berhasil untuk notifikasi #{sim.get('reference')}!"
                         )
                     else:
-                        st.info("Tidak ada pengingat pending yang due untuk disimulasikan.")
+                        st.info("Tidak ada pengingat yang perlu disimulasikan saat ini.")
                     st.rerun()
                 except Exception as exc:
                     show_api_error(exc)
@@ -192,12 +192,16 @@ def render_reminder_page() -> None:
             "<hr style='margin: 14px 0; border: none; border-top: 1px solid #E2E8F0;'>",
             unsafe_allow_html=True,
         )
-        # Fetch attempt history
+        # Fetch attempt history and routing
         try:
             attempts = client.get_reminder_attempts(selected_rem["id"])
         except Exception:
             attempts = []
-        render_reminder_details(selected_rem, attempts)
+        try:
+            routing = client.get_recipient_routing(selected_rem["id"])
+        except Exception:
+            routing = None
+        render_reminder_details(selected_rem, attempts, routing=routing)
 
 
 if __name__ == "__main__":

@@ -110,8 +110,8 @@ def render_pipeline_page() -> None:
                     </div>
                 </div>
                 <div>
-                    <span style="font-size: 12px; font-weight: 600; color: #13263F;">
-                        Status: {selected_p.get("status").upper()}
+                    <span style="font-size: 12px; font-weight: 600; color: #13263F; background: #E0E7FF; padding: 4px 8px; border-radius: 4px;">
+                        Status: {format_status_label(selected_p.get("status"))}
                     </span>
                 </div>
             </div>
@@ -149,9 +149,16 @@ def render_pipeline_page() -> None:
                 if can_mutate and act.get("status") != "completed":
                     col_m1, col_m2 = st.columns([1, 1])
                     with col_m1:
-                        if st.button(
-                            f"Tandai Selesai (#{act.get('code')})", key=f"comp_{act['id']}"
-                        ):
+                        st_name = (
+                            "Pemeriksaan Kesehatan"
+                            if act.get("step_type") == "medical_check"
+                            else (
+                                "Wawancara Kerja"
+                                if act.get("step_type") == "interview"
+                                else "Tahapan"
+                            )
+                        )
+                        if st.button(f"✓ Tandai Selesai ({st_name})", key=f"comp_{act['id']}"):
                             try:
                                 client.update_activity(
                                     pid,

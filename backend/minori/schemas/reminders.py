@@ -19,10 +19,19 @@ class MessageRead(InputSchema):
     body: str
 
 
+class RecipientRoutingRead(InputSchema):
+    intended_recipient: str
+    effective_recipient: str | None = None
+    routing_mode: Literal["dry_run", "mailpit", "demo_recipient"]
+    delivery_allowed: bool
+    safety_notice: str
+
+
 class ClaimRead(InputSchema):
     notification: NotificationRead
     claim_token: str
     message: MessageRead
+    recipient_routing: RecipientRoutingRead | None = None
 
 
 class CompletionRequest(InputSchema):

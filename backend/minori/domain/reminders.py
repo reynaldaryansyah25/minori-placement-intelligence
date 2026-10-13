@@ -34,6 +34,37 @@ class ReminderPolicy:
     max_attempts: int = 3
     retry_base_seconds: int = 60
     retry_max_seconds: int = 3600
+    demo_notification_recipient: str | None = None
+    notification_delivery_mode: str = "dry_run"
+    mailpit_inbox_email: str = "mailpit@minori.local"
+
+    def resolve_recipient(self, candidate_reference: str) -> dict[str, object]:
+        clean_ref = candidate_reference.lower().replace("_", "-").strip()
+        intended = f"kandidat-{clean_ref}@demo.minori.internal"
+
+        if self.demo_notification_recipient:
+            effective = self.demo_notification_recipient
+            mode = "demo_recipient"
+            allowed = True
+        elif self.notification_delivery_mode == "mailpit":
+            effective = self.mailpit_inbox_email
+            mode = "mailpit"
+            allowed = True
+        else:
+            effective = None
+            mode = "dry_run"
+            allowed = False
+
+        return {
+            "intended_recipient": intended,
+            "effective_recipient": effective,
+            "routing_mode": mode,
+            "delivery_allowed": allowed,
+            "safety_notice": (
+                "Mode demo: email fiktif kandidat dialihkan secara aman ke inbox pengujian lokal "
+                "atau dry-run dan tidak dikirim ke pihak luar."
+            ),
+        }
 
     def __post_init__(self):
         ZoneInfo(self.timezone)

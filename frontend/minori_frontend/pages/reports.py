@@ -55,99 +55,122 @@ def render_reports_page() -> None:
         c1, c2 = st.columns(2)
 
         with c1:
-            st.markdown(
-                """
-                <div class="minori-card">
-                    <h4 style="margin:0 0 10px 0; font-size:14px; color:#13263F;">Status Kandidat Terdaftar</h4>
-                """,
-                unsafe_allow_html=True,
-            )
-            cand_status_counts: dict[str, int] = {}
-            for cand in candidates:
-                st_code = cand.get("status", "registered")
-                cand_status_counts[st_code] = cand_status_counts.get(st_code, 0) + 1
-
-            if cand_status_counts:
-                st.bar_chart(
-                    data={
-                        "Status": [format_status_label(k) for k in cand_status_counts.keys()],
-                        "Jumlah": list(cand_status_counts.values()),
-                    },
-                    x="Status",
-                    y="Jumlah",
-                    color="#0F766E",
-                    height=220,
+            with st.container(border=True):
+                st.markdown(
+                    "<h4 style='margin:0 0 10px 0; font-size:14px; color:#13263F; font-weight:700;'>Status Kandidat Terdaftar</h4>",
+                    unsafe_allow_html=True,
                 )
-            st.markdown("</div>", unsafe_allow_html=True)
+                cand_status_counts: dict[str, int] = {}
+                for cand in candidates:
+                    st_code = cand.get("status", "registered")
+                    cand_status_counts[st_code] = cand_status_counts.get(st_code, 0) + 1
+
+                if cand_status_counts:
+                    st.bar_chart(
+                        data={
+                            "Status": [format_status_label(k) for k in cand_status_counts.keys()],
+                            "Jumlah": list(cand_status_counts.values()),
+                        },
+                        x="Jumlah",
+                        y="Status",
+                        horizontal=True,
+                        color="#0F766E",
+                        height=200,
+                    )
 
         with c2:
-            st.markdown(
-                """
-                <div class="minori-card">
-                    <h4 style="margin:0 0 10px 0; font-size:14px; color:#13263F;">Distribusi Lowongan per Sektor Industri</h4>
-                """,
-                unsafe_allow_html=True,
-            )
-            vac_sector_counts: dict[str, int] = {}
-            for vac in vacancies:
-                sec = vac.get("sector", "General")
-                vac_sector_counts[sec] = vac_sector_counts.get(sec, 0) + 1
-
-            if vac_sector_counts:
-                st.bar_chart(
-                    data={
-                        "Sektor": list(vac_sector_counts.keys()),
-                        "Lowongan": list(vac_sector_counts.values()),
-                    },
-                    x="Sektor",
-                    y="Lowongan",
-                    color="#13263F",
-                    height=220,
+            with st.container(border=True):
+                st.markdown(
+                    "<h4 style='margin:0 0 10px 0; font-size:14px; color:#13263F; font-weight:700;'>Distribusi Lowongan per Sektor Industri</h4>",
+                    unsafe_allow_html=True,
                 )
-            st.markdown("</div>", unsafe_allow_html=True)
+                sector_map = {
+                    "agriculture": "Pertanian",
+                    "food_service": "Pengolahan Makanan",
+                    "caregiving": "Kaigo / Perawat",
+                    "manufacturing": "Manufaktur / Pengelasan",
+                    "engineering": "Teknik Mesin CAD",
+                    "accommodation": "Perhotelan & Resor",
+                }
+                vac_sector_counts: dict[str, int] = {}
+                for vac in vacancies:
+                    sec = vac.get("sector", "General")
+                    label = sector_map.get(sec, sec.replace("_", " ").title())
+                    vac_sector_counts[label] = vac_sector_counts.get(label, 0) + 1
+
+                if vac_sector_counts:
+                    st.bar_chart(
+                        data={
+                            "Sektor": list(vac_sector_counts.keys()),
+                            "Lowongan": list(vac_sector_counts.values()),
+                        },
+                        x="Lowongan",
+                        y="Sektor",
+                        horizontal=True,
+                        color="#13263F",
+                        height=200,
+                    )
 
         st.markdown("##### 2. Distribusi Kelayakan Matching & Status Pengingat")
         c3, c4 = st.columns(2)
 
         with c3:
-            st.markdown(
-                """
-                <div class="minori-card">
-                    <h4 style="margin:0 0 10px 0; font-size:14px; color:#13263F;">Kelayakan Matching Pasangan</h4>
-                """,
-                unsafe_allow_html=True,
-            )
-            el_data = {
-                "Hasil Evaluasi": ["Eligible", "Needs Review", "Not Eligible"],
-                "Jumlah": [
-                    summary.get("eligible_matches", 0),
-                    summary.get("needs_review_matches", 0),
-                    summary.get("not_eligible_matches", 0),
-                ],
-            }
-            st.bar_chart(data=el_data, x="Hasil Evaluasi", y="Jumlah", color="#0F766E", height=200)
-            st.markdown("</div>", unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown(
+                    "<h4 style='margin:0 0 10px 0; font-size:14px; color:#13263F; font-weight:700;'>Kelayakan Matching Pasangan</h4>",
+                    unsafe_allow_html=True,
+                )
+                el_data = {
+                    "Hasil Evaluasi": [
+                        "Memenuhi Persyaratan",
+                        "Perlu Verifikasi",
+                        "Belum Memenuhi",
+                    ],
+                    "Jumlah": [
+                        summary.get("eligible_matches", 0),
+                        summary.get("needs_review_matches", 0),
+                        summary.get("not_eligible_matches", 0),
+                    ],
+                }
+                st.bar_chart(
+                    data=el_data,
+                    x="Jumlah",
+                    y="Hasil Evaluasi",
+                    horizontal=True,
+                    color="#0F766E",
+                    height=190,
+                )
 
         with c4:
-            st.markdown(
-                """
-                <div class="minori-card">
-                    <h4 style="margin:0 0 10px 0; font-size:14px; color:#13263F;">Pengiriman Pengingat (Reminder Delivery)</h4>
-                """,
-                unsafe_allow_html=True,
-            )
-            rem_data = {
-                "Status": ["Pending", "Simulated", "Sent", "Failed", "Missed"],
-                "Jumlah": [
-                    summary.get("pending_reminders", 0),
-                    summary.get("simulated_reminders", 0),
-                    summary.get("sent_reminders", 0),
-                    summary.get("failed_reminders", 0),
-                    summary.get("missed_reminders", 0),
-                ],
-            }
-            st.bar_chart(data=rem_data, x="Status", y="Jumlah", color="#B7791F", height=200)
-            st.markdown("</div>", unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown(
+                    "<h4 style='margin:0 0 10px 0; font-size:14px; color:#13263F; font-weight:700;'>Pengiriman Pengingat</h4>",
+                    unsafe_allow_html=True,
+                )
+                rem_data = {
+                    "Status": [
+                        "Menunggu Pengiriman",
+                        "Simulasi Berhasil",
+                        "Terkirim",
+                        "Gagal Kirim",
+                        "Terlewat",
+                    ],
+                    "Jumlah": [
+                        summary.get("pending_reminders", 0),
+                        summary.get("simulated_reminders", 0),
+                        summary.get("sent_reminders", 0),
+                        summary.get("failed_reminders", 0),
+                        summary.get("missed_reminders", 0),
+                    ],
+                }
+                st.bar_chart(
+                    data=rem_data,
+                    x="Jumlah",
+                    y="Status",
+                    horizontal=True,
+                    color="#B7791F",
+                    height=190,
+                )
 
     with tab_unmet:
         st.markdown("##### Kandidat Memerlukan Verifikasi Staf")

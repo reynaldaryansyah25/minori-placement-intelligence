@@ -147,7 +147,7 @@ def render_matching_page() -> None:
                     "Referensi": r.get("candidate_reference"),
                     "Program": format_program(cand_obj.get("preferred_program")),
                     "Kualifikasi Bahasa": lang_str,
-                    "Kelayakan": "ELIGIBLE",
+                    "Kelayakan": format_status_label(r.get("eligibility_status") or "ELIGIBLE"),
                     "Total Match Score": format_score(r.get("total_score")),
                     "Keputusan Staf": format_status_label(r.get("staff_status")),
                 }
@@ -168,7 +168,7 @@ def render_matching_page() -> None:
         cid = ev.get("candidate_id")
         cand_obj = all_candidates.get(cid, {})
         cname = cand_obj.get("full_name", ev.get("candidate_reference", "Kandidat"))
-        status_label = ev.get("eligibility_status")
+        status_label = format_status_label(ev.get("eligibility_status"))
         pair_options[cid] = f"{cname} ({ev.get('candidate_reference')}) — [{status_label}]"
 
     if not pair_options:

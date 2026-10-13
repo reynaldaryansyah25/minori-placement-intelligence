@@ -80,10 +80,10 @@
       "step_type": "interview",
       "sequence_number": 1,
       "status": "completed",
-      "scheduled_at": "2026-11-05T09:00:00+07:00",
-      "due_at": "2026-11-05T10:00:00+07:00",
-      "completed_at": "2026-11-05T09:45:00+07:00",
-      "location": "Ruang Wawancara Contoh"
+      "scheduled_at": "2026-10-05T09:00:00+07:00",
+      "due_at": "2026-10-05T10:00:00+07:00",
+      "completed_at": "2026-10-05T09:45:00+07:00",
+      "location": "Ruang Wawancara Minori Jakarta"
     },
     {
       "placement_reference": "DEMO-PLC-AGRI",
@@ -94,7 +94,7 @@
       "scheduled_at": "2026-11-06T09:00:00+07:00",
       "due_at": "2026-11-06T10:00:00+07:00",
       "completed_at": null,
-      "location": "Klinik Administrasi Contoh"
+      "location": "Klinik Medika Utama Rawamangun"
     },
     {
       "placement_reference": "DEMO-PLC-FOOD",
@@ -105,7 +105,7 @@
       "scheduled_at": "2026-11-07T09:00:00+07:00",
       "due_at": "2026-11-07T10:00:00+07:00",
       "completed_at": null,
-      "location": "Ruang Wawancara Contoh"
+      "location": "Ruang Wawancara Minori Jakarta"
     },
     {
       "placement_reference": "DEMO-PLC-FOOD",
@@ -116,7 +116,7 @@
       "scheduled_at": "2026-11-08T09:00:00+07:00",
       "due_at": "2026-11-08T10:00:00+07:00",
       "completed_at": null,
-      "location": "Klinik Administrasi Contoh"
+      "location": "Klinik Medika Utama Rawamangun"
     },
     {
       "placement_reference": "DEMO-PLC-CARE",
@@ -127,7 +127,7 @@
       "scheduled_at": "2026-11-09T09:00:00+07:00",
       "due_at": "2026-11-09T10:00:00+07:00",
       "completed_at": null,
-      "location": "Ruang Wawancara Contoh"
+      "location": "Ruang Wawancara Minori Jakarta"
     },
     {
       "placement_reference": "DEMO-PLC-CARE",
@@ -138,7 +138,7 @@
       "scheduled_at": "2026-11-10T09:00:00+07:00",
       "due_at": "2026-11-10T10:00:00+07:00",
       "completed_at": null,
-      "location": "Klinik Administrasi Contoh"
+      "location": "Klinik Medika Utama Rawamangun"
     },
     {
       "placement_reference": "DEMO-PLC-WELD",
@@ -149,7 +149,7 @@
       "scheduled_at": "2026-11-11T09:00:00+07:00",
       "due_at": "2026-11-11T10:00:00+07:00",
       "completed_at": null,
-      "location": "Ruang Wawancara Contoh"
+      "location": "Ruang Wawancara Minori Jakarta"
     },
     {
       "placement_reference": "DEMO-PLC-WELD",
@@ -160,7 +160,7 @@
       "scheduled_at": "2026-11-12T09:00:00+07:00",
       "due_at": "2026-11-12T10:00:00+07:00",
       "completed_at": null,
-      "location": "Klinik Administrasi Contoh"
+      "location": "Klinik Medika Utama Rawamangun"
     }
   ],
   "drafts": [
@@ -170,8 +170,8 @@
       "source_reference": "fixture.agri",
       "proposed_data": {
         "reference": "DEMO-VAC-AGRI",
-        "title": "Operator Pertanian Contoh",
-        "employer_name": "Perusahaan Jepang Contoh AGRI",
+        "title": "Operator Pertanian Modern",
+        "employer_name": "Hokkaido Agri Bio Corporation",
         "program": "ssw",
         "sector": "agriculture",
         "prefecture": "Hokkaido",
@@ -206,8 +206,8 @@
       "source_reference": "fixture.food",
       "proposed_data": {
         "reference": "DEMO-VAC-FOOD",
-        "title": "Staf Dapur Contoh",
-        "employer_name": "Perusahaan Jepang Contoh FOOD",
+        "title": "Staf Pengolahan Makanan & Dapur",
+        "employer_name": "Kansai Food Industries Ltd.",
         "program": "ssw",
         "sector": "food_service",
         "prefecture": "Osaka",
@@ -244,8 +244,8 @@
       "candidate_reference": "DEMO-CAND-FOOD",
       "placement_reference": "DEMO-PLC-FOOD",
       "step_code": "employer_interview",
-      "template_code": "interview_schedule",
-      "scheduled_at": "2026-11-06T08:00:00+07:00",
+      "template_code": "interview_h3",
+      "scheduled_at": "2026-11-04T08:00:00+07:00",
       "channel": "internal",
       "status": "pending"
     },
@@ -255,11 +255,11 @@
       "candidate_reference": "DEMO-CAND-AGRI",
       "placement_reference": "DEMO-PLC-AGRI",
       "step_code": "employer_interview",
-      "template_code": "interview_schedule",
-      "scheduled_at": "2026-11-04T08:00:00+07:00",
+      "template_code": "interview_h3",
+      "scheduled_at": "2026-10-02T08:00:00+07:00",
       "channel": "internal",
       "status": "sent",
-      "sent_at": "2026-11-04T08:01:00+07:00"
+      "sent_at": "2026-10-02T08:01:00+07:00"
     }
   ],
   "attempts": [
@@ -267,8 +267,8 @@
       "notification_reference": "DEMO-NOTIFY-AGRI",
       "attempt_number": 1,
       "status": "failed",
-      "attempted_at": "2026-11-04T08:00:00+07:00",
-      "finished_at": "2026-11-04T08:00:10+07:00",
+      "attempted_at": "2026-10-02T08:00:00+07:00",
+      "finished_at": "2026-10-02T08:00:10+07:00",
       "error_code": "SIMULATED_UNAVAILABLE",
       "provider_reference": null
     },
@@ -276,8 +276,8 @@
       "notification_reference": "DEMO-NOTIFY-AGRI",
       "attempt_number": 2,
       "status": "succeeded",
-      "attempted_at": "2026-11-04T08:00:50+07:00",
-      "finished_at": "2026-11-04T08:01:00+07:00",
+      "attempted_at": "2026-10-02T08:00:50+07:00",
+      "finished_at": "2026-10-02T08:01:00+07:00",
       "error_code": null,
       "provider_reference": "synthetic-delivery"
     }

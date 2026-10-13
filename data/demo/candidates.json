@@ -1,0 +1,714 @@
+{
+  "synthetic": true,
+  "description": "Kandidat dan kualifikasi sintetis profesional untuk demonstrasi operasional Minori Group.",
+  "candidates": [
+    {
+      "reference": "DEMO-CAND-AGRI",
+      "full_name": "Ayu Lestari",
+      "preferred_program": "ssw",
+      "education_level": "SMK Pertanian",
+      "domicile_city": "Semarang",
+      "status": "ready",
+      "skills": ["crop_care", "farm_safety"],
+      "preferred_prefectures": ["Hokkaido", "Nagano"],
+      "language_tests": [
+        {
+          "test_type": "jft_basic",
+          "level": "A2.2",
+          "taken_on": "2026-09-15",
+          "score": 218
+        }
+      ],
+      "certifications": [
+        {
+          "code": "agriculture_skill",
+          "name": "Sertifikasi Keterampilan Pertanian Jepang",
+          "issuer": "Japan Agricultural Assessment Center",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "PT Agro Nusantara Hijau",
+          "sector": "agriculture",
+          "role": "Operator Kebun",
+          "started_on": "2023-01-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-FOOD",
+      "full_name": "Bagus Pratama",
+      "preferred_program": "ssw",
+      "education_level": "SMK Tata Boga",
+      "domicile_city": "Bandung",
+      "status": "ready",
+      "skills": ["food_preparation", "hygiene"],
+      "preferred_prefectures": ["Osaka", "Kyoto"],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N4",
+          "taken_on": "2026-07-05",
+          "score": 122
+        }
+      ],
+      "certifications": [
+        {
+          "code": "food_service_skill",
+          "name": "Sertifikasi Pengolahan Makanan & Sanitasi Dapur",
+          "issuer": "Japan Food Service Association",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "PT Pangan Boga Utama",
+          "sector": "food_service",
+          "role": "Asisten Dapur",
+          "started_on": "2024-01-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-CARE",
+      "full_name": "Citra Dewi Utami",
+      "preferred_program": "ssw",
+      "education_level": "D3 Keperawatan",
+      "domicile_city": "Surabaya",
+      "status": "preparing",
+      "skills": ["caregiving_support", "workplace_communication"],
+      "preferred_prefectures": ["Saitama", "Tokyo"],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N3",
+          "taken_on": "2026-07-05",
+          "score": 140
+        },
+        {
+          "test_type": "jft_basic",
+          "level": "A2.2",
+          "taken_on": "2026-09-15",
+          "score": 224
+        }
+      ],
+      "certifications": [
+        {
+          "code": "caregiving_skill",
+          "name": "Sertifikasi Keperawatan Kaigo",
+          "issuer": "Japan Care Worker Assessment Center",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        },
+        {
+          "code": "caregiving_japanese",
+          "name": "Bahasa Jepang Keperawatan Teknis",
+          "issuer": "Japan Nursing Association",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "PT Citra Medika Sejahtera",
+          "sector": "caregiving",
+          "role": "Asisten Perawatan",
+          "started_on": "2022-08-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-WELD",
+      "full_name": "Damar Setiawan",
+      "preferred_program": "titp",
+      "education_level": "SMK Teknik Las",
+      "domicile_city": "Solo",
+      "status": "preparing",
+      "skills": ["welding_basics", "workshop_safety"],
+      "preferred_prefectures": ["Aichi", "Mie"],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N5",
+          "taken_on": "2026-07-05",
+          "score": 104
+        }
+      ],
+      "certifications": [
+        {
+          "code": "basic_welding",
+          "name": "Sertifikasi Pengelasan SMAW/GMAW",
+          "issuer": "Japan Welding Engineering Society",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "PT Fabrikasi Baja Presisi",
+          "sector": "manufacturing",
+          "role": "Asisten Bengkel",
+          "started_on": "2025-01-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-ENG",
+      "full_name": "Eka Kurniawan",
+      "preferred_program": "engineer",
+      "education_level": "S1 Teknik Mesin",
+      "domicile_city": "Yogyakarta",
+      "status": "ready",
+      "skills": ["cad_design", "cnc_operation"],
+      "preferred_prefectures": ["Shizuoka", "Kanagawa"],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N2",
+          "taken_on": "2026-07-05",
+          "score": 131
+        }
+      ],
+      "certifications": [
+        {
+          "code": "cad_operator",
+          "name": "Sertifikasi Desain CAD & Permesinan",
+          "issuer": "Japan Mechanical Design Association",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "PT Rekayasa Mesin Presisi",
+          "sector": "engineering",
+          "role": "Teknisi Desain",
+          "started_on": "2022-06-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-HOTEL",
+      "full_name": "Fitri Handayani",
+      "preferred_program": "ssw",
+      "education_level": "SMK Perhotelan",
+      "domicile_city": "Denpasar",
+      "status": "ready",
+      "skills": ["guest_service", "housekeeping"],
+      "preferred_prefectures": ["Okinawa", "Tokyo"],
+      "language_tests": [
+        {
+          "test_type": "jft_basic",
+          "level": "A2.2",
+          "taken_on": "2026-09-15",
+          "score": 206
+        }
+      ],
+      "certifications": [
+        {
+          "code": "accommodation_skill",
+          "name": "Sertifikasi Pelayanan Akomodasi Perhotelan",
+          "issuer": "Japan Hotel & Hospitality Center",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "PT Grand Nusa Hospitality",
+          "sector": "accommodation",
+          "role": "Petugas Hotel",
+          "started_on": "2024-02-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-TRAINEE",
+      "full_name": "Gilang Ramadhan",
+      "preferred_program": "titp",
+      "education_level": "SMA",
+      "domicile_city": "Malang",
+      "status": "registered",
+      "skills": ["workshop_safety"],
+      "preferred_prefectures": [],
+      "language_tests": [
+        {
+          "test_type": "jft_basic",
+          "level": "A1",
+          "taken_on": "2026-09-15",
+          "score": 161
+        }
+      ],
+      "certifications": [],
+      "experiences": []
+    },
+    {
+      "reference": "DEMO-CAND-INACTIVE",
+      "full_name": "Hana Anindya",
+      "preferred_program": "ssw",
+      "education_level": "SMK Tata Boga",
+      "domicile_city": "Medan",
+      "status": "inactive",
+      "skills": ["food_preparation"],
+      "preferred_prefectures": [],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N4",
+          "taken_on": "2026-07-05",
+          "score": 117
+        }
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "employer_name": "PT Industri Pangan Sejahtera",
+          "sector": "food_manufacturing",
+          "role": "Asisten Produksi",
+          "started_on": "2021-01-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-WELD-01",
+      "full_name": "Rizky Hidayat",
+      "preferred_program": "titp",
+      "education_level": "SMK Teknik Pengelasan",
+      "domicile_city": "Cirebon",
+      "status": "ready",
+      "skills": ["welding_basics", "workshop_safety", "gmaw_welding"],
+      "preferred_prefectures": ["Aichi", "Gifu"],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N4",
+          "taken_on": "2026-07-05",
+          "score": 128
+        }
+      ],
+      "certifications": [
+        {
+          "code": "basic_welding",
+          "name": "Sertifikasi Kualifikasi Pengelasan Standar JIS",
+          "issuer": "Japan Welding Engineering Society",
+          "issued_on": "2026-05-10",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "PT Manufaktur Baja Cirebon",
+          "sector": "manufacturing",
+          "role": "Juru Las Konstruksi",
+          "started_on": "2024-03-01",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-WELD-02",
+      "full_name": "Budi Santoso",
+      "preferred_program": "titp",
+      "education_level": "SMK Mesin Perkakas",
+      "domicile_city": "Tegal",
+      "status": "ready",
+      "skills": ["welding_basics", "workshop_safety"],
+      "preferred_prefectures": ["Aichi"],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N5",
+          "taken_on": "2026-07-05",
+          "score": 115
+        }
+      ],
+      "certifications": [
+        {
+          "code": "basic_welding",
+          "name": "Sertifikasi Juru Las Busur Listrik",
+          "issuer": "Balai Latihan Kerja Industri",
+          "issued_on": "2026-06-15",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "CV Tegal Logam Presisi",
+          "sector": "manufacturing",
+          "role": "Operator Pengelasan",
+          "started_on": "2025-02-01",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-WELD-03",
+      "full_name": "Fajar Nugroho",
+      "preferred_program": "titp",
+      "education_level": "SMK Teknik Mesin",
+      "domicile_city": "Klaten",
+      "status": "ready",
+      "skills": ["welding_basics", "workshop_safety"],
+      "preferred_prefectures": ["Aichi", "Mie"],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N5",
+          "taken_on": "2026-07-05",
+          "score": 102
+        }
+      ],
+      "certifications": [
+        {
+          "code": "basic_welding",
+          "name": "Sertifikasi Pengelasan Dasar",
+          "issuer": "Lembaga Sertifikasi Profesi Logam",
+          "issued_on": "2026-07-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "Bengkel Rekayasa Klaten",
+          "sector": "manufacturing",
+          "role": "Magang Pengelasan",
+          "started_on": "2025-09-01",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-AGRI-02",
+      "full_name": "Joko Prasetyo",
+      "preferred_program": "ssw",
+      "education_level": "SMK Pertanian",
+      "domicile_city": "Batu",
+      "status": "ready",
+      "skills": ["crop_care", "farm_safety", "tractor_operation"],
+      "preferred_prefectures": ["Hokkaido", "Ibaraki"],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N4",
+          "taken_on": "2026-07-05",
+          "score": 125
+        }
+      ],
+      "certifications": [
+        {
+          "code": "agriculture_skill",
+          "name": "Sertifikasi Keterampilan Budidaya Hortikultura",
+          "issuer": "Japan Agricultural Assessment Center",
+          "issued_on": "2026-05-20",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "PT Agro Tani Mandiri Batu",
+          "sector": "agriculture",
+          "role": "Teknisi Rumah Kaca",
+          "started_on": "2024-01-15",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-FOOD-02",
+      "full_name": "Dewi Anggraini",
+      "preferred_program": "ssw",
+      "education_level": "SMK Tata Boga",
+      "domicile_city": "Bogor",
+      "status": "ready",
+      "skills": ["food_preparation", "hygiene", "haccp_standard"],
+      "preferred_prefectures": ["Osaka", "Fukuoka"],
+      "language_tests": [
+        {
+          "test_type": "jft_basic",
+          "level": "A2.2",
+          "taken_on": "2026-09-15",
+          "score": 210
+        }
+      ],
+      "certifications": [
+        {
+          "code": "food_service_skill",
+          "name": "Sertifikasi Penanganan & Keamanan Pangan",
+          "issuer": "Japan Food Service Association",
+          "issued_on": "2026-06-10",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "PT Boga Boga Prima Sentosa",
+          "sector": "food_service",
+          "role": "Cook Helper & Sanitasi",
+          "started_on": "2024-06-01",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-CARE-02",
+      "full_name": "Ratna Sari",
+      "preferred_program": "ssw",
+      "education_level": "D3 Keperawatan",
+      "domicile_city": "Magelang",
+      "status": "ready",
+      "skills": ["caregiving_support", "workplace_communication", "vital_signs_check"],
+      "preferred_prefectures": ["Saitama", "Tokyo", "Kanagawa"],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N3",
+          "taken_on": "2026-07-05",
+          "score": 145
+        }
+      ],
+      "certifications": [
+        {
+          "code": "caregiving_skill",
+          "name": "Sertifikasi Keterampilan Kaigo Resmi",
+          "issuer": "Japan Care Worker Assessment Center",
+          "issued_on": "2026-05-15",
+          "expires_on": null
+        },
+        {
+          "code": "caregiving_japanese",
+          "name": "Bahasa Jepang Keperawatan Teknis",
+          "issuer": "Japan Nursing Association",
+          "issued_on": "2026-05-15",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "Klinik Pratama Sehat Magelang",
+          "sector": "caregiving",
+          "role": "Perawat Lansia Terpadu",
+          "started_on": "2023-01-01",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-CNC",
+      "full_name": "Aditya Pratama",
+      "preferred_program": "ssw",
+      "education_level": "SMK Teknik Pemesinan",
+      "domicile_city": "Bekasi",
+      "status": "ready",
+      "skills": ["cnc_operation", "lathe_operation", "machining_basics"],
+      "preferred_prefectures": ["Shizuoka", "Aichi"],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N4",
+          "taken_on": "2026-07-05",
+          "score": 120
+        }
+      ],
+      "certifications": [
+        {
+          "code": "machining_skill",
+          "name": "Sertifikasi Pemesinan & Bubut Logam Presisi",
+          "issuer": "Japan Machine Tools Association",
+          "issued_on": "2026-06-05",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "PT Presisi Komponen Cikarang",
+          "sector": "manufacturing",
+          "role": "Operator CNC Milling",
+          "started_on": "2024-04-01",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-ELEC",
+      "full_name": "Hendra Gunawan",
+      "preferred_program": "titp",
+      "education_level": "SMK Teknik Elektro",
+      "domicile_city": "Tangerang",
+      "status": "preparing",
+      "skills": ["electrical_assembly", "soldering_basics", "circuit_testing"],
+      "preferred_prefectures": ["Kanagawa", "Tokyo"],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N5",
+          "taken_on": "2026-07-05",
+          "score": 108
+        }
+      ],
+      "certifications": [
+        {
+          "code": "electronics_assembly",
+          "name": "Sertifikasi Perakitan Perangkat Elektronika",
+          "issuer": "Lembaga Sertifikasi Elektronika Industri",
+          "issued_on": "2026-07-10",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "PT Elektronika Maju Nusantara",
+          "sector": "manufacturing",
+          "role": "Teknisi Perakitan Panel",
+          "started_on": "2025-01-15",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-HOTEL-02",
+      "full_name": "Maya Kusuma",
+      "preferred_program": "ssw",
+      "education_level": "D3 Manajemen Perhotelan",
+      "domicile_city": "Mataram",
+      "status": "ready",
+      "skills": ["guest_service", "front_office", "housekeeping"],
+      "preferred_prefectures": ["Okinawa", "Kyoto"],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N3",
+          "taken_on": "2026-07-05",
+          "score": 136
+        }
+      ],
+      "certifications": [
+        {
+          "code": "accommodation_skill",
+          "name": "Sertifikasi Operasional Resor & Perhotelan",
+          "issuer": "Japan Hotel & Hospitality Center",
+          "issued_on": "2026-06-20",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "Lombok Beach Resort & Spa",
+          "sector": "accommodation",
+          "role": "Guest Relations & Receptionist",
+          "started_on": "2023-09-01",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-AUTO",
+      "full_name": "Wahyu Firmansyah",
+      "preferred_program": "titp",
+      "education_level": "SMK Otomotif",
+      "domicile_city": "Karawang",
+      "status": "preparing",
+      "skills": ["auto_maintenance", "engine_tuneup", "tools_safety"],
+      "preferred_prefectures": ["Aichi", "Gunma"],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N5",
+          "taken_on": "2026-07-05",
+          "score": 105
+        }
+      ],
+      "certifications": [
+        {
+          "code": "auto_maintenance",
+          "name": "Sertifikasi Pemeliharaan Kendaraan Ringan",
+          "issuer": "Badan Nasional Sertifikasi Profesi Otomotif",
+          "issued_on": "2026-06-25",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "Bengkel Mitra Otomotif Karawang",
+          "sector": "manufacturing",
+          "role": "Mekanik Muda",
+          "started_on": "2025-03-01",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-BUILD",
+      "full_name": "Teguh Wibowo",
+      "preferred_program": "ssw",
+      "education_level": "SMK Bangunan Gedung",
+      "domicile_city": "Purwokerto",
+      "status": "registered",
+      "skills": ["construction_safety", "scaffolding_basics"],
+      "preferred_prefectures": ["Tokyo", "Chiba"],
+      "language_tests": [
+        {
+          "test_type": "jft_basic",
+          "level": "A2.1",
+          "taken_on": "2026-09-15",
+          "score": 182
+        }
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "employer_name": "PT Konstruksi Nusa Purwokerto",
+          "sector": "construction",
+          "role": "Pembantu Tukang Bangunan",
+          "started_on": "2024-08-01",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-PACK",
+      "full_name": "Sri Wahyuni",
+      "preferred_program": "titp",
+      "education_level": "SMA",
+      "domicile_city": "Kediri",
+      "status": "ready",
+      "skills": ["factory_packing", "sanitation", "sorting_quality"],
+      "preferred_prefectures": ["Fukuoka", "Hiroshima"],
+      "language_tests": [
+        {
+          "test_type": "jft_basic",
+          "level": "A2.2",
+          "taken_on": "2026-09-15",
+          "score": 204
+        }
+      ],
+      "certifications": [
+        {
+          "code": "packaging_skill",
+          "name": "Sertifikasi Pengemasan Produk Industri",
+          "issuer": "Balai Pelatihan Kerja Kediri",
+          "issued_on": "2026-07-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "PT Kemas Makmur Kediri",
+          "sector": "manufacturing",
+          "role": "Petugas Pengemasan Lini",
+          "started_on": "2024-11-01",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    }
+  ]
+}

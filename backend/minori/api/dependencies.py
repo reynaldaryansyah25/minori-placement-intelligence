@@ -57,6 +57,9 @@ def reminder_policy(settings: Settings) -> ReminderPolicy:
         max_attempts=settings.notification_max_attempts,
         retry_base_seconds=settings.notification_retry_base_seconds,
         retry_max_seconds=settings.notification_retry_max_seconds,
+        demo_notification_recipient=settings.demo_notification_recipient,
+        notification_delivery_mode=settings.notification_delivery_mode,
+        mailpit_inbox_email=settings.mailpit_inbox_email,
     )
 
 

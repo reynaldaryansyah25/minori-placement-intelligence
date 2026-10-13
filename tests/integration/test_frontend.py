@@ -73,11 +73,11 @@ def test_frontend_renders_app_and_sidebar(monkeypatch):
     monkeypatch.setattr(BackendClient, "get_health", lambda self: HEALTH)
     app = AppTest.from_file(str(ROOT / "frontend/minori_frontend/app.py"), default_timeout=15).run()
     assert not app.exception
-    # Check sidebar contains MINORI Group branding and Connected status
+    # Check sidebar contains MINORI Group branding and operational status
     sidebar_text = "".join(m.value for m in app.sidebar.markdown)
     assert "MINORI Group" in sidebar_text
-    assert "Connected" in sidebar_text
-    assert "Asia/Jakarta (WIB)" in sidebar_text
+    assert "Sistem Operasional Aktif" in sidebar_text
+    assert "WIB (UTC+7)" in sidebar_text
 
 
 def test_frontend_reports_connection_failure_gracefully(monkeypatch):
@@ -88,7 +88,7 @@ def test_frontend_reports_connection_failure_gracefully(monkeypatch):
     app = AppTest.from_file(str(ROOT / "frontend/minori_frontend/app.py"), default_timeout=15).run()
     assert not app.exception
     sidebar_text = "".join(m.value for m in app.sidebar.markdown)
-    assert "Backend Offline" in sidebar_text
+    assert "Menghubungkan ke Server..." in sidebar_text
 
 
 @pytest.mark.parametrize(

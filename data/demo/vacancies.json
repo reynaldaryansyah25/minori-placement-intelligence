@@ -1,0 +1,223 @@
+{
+  "synthetic": true,
+  "description": "Persyaratan pemberi kerja fiktif profesional untuk demonstrasi operasional Minori Group.",
+  "vacancies": [
+    {
+      "reference": "DEMO-VAC-AGRI",
+      "title": "Operator Pertanian Modern",
+      "employer_name": "Hokkaido Agri Bio Corporation",
+      "program": "ssw",
+      "sector": "agriculture",
+      "prefecture": "Hokkaido",
+      "quota": 6,
+      "minimum_experience_months": 12,
+      "required_skills": [
+        "crop_care",
+        "farm_safety"
+      ],
+      "required_certifications": [
+        "agriculture_skill"
+      ],
+      "language_requirements": [
+        {
+          "test_type": "jlpt",
+          "minimum_level": "N4"
+        },
+        {
+          "test_type": "jft_basic",
+          "minimum_level": "A2.2"
+        }
+      ],
+      "status": "open",
+      "application_deadline": "2026-12-20T23:59:00+09:00"
+    },
+    {
+      "reference": "DEMO-VAC-FOOD",
+      "title": "Staf Pengolahan Makanan & Dapur",
+      "employer_name": "Kansai Food Industries Ltd.",
+      "program": "ssw",
+      "sector": "food_service",
+      "prefecture": "Osaka",
+      "quota": 4,
+      "minimum_experience_months": 12,
+      "required_skills": [
+        "food_preparation",
+        "hygiene"
+      ],
+      "required_certifications": [
+        "food_service_skill"
+      ],
+      "language_requirements": [
+        {
+          "test_type": "jlpt",
+          "minimum_level": "N4"
+        },
+        {
+          "test_type": "jft_basic",
+          "minimum_level": "A2.2"
+        }
+      ],
+      "status": "open",
+      "application_deadline": "2026-12-20T23:59:00+09:00"
+    },
+    {
+      "reference": "DEMO-VAC-CARE",
+      "title": "Staf Kaigo / Perawat Lansia",
+      "employer_name": "Tokyo Care Support Inc.",
+      "program": "ssw",
+      "sector": "caregiving",
+      "prefecture": "Saitama",
+      "quota": 3,
+      "minimum_experience_months": 24,
+      "required_skills": [
+        "caregiving_support"
+      ],
+      "required_certifications": [
+        "caregiving_skill",
+        "caregiving_japanese"
+      ],
+      "language_requirements": [
+        {
+          "test_type": "jlpt",
+          "minimum_level": "N3"
+        },
+        {
+          "test_type": "jft_basic",
+          "minimum_level": "A2.2"
+        }
+      ],
+      "status": "open",
+      "application_deadline": "2026-12-20T23:59:00+09:00"
+    },
+    {
+      "reference": "DEMO-VAC-WELD",
+      "title": "Teknisi Pengelasan & Fabrikasi Logam",
+      "employer_name": "Aichi Precision Metal Works",
+      "program": "titp",
+      "sector": "manufacturing",
+      "prefecture": "Aichi",
+      "quota": 5,
+      "minimum_experience_months": 0,
+      "required_skills": [
+        "welding_basics"
+      ],
+      "required_certifications": [
+        "basic_welding"
+      ],
+      "language_requirements": [
+        {
+          "test_type": "jlpt",
+          "minimum_level": "N5"
+        }
+      ],
+      "status": "open",
+      "application_deadline": "2026-12-20T23:59:00+09:00"
+    },
+    {
+      "reference": "DEMO-VAC-ENG",
+      "title": "Mechanical CAD Design Engineer",
+      "employer_name": "Shinano Precision Engineering Corp.",
+      "program": "engineer",
+      "sector": "engineering",
+      "prefecture": "Shizuoka",
+      "quota": 2,
+      "minimum_experience_months": 24,
+      "required_skills": [
+        "cad_design",
+        "cnc_operation"
+      ],
+      "required_certifications": [
+        "cad_operator"
+      ],
+      "language_requirements": [
+        {
+          "test_type": "jlpt",
+          "minimum_level": "N2"
+        }
+      ],
+      "status": "paused",
+      "application_deadline": "2026-12-20T23:59:00+09:00"
+    },
+    {
+      "reference": "DEMO-VAC-HOTEL",
+      "title": "Staf Layanan Tamu & Perhotelan Resor",
+      "employer_name": "Okinawa Seaside Resort & Spa",
+      "program": "ssw",
+      "sector": "accommodation",
+      "prefecture": "Okinawa",
+      "quota": 4,
+      "minimum_experience_months": 12,
+      "required_skills": [
+        "guest_service"
+      ],
+      "required_certifications": [
+        "accommodation_skill"
+      ],
+      "language_requirements": [
+        {
+          "test_type": "jlpt",
+          "minimum_level": "N4"
+        },
+        {
+          "test_type": "jft_basic",
+          "minimum_level": "A2.2"
+        }
+      ],
+      "status": "open",
+      "application_deadline": "2026-12-25T23:59:00+09:00"
+    },
+    {
+      "reference": "DEMO-VAC-CNC",
+      "title": "Operator Mesin Bubut & CNC Presisi",
+      "employer_name": "Hamamatsu Seiki Precision Machinery",
+      "program": "ssw",
+      "sector": "manufacturing",
+      "prefecture": "Shizuoka",
+      "quota": 3,
+      "minimum_experience_months": 12,
+      "required_skills": [
+        "cnc_operation",
+        "machining_basics"
+      ],
+      "required_certifications": [
+        "machining_skill"
+      ],
+      "language_requirements": [
+        {
+          "test_type": "jlpt",
+          "minimum_level": "N4"
+        }
+      ],
+      "status": "open",
+      "application_deadline": "2026-12-30T23:59:00+09:00"
+    },
+    {
+      "reference": "DEMO-VAC-FROZEN",
+      "title": "Operator Pengolahan & Pengemasan Pangan",
+      "employer_name": "Fukuoka Chilled Logistics Co., Ltd.",
+      "program": "ssw",
+      "sector": "food_service",
+      "prefecture": "Fukuoka",
+      "quota": 5,
+      "minimum_experience_months": 6,
+      "required_skills": [
+        "food_preparation"
+      ],
+      "required_certifications": [
+        "food_service_skill"
+      ],
+      "language_requirements": [
+        {
+          "test_type": "jlpt",
+          "minimum_level": "N4"
+        },
+        {
+          "test_type": "jft_basic",
+          "minimum_level": "A2.2"
+        }
+      ],
+      "status": "open",
+      "application_deadline": "2026-12-31T23:59:00+09:00"
+    }
+  ]
+}

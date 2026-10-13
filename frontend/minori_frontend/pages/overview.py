@@ -8,6 +8,25 @@ from minori_frontend.components.metric_card import render_metric_card
 from minori_frontend.components.page_header import render_page_header
 from minori_frontend.config import FrontendSettings
 from minori_frontend.utils.dates import format_datetime_id
+from minori_frontend.utils.formatting import format_status_label
+
+ACTION_LABELS = {
+    "fixture.created": "Pembuatan Catatan Data",
+    "reminder.claimed": "Pengambilan Antrean Pengingat",
+    "reminder.simulated": "Simulasi Pengiriman Selesai",
+    "reminder.sent": "Pengiriman Notifikasi Berhasil",
+    "reminder.rescheduled": "Penjadwalan Ulang Pengingat",
+    "stage.completed": "Tahapan Selesai",
+    "match.decided": "Keputusan Staf Disimpan",
+    "evaluation.recomputed": "Evaluasi Matching Diperbarui",
+}
+
+ACTOR_LABELS = {
+    "fixture.seed": "Sistem Minori",
+    "reminder.worker": "Layanan Pengingat",
+    "staff.admin": "Staf HR Minori",
+    "reviewer": "Peninjau",
+}
 
 
 def render_overview_page() -> None:
@@ -23,7 +42,7 @@ def render_overview_page() -> None:
 
     render_page_header(
         title="Command Center Operasional",
-        description="Ringkasan waktu nyata penempatan tenaga kerja ke Jepang, matching, dan antrean pengingat.",
+        description="Ringkasan waktu nyata penempatan tenaga kerja ke Jepang, status matching, dan antrean pengingat.",
         breadcrumb="MINORI Operations / Overview",
         backend_status=backend_status,
         demo_mode=settings.demo_mode,
@@ -42,7 +61,7 @@ def render_overview_page() -> None:
             label="Total Kandidat",
             value=summary.get("total_candidates", 0),
             subtext=f"{summary.get('ready_candidates', 0)} siap berangkat",
-            badge="Pool Aktif",
+            badge="Kandidat",
             badge_type="info",
         )
     with c2:
@@ -50,150 +69,151 @@ def render_overview_page() -> None:
             label="Lowongan Aktif",
             value=summary.get("active_vacancies", 0),
             subtext="Menerima kandidat",
-            badge="Open",
+            badge="Lowongan",
             badge_type="success",
         )
     with c3:
         render_metric_card(
-            label="Placement Aktif",
+            label="Penempatan Aktif",
             value=summary.get("active_placements", 0),
-            subtext="Dalam proses pipeline",
-            badge="Pipeline",
+            subtext="Dalam proses alur",
+            badge="Penempatan",
             badge_type="info",
         )
     with c4:
         render_metric_card(
-            label="Matches Eligible",
+            label="Memenuhi Syarat",
             value=summary.get("eligible_matches", 0),
-            subtext="Lolos verifikasi kuota",
+            subtext="Lolos evaluasi kualifikasi",
             badge="Lolos",
             badge_type="success",
         )
     with c5:
         render_metric_card(
-            label="Needs Review",
+            label="Perlu Verifikasi",
             value=summary.get("needs_review_matches", 0),
-            subtext="Memerlukan aksi staf",
-            badge="Perhatian",
+            subtext="Menunggu telaah staf",
+            badge="Verifikasi",
             badge_type="warning",
         )
     with c6:
         render_metric_card(
-            label="Pengingat Pending",
+            label="Antrean Pengingat",
             value=summary.get("pending_reminders", 0),
-            subtext=f"{summary.get('simulated_reminders', 0)} dry-run",
-            badge="Antrean",
+            subtext=f"{summary.get('simulated_reminders', 0)} simulasi sukses",
+            badge="Pengingat",
             badge_type="neutral",
         )
 
-    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
 
     # --- Action Center & Upcoming Activities ---
     col_act, col_dist = st.columns([1, 1])
 
     with col_act:
-        st.markdown(
-            """
-            <div class="minori-card">
-                <div class="minori-card-header">
-                    <h3 class="minori-card-title">⚡ Action Center & Jadwal Terdekat</h3>
-                </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        upcoming = summary.get("upcoming_activities", [])
-        if not upcoming:
-            st.caption("Tidak ada wawancara atau pemeriksaan medis terjadwal dalam waktu dekat.")
-        else:
-            for item in upcoming[:5]:
-                step_title = item.get("step_type", "Aktivitas").replace("_", " ").title()
-                sched = format_datetime_id(item.get("scheduled_at"))
-                venue = item.get("location") or "Lokasi belum ditentukan"
-                st.markdown(
-                    f"""
-                    <div style="border-left: 3px solid #0F766E; padding-left: 10px; margin-bottom: 10px;">
-                        <div style="font-weight: 600; color: #13263F; font-size: 13px;">{item.get("code")} — {step_title}</div>
-                        <div style="font-size: 12px; color: #64748B;">📅 {sched} | 📍 {venue}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
+        with st.container(border=True):
+            st.markdown(
+                "<h3 style='margin:0 0 12px 0; font-size:15px; color:#13263F; font-weight:700;'>⚡ Agenda & Jadwal Terdekat</h3>",
+                unsafe_allow_html=True,
+            )
+            upcoming = summary.get("upcoming_activities", [])
+            if not upcoming:
+                st.caption(
+                    "Tidak ada wawancara atau pemeriksaan kesehatan terjadwal dalam waktu dekat."
                 )
-
-        st.markdown("</div>", unsafe_allow_html=True)
+            else:
+                for item in upcoming[:5]:
+                    step_type = item.get("step_type", "Aktivitas")
+                    step_title = (
+                        "Pemeriksaan Kesehatan"
+                        if step_type == "medical_check"
+                        else (
+                            "Wawancara Kerja"
+                            if step_type == "interview"
+                            else step_type.replace("_", " ").title()
+                        )
+                    )
+                    sched = format_datetime_id(item.get("scheduled_at"))
+                    venue = item.get("location") or "Lokasi belum ditentukan"
+                    st.markdown(
+                        f"""
+                        <div style="border-left: 3px solid #0F766E; padding-left: 10px; margin-bottom: 10px;">
+                            <div style="font-weight: 600; color: #13263F; font-size: 13px;">{step_title}</div>
+                            <div style="font-size: 12px; color: #64748B;">📅 {sched} | 📍 {venue}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
     with col_dist:
-        st.markdown(
-            """
-            <div class="minori-card">
-                <div class="minori-card-header">
-                    <h3 class="minori-card-title">📊 Distribusi Kelayakan Matching (Eligibility)</h3>
-                </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        el_data = {
-            "Status": ["Eligible", "Needs Review", "Not Eligible"],
-            "Jumlah": [
-                summary.get("eligible_matches", 0),
-                summary.get("needs_review_matches", 0),
-                summary.get("not_eligible_matches", 0),
-            ],
-        }
-        st.bar_chart(data=el_data, x="Status", y="Jumlah", color="#0F766E", height=200)
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(
+                "<h3 style='margin:0 0 12px 0; font-size:15px; color:#13263F; font-weight:700;'>📊 Distribusi Kelayakan Matching</h3>",
+                unsafe_allow_html=True,
+            )
+            el_data = {
+                "Status": ["Memenuhi Persyaratan", "Perlu Verifikasi", "Belum Memenuhi"],
+                "Jumlah": [
+                    summary.get("eligible_matches", 0),
+                    summary.get("needs_review_matches", 0),
+                    summary.get("not_eligible_matches", 0),
+                ],
+            }
+            st.bar_chart(
+                data=el_data, x="Jumlah", y="Status", horizontal=True, color="#0F766E", height=190
+            )
 
     # --- Pipeline & Audit Log Overview ---
     col_pl, col_log = st.columns([1, 1])
 
     with col_pl:
-        st.markdown(
-            """
-            <div class="minori-card">
-                <div class="minori-card-header">
-                    <h3 class="minori-card-title">📌 Status Penempatan (Placement Pipeline)</h3>
-                </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        pl_data = summary.get("placements_by_status", {})
-        if pl_data:
-            chart_df = {
-                "Status": [k.replace("_", " ").title() for k in pl_data.keys()],
-                "Jumlah": list(pl_data.values()),
-            }
-            st.bar_chart(data=chart_df, x="Status", y="Jumlah", color="#13263F", height=200)
-        else:
-            st.caption("Belum ada data status penempatan aktif.")
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(
+                "<h3 style='margin:0 0 12px 0; font-size:15px; color:#13263F; font-weight:700;'>📌 Tahapan Alur Penempatan</h3>",
+                unsafe_allow_html=True,
+            )
+            pl_data = summary.get("placements_by_status", {})
+            if pl_data:
+                chart_df = {
+                    "Status": [format_status_label(k) for k in pl_data.keys()],
+                    "Jumlah": list(pl_data.values()),
+                }
+                st.bar_chart(
+                    data=chart_df,
+                    x="Jumlah",
+                    y="Status",
+                    horizontal=True,
+                    color="#13263F",
+                    height=190,
+                )
+            else:
+                st.caption("Belum ada data status penempatan aktif.")
 
     with col_log:
-        st.markdown(
-            """
-            <div class="minori-card">
-                <div class="minori-card-header">
-                    <h3 class="minori-card-title">📝 Aktivitas Audit Terakhir (Audit Log)</h3>
-                </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        audits = summary.get("recent_audits", [])
-        if not audits:
-            st.caption("Belum ada log audit tercatat.")
-        else:
-            for a in audits[:5]:
-                dt = format_datetime_id(a.get("occurred_at"))
-                st.markdown(
-                    f"""
-                    <div style="font-size: 12px; color: #334155; padding: 4px 0; border-bottom: 1px solid #F1F5F9;">
-                        <b>{a.get("actor_reference")}</b>: {a.get("action")} pada <i>{a.get("entity_type")}</i>
-                        <span style="color: #64748B; float: right;">{dt}</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(
+                "<h3 style='margin:0 0 12px 0; font-size:15px; color:#13263F; font-weight:700;'>📝 Catatan Aktivitas Terkini</h3>",
+                unsafe_allow_html=True,
+            )
+            audits = summary.get("recent_audits", [])
+            if not audits:
+                st.caption("Belum ada riwayat aktivitas tercatat.")
+            else:
+                for a in audits[:5]:
+                    dt = format_datetime_id(a.get("occurred_at"))
+                    raw_actor = a.get("actor_reference", "staf")
+                    actor_clean = ACTOR_LABELS.get(raw_actor, "Staf Operasional")
+                    raw_act = a.get("action", "")
+                    action_clean = ACTION_LABELS.get(raw_act, raw_act.replace("_", " ").title())
+                    st.markdown(
+                        f"""
+                        <div style="font-size: 12px; color: #334155; padding: 6px 0; border-bottom: 1px solid #F1F5F9;">
+                            <b>{actor_clean}</b>: {action_clean}
+                            <span style="color: #64748B; float: right;">{dt}</span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
 
 if __name__ == "__main__":

@@ -4,8 +4,8 @@
   "vacancies": [
     {
       "reference": "DEMO-VAC-AGRI",
-      "title": "Operator Pertanian Contoh",
-      "employer_name": "Perusahaan Jepang Contoh AGRI",
+      "title": "Operator Pertanian Modern",
+      "employer_name": "Hokkaido Agri Bio Corporation",
       "program": "ssw",
       "sector": "agriculture",
       "prefecture": "Hokkaido",
@@ -33,8 +33,8 @@
     },
     {
       "reference": "DEMO-VAC-FOOD",
-      "title": "Staf Dapur Contoh",
-      "employer_name": "Perusahaan Jepang Contoh FOOD",
+      "title": "Staf Pengolahan Makanan & Dapur",
+      "employer_name": "Kansai Food Industries Ltd.",
       "program": "ssw",
       "sector": "food_service",
       "prefecture": "Osaka",
@@ -62,8 +62,8 @@
     },
     {
       "reference": "DEMO-VAC-CARE",
-      "title": "Asisten Perawatan Contoh",
-      "employer_name": "Perusahaan Jepang Contoh CARE",
+      "title": "Staf Kaigo / Perawat Lansia",
+      "employer_name": "Tokyo Care Support Inc.",
       "program": "ssw",
       "sector": "caregiving",
       "prefecture": "Saitama",
@@ -91,8 +91,8 @@
     },
     {
       "reference": "DEMO-VAC-WELD",
-      "title": "Peserta Pelatihan Las Contoh",
-      "employer_name": "Perusahaan Jepang Contoh WELD",
+      "title": "Teknisi Pengelasan & Fabrikasi Logam",
+      "employer_name": "Aichi Precision Metal Works",
       "program": "titp",
       "sector": "manufacturing",
       "prefecture": "Aichi",
@@ -115,8 +115,8 @@
     },
     {
       "reference": "DEMO-VAC-ENG",
-      "title": "Teknisi Desain Mesin Contoh",
-      "employer_name": "Perusahaan Jepang Contoh ENG",
+      "title": "Mechanical CAD Design Engineer",
+      "employer_name": "Shinano Precision Engineering Corp.",
       "program": "engineer",
       "sector": "engineering",
       "prefecture": "Shizuoka",
