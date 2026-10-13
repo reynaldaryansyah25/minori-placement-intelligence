@@ -1,14 +1,19 @@
 # MINORI Placement Intelligence
 
-Fondasi sistem AI untuk penempatan tenaga kerja ke Jepang dengan arsitektur
-**Modular Monolith dan prinsip Clean Architecture**. Repository bernama
-`minori-placement-intelligence`. Fondasi menyediakan kesehatan layanan, konfigurasi,
-persistensi, migrasi, adapter 9Router, konsol Streamlit, dan workflow n8n manual.
-Database bisnis, schemas, repository, migrasi, dan seed idempotent tersedia.
-Explainable matching deterministik tersedia melalui domain engine, service, dan API.
-Kelayakan mesin dipisahkan dari keputusan staf dan history evaluasi dipertahankan.
-Placement Management dan Reminder Backend tersedia dengan approval manusia,
-validasi kuota, antrean claim/lease/retry, dan dry-run sebagai default.
+Aplikasi operasional rekrutmen dan penempatan tenaga kerja ke Jepang dengan arsitektur
+**Modular Monolith dan prinsip Clean Architecture**, dilengkapi antarmuka frontend
+**Japanese Minimalist Enterprise** berbasis Python 3.12 dan Streamlit.
+
+Sistem menyediakan operasional penempatan menyeluruh:
+- **Operational Command Center (Overview):** Metrik KPI real-time, action center, dan log audit.
+- **Candidates Directory:** Profil kandidat, skor JLPT/JFT-Basic, sertifikasi kompetensi, dan riwayat kerja.
+- **Vacancies Explorer:** Manajemen lowongan kerja Jepang, spesifikasi bahasa alternatif, dan kuota.
+- **Candidate Matching (Showcase):** Peringkat deterministik, explainability engine, rincian bobot skor (35% Bahasa, 30% Pengalaman, 20% Sertifikasi, 15% Preferensi), dan persetujuan staf.
+- **Placement Pipeline:** Stepper tahapan seleksi (Interview ➔ Medical ➔ Dokumen ➔ Orientasi ➔ Terbang) dan penjadwalan sadar zona waktu WIB.
+- **Reminder Center:** Monitoring pengingat, dry-run simulation, pemulihan sewa (*lease*), dan penelusuran riwayat percobaan.
+- **AI Vacancy Intelligence:** Masukan teks lowongan bahasa Jepang, formulir draf terstruktur, dan alur publikasi manusiawi (integrasi AI ekstraksi otomatis siap menunggu penyelesaian endpoint 9Router).
+- **Reports & Analytics:** Distribusi kategori, ringkasan kendala kualifikasi, dan ekspor CSV resmi RFC 4180.
+- **Role-Based Access Control (RBAC):** Pemisahan tegas peran HR Staff (Admin/Tulis) dan Reviewer (Read-Only) di frontend dan backend.
 
 ## Struktur repository
 
@@ -175,7 +180,8 @@ Log, JUnit XML, coverage XML/HTML, dan JSON hasil eksekusi disimpan di
 `test-results/` dan diabaikan oleh Git. Tes 9Router lokal tidak memverifikasi
 instance atau kredensial LLM pengguna.
 
-Panduan lebih lanjut: [arsitektur](docs/architecture.md),
+Panduan lebih lanjut: [panduan frontend](docs/frontend.md),
+[arsitektur](docs/architecture.md),
 [struktur database dan ERD](docs/database.md),
 [algoritma matching](docs/matching.md), [kontrak API](docs/api.md),
 [placement dan reminder](docs/placements_reminders.md),

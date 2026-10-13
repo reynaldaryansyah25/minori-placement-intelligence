@@ -137,3 +137,30 @@ Sesuaikan tanggal menjadi masa depan. Medical menggunakan step_type medical_chec
 tanpa field hasil/diagnosis. Documents memakai scheduled_at untuk awal pengumpulan
 dan due_at sebagai deadline. Lihat [placement/reminder](placements_reminders.md)
 untuk aturan kalender, retry, idempotensi, dan batas pengiriman eksternal.
+
+## Endpoint Pendukung Frontend & RBAC
+
+Seluruh endpoint dilindungi oleh otorisasi berbasis Bearer Token:
+- **Admin/Staff Token (`INTERNAL_API_TOKEN`):** Akses penuh membaca dan melakukan mutasi data (POST, PUT, PATCH, DELETE).
+- **Reviewer Token (`REVIEWER_API_TOKEN`):** Akses baca saja (GET). Setiap percobaan mutasi mengembalikan `403 Forbidden`.
+- **Tanpa token / Token salah:** Menghasilkan `401 Unauthorized`.
+
+| Method | Endpoint | Izin | Deskripsi |
+| --- | --- | --- | --- |
+| `GET` | `/auth/me` | Read/Staff | Memeriksa sesi token, peran (`admin` / `reviewer`), dan kemampuan menulis |
+| `GET` | `/overview/summary` | Read/Staff | Agregasi KPI real-time (kandidat, lowongan, matches, placements, reminders) |
+| `GET` | `/candidates` | Read/Staff | Daftar kandidat dengan pencarian ILIKE, filter program, dan status |
+| `GET` | `/candidates/{id}` | Read/Staff | Detail lengkap profil kualifikasi, bahasa, sertifikasi, dan pengalaman |
+| `POST` | `/candidates` | Staff | Membuat kandidat baru |
+| `PUT` | `/candidates/{id}` | Staff | Memperbarui aggregate profil kandidat |
+| `DELETE` | `/candidates/{id}` | Staff | Mengarsipkan kandidat (mengubah status menjadi `inactive`) |
+| `GET` | `/vacancies` | Read/Staff | Daftar lowongan aktif dengan pencarian sektor/jabatan dan filter program |
+| `GET` | `/vacancies/{id}` | Read/Staff | Spesifikasi kebutuhan kerja dan syarat bahasa alternatif |
+| `POST` | `/vacancies` | Staff | Membuat lowongan kerja baru secara langsung |
+| `PUT` | `/vacancies/{id}` | Staff | Memperbarui data dan kuota lowongan |
+| `DELETE` | `/vacancies/{id}` | Staff | Menutup lowongan (mengubah status menjadi `closed`) |
+| `GET` | `/vacancies/drafts` | Read/Staff | Daftar draf lowongan kerja (draf AI maupun manual) |
+| `GET` | `/vacancies/drafts/{id}` | Read/Staff | Detail draf lowongan dan usulan data terstruktur |
+| `POST` | `/vacancies/drafts` | Staff | Menyimpan draf lowongan baru dengan status `draft` |
+| `PUT` | `/vacancies/drafts/{id}` | Staff | Memperbarui draf lowongan sebelum persetujuan |
+| `POST` | `/vacancies/drafts/{id}/publish` | Staff | Mempublikasikan draf menjadi lowongan resmi berstatus `open` |

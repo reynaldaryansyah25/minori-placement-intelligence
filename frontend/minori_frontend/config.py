@@ -1,9 +1,9 @@
-"""Frontend settings isolated from backend credentials."""
+"""Frontend settings isolated from backend internal dependencies."""
 
 import os
 from pathlib import Path
 
-from pydantic import AnyHttpUrl, Field
+from pydantic import AnyHttpUrl, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(
@@ -18,3 +18,6 @@ class FrontendSettings(BaseSettings):
 
     backend_base_url: AnyHttpUrl = AnyHttpUrl("http://127.0.0.1:8000")
     http_timeout_seconds: float = Field(default=5, gt=0, le=60)
+    internal_api_token: SecretStr | None = None
+    reviewer_api_token: SecretStr | None = None
+    demo_mode: bool = True

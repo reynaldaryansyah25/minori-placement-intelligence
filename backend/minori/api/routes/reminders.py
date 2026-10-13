@@ -8,7 +8,7 @@ from pydantic import AwareDatetime
 
 from minori.api.dependencies import get_reminder_service
 from minori.api.routes.placements import Limit, Offset, invoke
-from minori.api.security import require_internal_token
+from minori.api.security import require_internal_token, require_read_access
 from minori.domain.catalogs import NotificationStatus
 from minori.schemas.notification import NotificationAttemptRead, NotificationRead
 from minori.schemas.reminders import (
@@ -27,9 +27,10 @@ internal_router = APIRouter(
     dependencies=[Depends(require_internal_token)],
 )
 Service = Annotated[ReminderService, Depends(get_reminder_service)]
+read_auth = [Depends(require_read_access)]
 
 
-@router.get("", response_model=list[NotificationRead])
+@router.get("", response_model=list[NotificationRead], dependencies=read_auth)
 def reminders(
     service: Service,
     status: NotificationStatus | None = None,
@@ -48,12 +49,16 @@ def reminders(
     )
 
 
-@router.get("/{notification_id}", response_model=NotificationRead)
+@router.get("/{notification_id}", response_model=NotificationRead, dependencies=read_auth)
 def detail(notification_id: UUID, service: Service):
     return invoke(service.get, notification_id)
 
 
-@router.get("/{notification_id}/attempts", response_model=list[NotificationAttemptRead])
+@router.get(
+    "/{notification_id}/attempts",
+    response_model=list[NotificationAttemptRead],
+    dependencies=read_auth,
+)
 def attempts(notification_id: UUID, service: Service, limit: Limit = 100, offset: Offset = 0):
     return invoke(service.attempts, notification_id, limit=limit, offset=offset)
 

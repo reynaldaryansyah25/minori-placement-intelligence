@@ -11,10 +11,13 @@ from minori.db.session import immediate_transaction
 from minori.domain.reminders import ReminderPolicy
 from minori.repositories.health import SqlAlchemyDatabaseProbe
 from minori.repositories.provider import Repositories, provide_repositories
+from minori.services.candidates import CandidateService
 from minori.services.health import HealthService
 from minori.services.matching import MatchingService
+from minori.services.overview import OverviewService
 from minori.services.placements import PlacementService
 from minori.services.reminders import ReminderService
+from minori.services.vacancies import VacancyService
 
 
 def get_app_settings(request: Request) -> Settings:
@@ -79,3 +82,34 @@ def get_placement_service(
 
     reminder = ReminderService(ports, transaction, reminder_policy(settings))
     return PlacementService(ports, transaction, reminder)
+
+
+def get_candidate_service(
+    session: Annotated[Session, Depends(get_db_session)],
+) -> CandidateService:
+    ports = provide_repositories(session)
+    return CandidateService(ports.candidate, lambda: immediate_transaction(session))
+
+
+def get_vacancy_service(
+    session: Annotated[Session, Depends(get_db_session)],
+) -> VacancyService:
+    ports = provide_repositories(session)
+    return VacancyService(
+        ports.vacancy, ports.vacancy_draft, lambda: immediate_transaction(session)
+    )
+
+
+def get_overview_service(
+    session: Annotated[Session, Depends(get_db_session)],
+) -> OverviewService:
+    ports = provide_repositories(session)
+    return OverviewService(
+        ports.candidate,
+        ports.vacancy,
+        ports.placement,
+        ports.placement_stage,
+        ports.notification,
+        ports.evaluation,
+        ports.audit_log,
+    )

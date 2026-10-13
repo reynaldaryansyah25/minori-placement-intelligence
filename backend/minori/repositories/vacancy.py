@@ -49,15 +49,25 @@ class SqlAlchemyVacancyRepository:
         offset: int = 0,
         program: Program | None = None,
         status: VacancyStatus | None = None,
+        query: str | None = None,
     ) -> list[VacancyRecord]:
         pagination(limit, offset)
-        query = select(Vacancy)
+        stmt = select(Vacancy)
+        if query is not None and query.strip():
+            term = f"%{query.strip()}%"
+            stmt = stmt.where(
+                Vacancy.title.ilike(term)
+                | Vacancy.employer_name.ilike(term)
+                | Vacancy.reference.ilike(term)
+                | Vacancy.sector.ilike(term)
+                | Vacancy.prefecture.ilike(term)
+            )
         if program is not None:
-            query = query.where(Vacancy.program == program)
+            stmt = stmt.where(Vacancy.program == program)
         if status is not None:
-            query = query.where(Vacancy.status == status)
+            stmt = stmt.where(Vacancy.status == status)
         rows = self._session.scalars(
-            query.order_by(Vacancy.created_at, Vacancy.id).limit(limit).offset(offset)
+            stmt.order_by(Vacancy.created_at, Vacancy.id).limit(limit).offset(offset)
         ).all()
         return [to_record(row, VacancyRecord) for row in rows]
 

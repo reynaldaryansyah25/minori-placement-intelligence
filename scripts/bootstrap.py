@@ -57,6 +57,16 @@ def initialize_env_file() -> None:
             + secrets.token_urlsafe(48)
             + text[token_entry.end() :]
         )
+    reviewer_entry = re.search(r"^REVIEWER_API_TOKEN=(.*)$", text, flags=re.MULTILINE)
+    if reviewer_entry is None:
+        text += "\nREVIEWER_API_TOKEN=" + secrets.token_urlsafe(32) + "\n"
+    elif reviewer_entry.group(1).strip() in {"", '""', "''"}:
+        text = (
+            text[: reviewer_entry.start()]
+            + "REVIEWER_API_TOKEN="
+            + secrets.token_urlsafe(32)
+            + text[reviewer_entry.end() :]
+        )
     target.write_text(text, encoding="utf-8")
     print("Private .env configured; existing non-empty values preserved.")
 

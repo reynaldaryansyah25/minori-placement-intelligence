@@ -7,11 +7,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from minori import __version__
+from minori.api.routes.auth import router as auth_router
+from minori.api.routes.candidates import router as candidate_router
 from minori.api.routes.health import router as health_router
 from minori.api.routes.matching import router as matching_router
+from minori.api.routes.overview import router as overview_router
 from minori.api.routes.placements import router as placement_router
 from minori.api.routes.reminders import internal_router
 from minori.api.routes.reminders import router as reminder_router
+from minori.api.routes.vacancies import router as vacancy_router
 from minori.core.config import Settings, get_settings
 from minori.core.logging import configure_logging
 from minori.db.session import Database
@@ -45,6 +49,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     application.state.settings = configuration
     application.include_router(health_router)
+    application.include_router(auth_router)
+    application.include_router(overview_router)
+    application.include_router(candidate_router)
+    application.include_router(vacancy_router)
     application.include_router(matching_router)
     application.include_router(placement_router)
     application.include_router(reminder_router)

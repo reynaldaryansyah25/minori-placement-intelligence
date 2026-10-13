@@ -1,34 +1,38 @@
-# Hasil verifikasi Placement Management dan Reminder Backend
+# Hasil Verifikasi MINORI Placement Intelligence (Frontend & Backend Operasional)
 
-Dijalankan 13 Oktober 2026, Asia/Bangkok (UTC+07:00). Pemeriksaan lokal final
-selesai pukul 21:52, pemeriksaan Docker/API final pukul 21:56. Angka di bawah
-berasal dari perintah yang benar-benar dieksekusi, tanpa n8n atau provider pengiriman.
+Dijalankan 13 Oktober 2026, Asia/Jakarta (UTC+07:00). Pemeriksaan menyeluruh mencakup
+arstitektur modular monolith, backend endpoints, seluruh 8 halaman frontend Streamlit,
+RBAC autentikasi (Admin vs Reviewer), dan pengujian visual peramban aktual.
 
-## Hasil nyata
+## Hasil Nyata Verifikasi
 
-- **242 tes lulus**, tanpa skip, dalam **130.17 detik** pada full run final.
-- **56 tes baru** ditambahkan; seluruh 186 tes sebelumnya tetap lulus.
-- Coverage gabungan statement/branch: **94%** (2989 statements, 482 branches).
-- Ruff check lulus; format check: **120 files already formatted**.
-- pip check lokal, backend Docker, frontend Docker: tidak ada dependency rusak.
-- scripts/verify.py exit code 0, passed=true, seed_idempotent=true.
-- Alembic upgrade/check lokal dan Docker lulus; **No new upgrade operations detected**.
-- Head: placement_reminders; empat migration lama/baru berurutan tanpa menghapus revisi.
-- SQLite lokal/Docker: integrity_check=ok, foreign_keys=1, WAL, tanpa pelanggaran FK.
-- Dua proses Python independen berebut reminder: tepat satu claim berhasil dan satu
-  attempt tersimpan. Dua proses berebut kursi terakhir: tepat satu placement dibuat.
-- Retry/backoff, batas attempt, lease expiry/recovery, callback invalid/identik,
-  cancellation, perubahan jadwal, audit rollback, serta auth internal diuji.
-- Alur end-to-end melalui **Uvicorn dan HTTP nyata** lulus di lokal dan Docker Linux.
-- Backend/frontend image final berhasil dibangun; ketiga layanan lokal yang sudah
-  ada healthy. Volume lama dipertahankan; tidak ada deployment eksternal.
-- Smoke lokal lulus: backend/database ok, Streamlit health ok, frontend HTTP 200.
-- Semua **40 hasil matching tetap sama**: 2 ELIGIBLE, 2 NEEDS_REVIEW, 36 NOT_ELIGIBLE.
-  Domain eligibility.py, scoring.py, dan matching_engine.py tidak diubah.
-- API matching live pada Docker diverifikasi kembali dari host.
-- Worker HTTP memakai token environment berhasil mengakses backend. Pada database
-  persisten tidak ada reminder managed due, sehingga due_count=0 dan processed=[].
-  Simulasi pengiriman dibuktikan pada database terisolasi, bukan diklaim dari antrean kosong.
+- **260 tes lulus**, tanpa skip, dalam **96.34 detik** pada full test suite Pytest.
+- **18 tes baru** ditambahkan (`test_supporting_api.py` dan `test_frontend.py` multi-halaman);
+  seluruh 242 tes unit, domain, matching, dan reminder sebelumnya tetap 100% lulus.
+- Ruff lint check: **All checks passed!** (0 errors).
+- Ruff format check: **156 files already formatted** (100% konsisten).
+- `scripts/verify.py` exit code 0, `passed=true`, `seed_idempotent=true`.
+- Alembic upgrade/check: **No new upgrade operations detected** (revisi `placement_reminders`).
+- SQLite lokal & Docker: `integrity_check=ok`, `foreign_keys=1`, mode WAL persisten.
+- Seluruh **40 hasil matching tetap sama**: 2 ELIGIBLE, 2 NEEDS_REVIEW, 36 NOT_ELIGIBLE.
+- **Seluruh 8 halaman Streamlit teruji tanpa exception**:
+  1. `overview.py` (Command Center)
+  2. `candidates.py` (Direktori Kandidat)
+  3. `vacancies.py` (Lowongan Kerja)
+  4. `candidate_matching.py` (Showcase Ranking & Explainability)
+  5. `placement_pipeline.py` (Pipeline & Penjadwalan Aktivitas)
+  6. `reminder_center.py` (Monitoring Antrean Notifikasi)
+  7. `ai_vacancy_intelligence.py` (Draf Lowongan Jepang & Human-in-the-loop)
+  8. `reports.py` (Analitik & Ekspor CSV RFC 4180)
+- **Role-Based Access Control (RBAC)**:
+  - Admin/Staff token: mutasi diizinkan (200/201).
+  - Reviewer token: akses baca diizinkan (200), mutasi ditolak (403 Forbidden).
+  - Tanpa token / token salah: ditolak (401 Unauthorized).
+  - Tidak ada kebocoran token pada output markdown atau tampilan UI.
+- **Visual QA di Peramban Nyata (Browser Subagent)**:
+  - Desktop 1440x900, Desktop 1280x800, dan Mobile 390x844 terverifikasi responsif.
+  - Tangkapan layar aktual tersimpan sebagai artefak pengujian.
+- **Docker Compose**: Container backend, frontend, dan n8n sehat (*healthy*).
 
 ## Bukti alur end-to-end tanpa n8n
 

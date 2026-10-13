@@ -47,3 +47,10 @@ extend-exclude = ["test-results", "build"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.pyright]
+include = ["backend", "frontend", "tests", "scripts"]
+extraPaths = ["backend", "frontend"]
+venvPath = "."
+venv = ".venv"

@@ -73,6 +73,21 @@ dan queue. Conditional UPDATE bersama writer lock SQLite menegakkan claim eksklu
 Network provider tidak berada dalam transaksi. Token internal berasal dari environment.
 Lihat [placement/reminder](placements_reminders.md).
 
+## Arsitektur Frontend Streamlit
+
+Frontend diimplementasikan dengan **Python 3.12 + Streamlit** multi-page shell
+(`st.navigation` dan `st.Page`), terorganisir dalam paket `minori_frontend`:
+- `api_client.py`: HTTP connection pooling melalui HTTPX, penanganan timeout,
+  server-side token handling, error mapping terstruktur (401, 403, 404, 409, 422, 503).
+- `auth.py`: State RBAC session lokal memisahkan akses Staff (Admin/Tulis) dan
+  Reviewer (Read-Only) serta verifikasi token terhadap endpoint `/auth/me`.
+- `components/`: Komponen UI modular bergaya Japanese Minimalist Enterprise
+  (kartu KPI Ashby, drawer profil kandidat, kartu bobot skor explainable matching,
+  stepper visual pipeline, status pills, filter bars, alert dialogs).
+- `pages/`: 8 halaman operasional independen yang hanya mengakses backend via HTTP,
+  tanpa akses langsung ke SQLite atau model ORM backend (diverifikasi oleh uji batas arsitektur).
+Detail operasional dan antarmuka didokumentasikan dalam [panduan frontend](frontend.md).
+
 Acuan: [router modular FastAPI](https://fastapi.tiangolo.com/tutorial/bigger-applications/),
 [SQLite SQLAlchemy](https://docs.sqlalchemy.org/en/20/dialects/sqlite.html),
 [Alembic](https://alembic.sqlalchemy.org/en/latest/tutorial.html),

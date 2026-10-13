@@ -56,15 +56,23 @@ class SqlAlchemyCandidateRepository:
         offset: int = 0,
         preferred_program: Program | None = None,
         status: CandidateStatus | None = None,
+        query: str | None = None,
     ) -> list[CandidateRecord]:
         pagination(limit, offset)
-        query = select(Candidate)
+        stmt = select(Candidate)
+        if query is not None and query.strip():
+            term = f"%{query.strip()}%"
+            stmt = stmt.where(
+                Candidate.full_name.ilike(term)
+                | Candidate.reference.ilike(term)
+                | Candidate.domicile_city.ilike(term)
+            )
         if preferred_program is not None:
-            query = query.where(Candidate.preferred_program == preferred_program)
+            stmt = stmt.where(Candidate.preferred_program == preferred_program)
         if status is not None:
-            query = query.where(Candidate.status == status)
+            stmt = stmt.where(Candidate.status == status)
         rows = self._session.scalars(
-            query.order_by(Candidate.created_at, Candidate.id).limit(limit).offset(offset)
+            stmt.order_by(Candidate.created_at, Candidate.id).limit(limit).offset(offset)
         ).all()
         return [to_record(row, CandidateRecord) for row in rows]
 

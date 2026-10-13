@@ -505,7 +505,7 @@ def test_api_end_to_end_without_n8n(client, scenario):
         json={"claim_token": claimed["claim_token"], "outcome": "simulated"},
     )
     assert completed.status_code == 200 and completed.json()["status"] == "simulated"
-    attempts = client.get(f"/reminders/{reminder_id}/attempts")
+    attempts = client.get(f"/reminders/{reminder_id}/attempts", headers=headers)
     assert attempts.json()[0]["status"] == "simulated"
     assert "claim_token_hash" not in attempts.json()[0]
     changed = client.patch(
@@ -532,10 +532,12 @@ def test_api_end_to_end_without_n8n(client, scenario):
     simulated = client.post("/internal/reminders/simulate", headers=headers, json={})
     assert simulated.status_code == 200
     assert (
-        client.get("/placements", params={"query": "DEMO-PLACEMENT-API"}).json()[0]["id"]
+        client.get("/placements", headers=headers, params={"query": "DEMO-PLACEMENT-API"}).json()[
+            0
+        ]["id"]
         == identifier
     )
-    assert client.get("/audit-logs").status_code == 200
+    assert client.get("/audit-logs", headers=headers).status_code == 200
     assert inspect_database(scenario.database)["integrity"] == "ok"
 
 
@@ -586,9 +588,14 @@ def test_api_validates_unknown_inputs_and_sanitized_error_codes(client):
         ).status_code
         == 422
     )
-    assert client.get(f"/placements/{uuid4()}").status_code == 404
-    assert client.get("/placements", params={"limit": 101}).status_code == 422
-    assert client.get("/reminders", params={"due_before": "2026-01-01T00:00:00"}).status_code == 422
+    assert client.get(f"/placements/{uuid4()}", headers=headers).status_code == 404
+    assert client.get("/placements", headers=headers, params={"limit": 101}).status_code == 422
+    assert (
+        client.get(
+            "/reminders", headers=headers, params={"due_before": "2026-01-01T00:00:00"}
+        ).status_code
+        == 422
+    )
 
 
 def test_missing_internal_token_fails_closed(scenario, settings):

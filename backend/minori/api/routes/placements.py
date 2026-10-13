@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from minori.api.dependencies import get_placement_service, get_repositories
-from minori.api.security import require_internal_token
+from minori.api.security import require_read_access, require_staff_access
 from minori.domain.catalogs import (
     AuditEntityType,
     MatchStatus,
@@ -34,7 +34,8 @@ router = APIRouter(tags=["Placements"])
 Service = Annotated[PlacementService, Depends(get_placement_service)]
 Limit = Annotated[int, Query(ge=1, le=100)]
 Offset = Annotated[int, Query(ge=0)]
-authenticated = [Depends(require_internal_token)]
+read_auth = [Depends(require_read_access)]
+authenticated = [Depends(require_staff_access)]
 
 
 def invoke(operation, *args, **kwargs):
@@ -77,7 +78,7 @@ def create(request: PlacementRequest, service: Service):
     )
 
 
-@router.get("/placements", response_model=list[PlacementRead])
+@router.get("/placements", response_model=list[PlacementRead], dependencies=read_auth)
 def search(
     service: Service,
     query: Annotated[str | None, Query(max_length=80)] = None,
@@ -98,7 +99,7 @@ def search(
     )
 
 
-@router.get("/placements/{placement_id}", response_model=PlacementRead)
+@router.get("/placements/{placement_id}", response_model=PlacementRead, dependencies=read_auth)
 def get(placement_id: UUID, service: Service):
     return invoke(service.get, placement_id)
 
@@ -126,7 +127,11 @@ def cancel(placement_id: UUID, request: ActorRequest, service: Service):
     )
 
 
-@router.get("/placements/{placement_id}/activities", response_model=list[PlacementStageRead])
+@router.get(
+    "/placements/{placement_id}/activities",
+    response_model=list[PlacementStageRead],
+    dependencies=read_auth,
+)
 def activities(placement_id: UUID, service: Service):
     return invoke(service.activities, placement_id)
 
@@ -164,7 +169,7 @@ def update_activity(
     )
 
 
-@router.get("/audit-logs", response_model=list[AuditLogRead])
+@router.get("/audit-logs", response_model=list[AuditLogRead], dependencies=read_auth)
 def audit(
     repositories: Annotated[Repositories, Depends(get_repositories)],
     entity_type: AuditEntityType | None = None,

@@ -110,6 +110,34 @@ sudah berjalan serta token dari environment. Lease recovery berjalan ketika
 generate/claim/recover/due dipanggil; tidak ada dispatcher background saat startup.
 Lihat [kebijakan reminder](placements_reminders.md) dan [API](api.md).
 
+## Operasional Frontend Streamlit
+
+### Menjalankan Frontend Secara Lokal
+Setelah backend aktif pada port 8000, jalankan frontend Streamlit:
+
+```sh
+streamlit run frontend/minori_frontend/app.py --server.port 8501
+```
+
+Aplikasi terbuka di peramban pada alamat `http://localhost:8501`.
+
+### Menjalankan Melalui Docker Compose
+Seluruh arsitektur (backend, frontend, dan n8n) dapat dijalankan terkoordinasi:
+
+```sh
+docker compose up -d --build
+```
+
+- Backend berjalan di `http://127.0.0.1:8000`
+- Frontend berjalan di `http://127.0.0.1:8501`
+- n8n berjalan di `http://127.0.0.1:5678`
+
+### Konfigurasi Akses Demo & Token RBAC
+- File `.env` memuat `INTERNAL_API_TOKEN` (Admin/Tulis) dan `REVIEWER_API_TOKEN` (Reviewer Read-Only).
+- Pada sidebar bawah frontend, penguji dapat beralih peran demo antara **HR Staff (Admin/Tulis)** dan **Reviewer (Read-Only)** tanpa perlu memasukkan token manual.
+- Untuk menguji verifikasi token khusus, gunakan menu lipat (*expander*) **🔑 Masukkan Token Kustom** pada sidebar.
+- Panduan lengkap seluruh halaman dan elemen antarmuka tersedia di [panduan frontend](frontend.md).
+
 ## Dependency
 
 Sumber dependency langsung adalah `pyproject.toml`. `requirements.lock` menyimpan

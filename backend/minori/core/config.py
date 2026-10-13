@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     notification_retry_base_seconds: int = Field(default=60, ge=1, le=86400)
     notification_retry_max_seconds: int = Field(default=3600, ge=1, le=86400)
     internal_api_token: SecretStr | None = None
+    reviewer_api_token: SecretStr | None = None
 
     @field_validator("business_timezone")
     @classmethod
@@ -71,6 +72,17 @@ class Settings(BaseSettings):
                 return None
             if len(value) < 32:
                 raise ValueError("Internal API token must have at least 32 characters")
+        return value
+
+    @field_validator("reviewer_api_token", mode="before")
+    @classmethod
+    def validate_reviewer_token(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                return None
+            if len(value) < 16:
+                raise ValueError("Reviewer API token must have at least 16 characters")
         return value
 
     @field_validator("database_url")
