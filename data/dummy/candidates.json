@@ -1,0 +1,8 @@
+{
+  "synthetic": true,
+  "description": "Contoh format data fiktif untuk pengembangan mendatang; tidak diimpor ke database.",
+  "candidates": [
+    {"reference": "SYNTHETIC-A", "display_name": "Kandidat Contoh A", "japanese_level": "N4"},
+    {"reference": "SYNTHETIC-B", "display_name": "Kandidat Contoh B", "japanese_level": "N3"}
+  ]
+}

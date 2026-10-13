@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=84,<85"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "minori-placement-intelligence"
+version = "0.1.0"
+description = "Foundation for MINORI Placement Intelligence"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.143,<0.144",
+    "uvicorn>=0.54,<0.55",
+    "SQLAlchemy>=2.1,<2.2",
+    "alembic>=1.20,<2",
+    "pydantic>=2.14,<3",
+    "pydantic-settings>=2.15,<3",
+    "openai>=3.29,<4",
+    "httpx>=0.28,<0.29",
+]
+
+[project.optional-dependencies]
+frontend = ["streamlit>=1.65,<2"]
+dev = ["pytest>=9.1,<10", "pytest-cov>=7.1,<8", "ruff>=0.17,<0.18"]
+
+[tool.setuptools.packages.find]
+where = ["backend", "frontend"]
+include = ["minori", "minori.*", "minori_frontend", "minori_frontend.*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["minori", "minori_frontend"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["test-results", "build"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
