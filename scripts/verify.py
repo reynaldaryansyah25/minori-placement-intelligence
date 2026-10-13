@@ -31,9 +31,12 @@ def main() -> None:
         ),
         ("migration", [sys.executable, "-m", "alembic", "upgrade", "head"]),
         ("migration_drift", [sys.executable, "-m", "alembic", "check"]),
+        ("seed_initial", [sys.executable, str(ROOT / "scripts/seed_database.py")]),
+        ("seed_repeat", [sys.executable, str(ROOT / "scripts/seed_database.py")]),
         ("database", [sys.executable, str(ROOT / "scripts/check_database.py")]),
     ]
     records = []
+    seed_results = {}
     for name, command in checks:
         print(f"Running {name}...", flush=True)
         completed = subprocess.run(
@@ -42,6 +45,8 @@ def main() -> None:
         output = completed.stdout + completed.stderr
         (results / f"{name}.log").write_text(output, encoding="utf-8")
         print(output, end="")
+        if name in {"seed_initial", "seed_repeat"} and completed.returncode == 0:
+            seed_results[name] = json.loads(completed.stdout)
         records.append(
             {
                 "name": name,
@@ -51,12 +56,19 @@ def main() -> None:
             }
         )
     passed = all(record["exit_code"] == 0 for record in records)
+    idempotent = (
+        len(seed_results) == 2
+        and seed_results["seed_initial"]["counts"] == seed_results["seed_repeat"]["counts"]
+        and seed_results["seed_repeat"]["inserted_records"] == 0
+    )
+    passed = passed and idempotent
     (results / "checks.json").write_text(
         json.dumps(
             {
                 "executed_at": datetime.now(timezone(timedelta(hours=7))).isoformat(),
                 "python_version": sys.version.split()[0],
                 "passed": passed,
+                "seed_idempotent": idempotent,
                 "checks": records,
             },
             indent=2,

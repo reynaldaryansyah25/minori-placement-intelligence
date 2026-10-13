@@ -10,7 +10,7 @@
 .coverage
 test-results
 tests
-data
+data/runtime
 build
 dist
 **/*.db

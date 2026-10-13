@@ -27,6 +27,8 @@ berbeda.
 ```sh
 python -m alembic upgrade head
 python -m alembic current
+python scripts/seed_database.py
+python scripts/seed_database.py
 python scripts/check_database.py
 ```
 
@@ -50,10 +52,18 @@ docker compose ps
 python scripts/verify_containers.py
 ```
 
-`verify.py` mencatat status dependency, lint, format, Pytest, migrasi, drift schema,
-dan query database. Smoke test membuka port lokal sementara, menjalankan backend
+`verify.py` mencatat dependency, lint, format, Pytest, migrasi, drift schema,
+dua eksekusi seed, perbandingan idempotensi, dan query database. Pemeriksaan database
+membandingkan revisi dengan head Alembic dan mencakup seluruh model, foreign keys,
+serta integritas SQLite. Smoke test membuka port lokal sementara, menjalankan backend
 dan Streamlit, memeriksa endpoint HTTP, lalu menghentikan kedua proses.
 Tes frontend menggunakan Streamlit AppTest untuk memeriksa tampilan sukses dan gagal.
+
+Seed Docker dijalankan secara eksplisit dengan
+`docker compose exec -T backend python scripts/seed_database.py`.
+Jalankan dua kali untuk memeriksa idempotensi. Schema bisnis dan sifat transaksi
+dijelaskan dalam [struktur database](database.md). Downgrade yang akan menghapus
+data bisnis ditolak; jangan menghapus volume untuk memperbarui skema.
 
 ```sh
 docker compose logs --tail=50 backend frontend n8n

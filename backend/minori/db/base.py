@@ -1,4 +1,4 @@
-"""Shared declarative metadata; no business tables are defined yet."""
+"""Shared declarative metadata and consistent constraint names."""
 
 from sqlalchemy import MetaData
 from sqlalchemy.orm import DeclarativeBase

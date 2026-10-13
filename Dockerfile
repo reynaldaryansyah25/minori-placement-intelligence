@@ -14,6 +14,8 @@ RUN groupadd --gid 10001 minori && useradd --uid 10001 --gid minori --create-hom
 
 FROM base AS backend
 RUN python -m pip install --constraint requirements.lock .
+COPY data/dummy ./data/dummy
+COPY scripts/seed_database.py scripts/check_database.py ./scripts/
 USER minori
 EXPOSE 8000
 CMD ["sh", "-c", "python -m alembic upgrade head && exec python -m uvicorn minori.main:create_app --factory --host 0.0.0.0 --port 8000"]

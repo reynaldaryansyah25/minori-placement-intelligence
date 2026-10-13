@@ -3,13 +3,22 @@
 from alembic import context
 from minori.core.config import get_settings
 from minori.core.logging import configure_logging
+from minori.db import models  # noqa: F401 -- register ORM metadata
 from minori.db.base import Base
+from minori.db.models.common import UTCDateTime
 from minori.db.session import Database, resolve_database_url
 
-# Import future ORM models here so autogenerate can see their metadata.
+# Models are registered above so autogenerate sees every business table.
 target_metadata = Base.metadata
 settings = get_settings()
 configure_logging(settings.log_level)
+
+
+def render_type(kind, value, autogen_context):
+    """Freeze SQLite storage types rather than importing mutable application types."""
+    if kind == "type" and isinstance(value, UTCDateTime):
+        return "sa.DateTime()"
+    return False
 
 
 def run_migrations_offline() -> None:
@@ -33,6 +42,7 @@ def run_migrations_online() -> None:
                 target_metadata=target_metadata,
                 render_as_batch=True,
                 compare_type=True,
+                render_item=render_type,
             )
             with context.begin_transaction():
                 context.run_migrations()

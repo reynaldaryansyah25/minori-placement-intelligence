@@ -1,8 +1,297 @@
 {
   "synthetic": true,
-  "description": "Contoh format data fiktif untuk pengembangan mendatang; tidak diimpor ke database.",
+  "description": "Kandidat dan kualifikasi sepenuhnya fiktif.",
   "candidates": [
-    {"reference": "SYNTHETIC-A", "display_name": "Kandidat Contoh A", "japanese_level": "N4"},
-    {"reference": "SYNTHETIC-B", "display_name": "Kandidat Contoh B", "japanese_level": "N3"}
+    {
+      "reference": "DEMO-CAND-AGRI",
+      "full_name": "Ayu Contoh",
+      "preferred_program": "ssw",
+      "education_level": "SMK Pertanian",
+      "domicile_city": "Semarang",
+      "status": "ready",
+      "skills": [
+        "crop_care",
+        "farm_safety"
+      ],
+      "language_tests": [
+        {
+          "test_type": "jft_basic",
+          "level": "A2.2",
+          "taken_on": "2026-09-15",
+          "score": 218
+        }
+      ],
+      "certifications": [
+        {
+          "code": "agriculture_skill",
+          "name": "Sertifikasi Contoh agriculture",
+          "issuer": "Lembaga Penilai Contoh",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "Perusahaan Contoh agriculture",
+          "sector": "agriculture",
+          "role": "Operator Kebun",
+          "started_on": "2023-01-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-FOOD",
+      "full_name": "Bagus Contoh",
+      "preferred_program": "ssw",
+      "education_level": "SMK Tata Boga",
+      "domicile_city": "Bandung",
+      "status": "ready",
+      "skills": [
+        "food_preparation",
+        "hygiene"
+      ],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N4",
+          "taken_on": "2026-07-05",
+          "score": 122
+        }
+      ],
+      "certifications": [
+        {
+          "code": "food_service_skill",
+          "name": "Sertifikasi Contoh food_service",
+          "issuer": "Lembaga Penilai Contoh",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "Perusahaan Contoh food_service",
+          "sector": "food_service",
+          "role": "Asisten Dapur",
+          "started_on": "2024-01-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-CARE",
+      "full_name": "Citra Contoh",
+      "preferred_program": "ssw",
+      "education_level": "D3 Keperawatan",
+      "domicile_city": "Surabaya",
+      "status": "preparing",
+      "skills": [
+        "caregiving_support",
+        "workplace_communication"
+      ],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N3",
+          "taken_on": "2026-07-05",
+          "score": 140
+        },
+        {
+          "test_type": "jft_basic",
+          "level": "A2.2",
+          "taken_on": "2026-09-15",
+          "score": 224
+        }
+      ],
+      "certifications": [
+        {
+          "code": "caregiving_skill",
+          "name": "Sertifikasi Contoh caregiving",
+          "issuer": "Lembaga Penilai Contoh",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        },
+        {
+          "code": "caregiving_japanese",
+          "name": "Bahasa Jepang Perawatan Contoh",
+          "issuer": "Lembaga Penilai Contoh",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "Perusahaan Contoh caregiving",
+          "sector": "caregiving",
+          "role": "Asisten Perawatan",
+          "started_on": "2022-08-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-WELD",
+      "full_name": "Damar Contoh",
+      "preferred_program": "titp",
+      "education_level": "SMK Teknik Las",
+      "domicile_city": "Solo",
+      "status": "preparing",
+      "skills": [
+        "welding_basics",
+        "workshop_safety"
+      ],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N5",
+          "taken_on": "2026-07-05",
+          "score": 104
+        }
+      ],
+      "certifications": [
+        {
+          "code": "basic_welding",
+          "name": "Sertifikasi Contoh manufacturing",
+          "issuer": "Lembaga Penilai Contoh",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "Perusahaan Contoh manufacturing",
+          "sector": "manufacturing",
+          "role": "Asisten Bengkel",
+          "started_on": "2025-01-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-ENG",
+      "full_name": "Eka Contoh",
+      "preferred_program": "engineer",
+      "education_level": "S1 Teknik Mesin",
+      "domicile_city": "Yogyakarta",
+      "status": "ready",
+      "skills": [
+        "cad_design",
+        "cnc_operation"
+      ],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N2",
+          "taken_on": "2026-07-05",
+          "score": 131
+        }
+      ],
+      "certifications": [
+        {
+          "code": "cad_operator",
+          "name": "Sertifikasi Contoh engineering",
+          "issuer": "Lembaga Penilai Contoh",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "Perusahaan Contoh engineering",
+          "sector": "engineering",
+          "role": "Teknisi Desain",
+          "started_on": "2022-06-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-HOTEL",
+      "full_name": "Fitri Contoh",
+      "preferred_program": "ssw",
+      "education_level": "SMK Perhotelan",
+      "domicile_city": "Denpasar",
+      "status": "ready",
+      "skills": [
+        "guest_service",
+        "housekeeping"
+      ],
+      "language_tests": [
+        {
+          "test_type": "jft_basic",
+          "level": "A2.2",
+          "taken_on": "2026-09-15",
+          "score": 206
+        }
+      ],
+      "certifications": [
+        {
+          "code": "accommodation_skill",
+          "name": "Sertifikasi Contoh accommodation",
+          "issuer": "Lembaga Penilai Contoh",
+          "issued_on": "2026-06-01",
+          "expires_on": null
+        }
+      ],
+      "experiences": [
+        {
+          "employer_name": "Perusahaan Contoh accommodation",
+          "sector": "accommodation",
+          "role": "Petugas Hotel",
+          "started_on": "2024-02-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "reference": "DEMO-CAND-TRAINEE",
+      "full_name": "Gilang Contoh",
+      "preferred_program": "titp",
+      "education_level": "SMA",
+      "domicile_city": "Malang",
+      "status": "registered",
+      "skills": [
+        "workshop_safety"
+      ],
+      "language_tests": [
+        {
+          "test_type": "jft_basic",
+          "level": "A1",
+          "taken_on": "2026-09-15",
+          "score": 161
+        }
+      ],
+      "certifications": [],
+      "experiences": []
+    },
+    {
+      "reference": "DEMO-CAND-INACTIVE",
+      "full_name": "Hana Contoh",
+      "preferred_program": "ssw",
+      "education_level": "SMK Tata Boga",
+      "domicile_city": "Medan",
+      "status": "inactive",
+      "skills": [
+        "food_preparation"
+      ],
+      "language_tests": [
+        {
+          "test_type": "jlpt",
+          "level": "N4",
+          "taken_on": "2026-07-05",
+          "score": 117
+        }
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "employer_name": "Perusahaan Contoh food_manufacturing",
+          "sector": "food_manufacturing",
+          "role": "Asisten Produksi",
+          "started_on": "2021-01-10",
+          "ended_on": "2026-08-31"
+        }
+      ]
+    }
   ]
 }

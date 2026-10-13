@@ -106,24 +106,12 @@ def main() -> None:
                 "-T",
                 "backend",
                 "python",
-                "-c",
-                "import json; from sqlalchemy import text; "
-                "from minori.core.config import get_settings; "
-                "from minori.db.session import Database; "
-                "db=Database(get_settings()); "
-                "connection=db.engine.connect(); "
-                "print(json.dumps({'revision': connection.execute(text('SELECT version_num FROM "
-                "alembic_version')).scalar_one(), "
-                "'foreign_keys': connection.execute(text('PRAGMA foreign_keys')).scalar_one(), "
-                "'journal_mode': connection.execute(text('PRAGMA journal_mode')).scalar_one()})); "
-                "connection.close(); db.dispose()",
+                "scripts/check_database.py",
             )
         )
-        assert database_probe == {
-            "revision": "foundation",
-            "foreign_keys": 1,
-            "journal_mode": "wal",
-        }
+        assert database_probe["migration_revision"] == database_probe["expected_heads"]
+        assert database_probe["foreign_keys"] == 1 and database_probe["journal_mode"] == "wal"
+        assert database_probe["integrity"] == "ok"
         report.update(
             {
                 "passed": True,

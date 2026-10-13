@@ -1,0 +1,285 @@
+{
+  "synthetic": true,
+  "description": "Hubungan administratif fiktif, tanpa perhitungan matching atau pengiriman pesan.",
+  "matches": [
+    {
+      "candidate_reference": "DEMO-CAND-AGRI",
+      "vacancy_reference": "DEMO-VAC-AGRI",
+      "status": "approved",
+      "source": "manual",
+      "score": null,
+      "reviewed_at": "2026-10-12T09:00:00+07:00"
+    },
+    {
+      "candidate_reference": "DEMO-CAND-FOOD",
+      "vacancy_reference": "DEMO-VAC-FOOD",
+      "status": "approved",
+      "source": "manual",
+      "score": null,
+      "reviewed_at": "2026-10-12T09:00:00+07:00"
+    },
+    {
+      "candidate_reference": "DEMO-CAND-CARE",
+      "vacancy_reference": "DEMO-VAC-CARE",
+      "status": "approved",
+      "source": "manual",
+      "score": null,
+      "reviewed_at": "2026-10-12T09:00:00+07:00"
+    },
+    {
+      "candidate_reference": "DEMO-CAND-WELD",
+      "vacancy_reference": "DEMO-VAC-WELD",
+      "status": "approved",
+      "source": "manual",
+      "score": null,
+      "reviewed_at": "2026-10-12T09:00:00+07:00"
+    }
+  ],
+  "placements": [
+    {
+      "reference": "DEMO-PLC-AGRI",
+      "candidate_reference": "DEMO-CAND-AGRI",
+      "vacancy_reference": "DEMO-VAC-AGRI",
+      "use_match": true,
+      "status": "in_progress",
+      "planned_departure_at": "2027-03-10T09:00:00+09:00",
+      "actual_departure_at": null
+    },
+    {
+      "reference": "DEMO-PLC-FOOD",
+      "candidate_reference": "DEMO-CAND-FOOD",
+      "vacancy_reference": "DEMO-VAC-FOOD",
+      "use_match": true,
+      "status": "in_progress",
+      "planned_departure_at": "2027-03-10T09:00:00+09:00",
+      "actual_departure_at": null
+    },
+    {
+      "reference": "DEMO-PLC-CARE",
+      "candidate_reference": "DEMO-CAND-CARE",
+      "vacancy_reference": "DEMO-VAC-CARE",
+      "use_match": true,
+      "status": "in_progress",
+      "planned_departure_at": "2027-03-10T09:00:00+09:00",
+      "actual_departure_at": null
+    },
+    {
+      "reference": "DEMO-PLC-WELD",
+      "candidate_reference": "DEMO-CAND-WELD",
+      "vacancy_reference": "DEMO-VAC-WELD",
+      "use_match": true,
+      "status": "in_progress",
+      "planned_departure_at": "2027-03-10T09:00:00+09:00",
+      "actual_departure_at": null
+    }
+  ],
+  "steps": [
+    {
+      "placement_reference": "DEMO-PLC-AGRI",
+      "code": "employer_interview",
+      "step_type": "interview",
+      "sequence_number": 1,
+      "status": "completed",
+      "scheduled_at": "2026-11-05T09:00:00+07:00",
+      "due_at": "2026-11-05T10:00:00+07:00",
+      "completed_at": "2026-11-05T09:45:00+07:00",
+      "location": "Ruang Wawancara Contoh"
+    },
+    {
+      "placement_reference": "DEMO-PLC-AGRI",
+      "code": "medical_appointment",
+      "step_type": "medical_check",
+      "sequence_number": 2,
+      "status": "scheduled",
+      "scheduled_at": "2026-11-06T09:00:00+07:00",
+      "due_at": "2026-11-06T10:00:00+07:00",
+      "completed_at": null,
+      "location": "Klinik Administrasi Contoh"
+    },
+    {
+      "placement_reference": "DEMO-PLC-FOOD",
+      "code": "employer_interview",
+      "step_type": "interview",
+      "sequence_number": 1,
+      "status": "scheduled",
+      "scheduled_at": "2026-11-07T09:00:00+07:00",
+      "due_at": "2026-11-07T10:00:00+07:00",
+      "completed_at": null,
+      "location": "Ruang Wawancara Contoh"
+    },
+    {
+      "placement_reference": "DEMO-PLC-FOOD",
+      "code": "medical_appointment",
+      "step_type": "medical_check",
+      "sequence_number": 2,
+      "status": "scheduled",
+      "scheduled_at": "2026-11-08T09:00:00+07:00",
+      "due_at": "2026-11-08T10:00:00+07:00",
+      "completed_at": null,
+      "location": "Klinik Administrasi Contoh"
+    },
+    {
+      "placement_reference": "DEMO-PLC-CARE",
+      "code": "employer_interview",
+      "step_type": "interview",
+      "sequence_number": 1,
+      "status": "scheduled",
+      "scheduled_at": "2026-11-09T09:00:00+07:00",
+      "due_at": "2026-11-09T10:00:00+07:00",
+      "completed_at": null,
+      "location": "Ruang Wawancara Contoh"
+    },
+    {
+      "placement_reference": "DEMO-PLC-CARE",
+      "code": "medical_appointment",
+      "step_type": "medical_check",
+      "sequence_number": 2,
+      "status": "scheduled",
+      "scheduled_at": "2026-11-10T09:00:00+07:00",
+      "due_at": "2026-11-10T10:00:00+07:00",
+      "completed_at": null,
+      "location": "Klinik Administrasi Contoh"
+    },
+    {
+      "placement_reference": "DEMO-PLC-WELD",
+      "code": "employer_interview",
+      "step_type": "interview",
+      "sequence_number": 1,
+      "status": "scheduled",
+      "scheduled_at": "2026-11-11T09:00:00+07:00",
+      "due_at": "2026-11-11T10:00:00+07:00",
+      "completed_at": null,
+      "location": "Ruang Wawancara Contoh"
+    },
+    {
+      "placement_reference": "DEMO-PLC-WELD",
+      "code": "medical_appointment",
+      "step_type": "medical_check",
+      "sequence_number": 2,
+      "status": "scheduled",
+      "scheduled_at": "2026-11-12T09:00:00+07:00",
+      "due_at": "2026-11-12T10:00:00+07:00",
+      "completed_at": null,
+      "location": "Klinik Administrasi Contoh"
+    }
+  ],
+  "drafts": [
+    {
+      "reference": "DEMO-DRAFT-AGRI",
+      "source_channel": "manual_fixture",
+      "source_reference": "fixture.agri",
+      "proposed_data": {
+        "reference": "DEMO-VAC-AGRI",
+        "title": "Operator Pertanian Contoh",
+        "employer_name": "Perusahaan Jepang Contoh AGRI",
+        "program": "ssw",
+        "sector": "agriculture",
+        "prefecture": "Hokkaido",
+        "quota": 6,
+        "minimum_experience_months": 12,
+        "required_skills": [
+          "crop_care",
+          "farm_safety"
+        ],
+        "required_certifications": [
+          "agriculture_skill"
+        ],
+        "language_requirements": [
+          {
+            "test_type": "jlpt",
+            "minimum_level": "N4"
+          },
+          {
+            "test_type": "jft_basic",
+            "minimum_level": "A2.2"
+          }
+        ],
+        "status": "open",
+        "application_deadline": "2026-12-20T23:59:00+09:00"
+      },
+      "status": "published",
+      "published_vacancy_reference": "DEMO-VAC-AGRI"
+    },
+    {
+      "reference": "DEMO-DRAFT-FOOD",
+      "source_channel": "manual_fixture",
+      "source_reference": "fixture.food",
+      "proposed_data": {
+        "reference": "DEMO-VAC-FOOD",
+        "title": "Staf Dapur Contoh",
+        "employer_name": "Perusahaan Jepang Contoh FOOD",
+        "program": "ssw",
+        "sector": "food_service",
+        "prefecture": "Osaka",
+        "quota": 4,
+        "minimum_experience_months": 12,
+        "required_skills": [
+          "food_preparation",
+          "hygiene"
+        ],
+        "required_certifications": [
+          "food_service_skill"
+        ],
+        "language_requirements": [
+          {
+            "test_type": "jlpt",
+            "minimum_level": "N4"
+          },
+          {
+            "test_type": "jft_basic",
+            "minimum_level": "A2.2"
+          }
+        ],
+        "status": "open",
+        "application_deadline": "2026-12-20T23:59:00+09:00"
+      },
+      "status": "review",
+      "published_vacancy_reference": null
+    }
+  ],
+  "notifications": [
+    {
+      "reference": "DEMO-NOTIFY-FOOD",
+      "deduplication_key": "fixture.food.interview",
+      "candidate_reference": "DEMO-CAND-FOOD",
+      "placement_reference": "DEMO-PLC-FOOD",
+      "step_code": "employer_interview",
+      "template_code": "interview_schedule",
+      "scheduled_at": "2026-11-06T08:00:00+07:00",
+      "channel": "internal",
+      "status": "pending"
+    },
+    {
+      "reference": "DEMO-NOTIFY-AGRI",
+      "deduplication_key": "fixture.agri.interview",
+      "candidate_reference": "DEMO-CAND-AGRI",
+      "placement_reference": "DEMO-PLC-AGRI",
+      "step_code": "employer_interview",
+      "template_code": "interview_schedule",
+      "scheduled_at": "2026-11-04T08:00:00+07:00",
+      "channel": "internal",
+      "status": "sent",
+      "sent_at": "2026-11-04T08:01:00+07:00"
+    }
+  ],
+  "attempts": [
+    {
+      "notification_reference": "DEMO-NOTIFY-AGRI",
+      "attempt_number": 1,
+      "status": "failed",
+      "attempted_at": "2026-11-04T08:00:00+07:00",
+      "finished_at": "2026-11-04T08:00:10+07:00",
+      "error_code": "SIMULATED_UNAVAILABLE",
+      "provider_reference": null
+    },
+    {
+      "notification_reference": "DEMO-NOTIFY-AGRI",
+      "attempt_number": 2,
+      "status": "succeeded",
+      "attempted_at": "2026-11-04T08:00:50+07:00",
+      "finished_at": "2026-11-04T08:01:00+07:00",
+      "error_code": null,
+      "provider_reference": "synthetic-delivery"
+    }
+  ]
+}

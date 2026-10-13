@@ -4,7 +4,8 @@ Fondasi sistem AI untuk penempatan tenaga kerja ke Jepang dengan arsitektur
 **Modular Monolith dan prinsip Clean Architecture**. Repository bernama
 `minori-placement-intelligence`. Fondasi menyediakan kesehatan layanan, konfigurasi,
 persistensi, migrasi, adapter 9Router, konsol Streamlit, dan workflow n8n manual.
-Matching, reminder, extraction, dan tabel bisnis belum diimplementasikan.
+Database bisnis, schemas, repository, migrasi, dan seed idempotent tersedia.
+Algoritma matching, reminder, extraction, dan dashboard bisnis belum diimplementasikan.
 
 ## Struktur repository
 
@@ -18,15 +19,15 @@ minori-placement-intelligence/
 │   │   ├── services/            # Use case
 │   │   ├── repositories/        # Adapter SQLAlchemy
 │   │   ├── schemas/             # DTO Pydantic
-│   │   ├── db/                  # Engine, session, metadata
+│   │   ├── db/models/           # 13 tabel ORM; engine, session, inspection, seeding
 │   │   ├── integrations/nine_router/
 │   │   └── main.py
-│   └── alembic/versions/foundation.py
+│   └── alembic/versions/        # foundation.py dan business_tables.py
 ├── frontend/
 │   ├── minori_frontend/         # UI dan HTTP client
 │   └── .streamlit/config.toml
 ├── workflows/n8n/backend_health.json
-├── data/dummy/candidates.json
+├── data/dummy/                 # candidates.json, vacancies.json, placement_data.json
 ├── scripts/                    # Bootstrap, lock, verifikasi, smoke test
 ├── tests/                      # unit, integration, architecture
 ├── docs/                       # Arsitektur dan operasional
@@ -91,6 +92,7 @@ misalnya `.\.venv\Scripts\python.exe scripts/verify.py`; aktivasi tidak wajib.
 
 ```sh
 python -m alembic upgrade head
+python scripts/seed_database.py
 python -m uvicorn minori.main:create_app --factory --reload --host 127.0.0.1 --port 8000
 ```
 
@@ -168,4 +170,5 @@ Log, JUnit XML, coverage XML/HTML, dan JSON hasil eksekusi disimpan di
 instance atau kredensial LLM pengguna.
 
 Panduan lebih lanjut: [arsitektur](docs/architecture.md),
+[struktur database dan ERD](docs/database.md),
 [operasional](docs/operations.md), dan [pedoman pengembangan](AGENTS.md).

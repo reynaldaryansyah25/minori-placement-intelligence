@@ -1,0 +1,142 @@
+{
+  "synthetic": true,
+  "description": "Persyaratan pemberi kerja fiktif; bukan ketentuan imigrasi.",
+  "vacancies": [
+    {
+      "reference": "DEMO-VAC-AGRI",
+      "title": "Operator Pertanian Contoh",
+      "employer_name": "Perusahaan Jepang Contoh AGRI",
+      "program": "ssw",
+      "sector": "agriculture",
+      "prefecture": "Hokkaido",
+      "quota": 6,
+      "minimum_experience_months": 12,
+      "required_skills": [
+        "crop_care",
+        "farm_safety"
+      ],
+      "required_certifications": [
+        "agriculture_skill"
+      ],
+      "language_requirements": [
+        {
+          "test_type": "jlpt",
+          "minimum_level": "N4"
+        },
+        {
+          "test_type": "jft_basic",
+          "minimum_level": "A2.2"
+        }
+      ],
+      "status": "open",
+      "application_deadline": "2026-12-20T23:59:00+09:00"
+    },
+    {
+      "reference": "DEMO-VAC-FOOD",
+      "title": "Staf Dapur Contoh",
+      "employer_name": "Perusahaan Jepang Contoh FOOD",
+      "program": "ssw",
+      "sector": "food_service",
+      "prefecture": "Osaka",
+      "quota": 4,
+      "minimum_experience_months": 12,
+      "required_skills": [
+        "food_preparation",
+        "hygiene"
+      ],
+      "required_certifications": [
+        "food_service_skill"
+      ],
+      "language_requirements": [
+        {
+          "test_type": "jlpt",
+          "minimum_level": "N4"
+        },
+        {
+          "test_type": "jft_basic",
+          "minimum_level": "A2.2"
+        }
+      ],
+      "status": "open",
+      "application_deadline": "2026-12-20T23:59:00+09:00"
+    },
+    {
+      "reference": "DEMO-VAC-CARE",
+      "title": "Asisten Perawatan Contoh",
+      "employer_name": "Perusahaan Jepang Contoh CARE",
+      "program": "ssw",
+      "sector": "caregiving",
+      "prefecture": "Saitama",
+      "quota": 3,
+      "minimum_experience_months": 24,
+      "required_skills": [
+        "caregiving_support"
+      ],
+      "required_certifications": [
+        "caregiving_skill",
+        "caregiving_japanese"
+      ],
+      "language_requirements": [
+        {
+          "test_type": "jlpt",
+          "minimum_level": "N3"
+        },
+        {
+          "test_type": "jft_basic",
+          "minimum_level": "A2.2"
+        }
+      ],
+      "status": "open",
+      "application_deadline": "2026-12-20T23:59:00+09:00"
+    },
+    {
+      "reference": "DEMO-VAC-WELD",
+      "title": "Peserta Pelatihan Las Contoh",
+      "employer_name": "Perusahaan Jepang Contoh WELD",
+      "program": "titp",
+      "sector": "manufacturing",
+      "prefecture": "Aichi",
+      "quota": 5,
+      "minimum_experience_months": 0,
+      "required_skills": [
+        "welding_basics"
+      ],
+      "required_certifications": [
+        "basic_welding"
+      ],
+      "language_requirements": [
+        {
+          "test_type": "jlpt",
+          "minimum_level": "N5"
+        }
+      ],
+      "status": "open",
+      "application_deadline": "2026-12-20T23:59:00+09:00"
+    },
+    {
+      "reference": "DEMO-VAC-ENG",
+      "title": "Teknisi Desain Mesin Contoh",
+      "employer_name": "Perusahaan Jepang Contoh ENG",
+      "program": "engineer",
+      "sector": "engineering",
+      "prefecture": "Shizuoka",
+      "quota": 2,
+      "minimum_experience_months": 24,
+      "required_skills": [
+        "cad_design",
+        "cnc_operation"
+      ],
+      "required_certifications": [
+        "cad_operator"
+      ],
+      "language_requirements": [
+        {
+          "test_type": "jlpt",
+          "minimum_level": "N2"
+        }
+      ],
+      "status": "paused",
+      "application_deadline": "2026-12-20T23:59:00+09:00"
+    }
+  ]
+}

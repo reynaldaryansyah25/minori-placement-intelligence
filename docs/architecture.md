@@ -3,7 +3,10 @@
 Backend adalah modular monolith: satu deployment dan satu database SQLite. Lapisan
 memisahkan transport, use case, domain, serta adapter. Kapabilitas bisnis dapat
 memiliki modul bernama sama di lapisan terkait ketika dibutuhkan, dengan kontrak
-port yang jelas. Fondasi saat ini hanya menyediakan kesehatan layanan.
+port yang jelas. Fondasi menyediakan kesehatan layanan dan akses database bisnis.
+Model ORM ada di db/models, dataclass serta port repository di domain, dan schemas
+Pydantic di schemas. Repository hanya mengembalikan snapshot domain yang terlepas
+dari session; services tetap tidak mengimpor framework.
 
 ```mermaid
 flowchart LR
@@ -37,7 +40,8 @@ syarat health dan tidak dibangun saat startup.
 SQLAlchemy memakai engine sinkron, session per request, foreign keys aktif,
 `busy_timeout` terbatas, dan WAL untuk file database. Route health sinkron diproses
 oleh worker thread FastAPI. Semua perubahan skema melalui Alembic. Revisi
-`foundation` hanya mencatat versi Alembic; tabel bisnis belum dibuat. WAL membantu
+`foundation` mencatat versi awal dan `placement_database` menambahkan 13 tabel bisnis.
+Lihat [struktur database dan ERD](database.md). WAL membantu
 akses baca/tulis, tetapi SQLite tetap memiliki satu writer pada satu waktu. Gunakan
 volume lokal untuk file SQLite dan jalankan satu worker backend dalam konfigurasi ini.
 
