@@ -1,9 +1,9 @@
-"""Candidate management page with directory, profiles, and CRUD operations."""
+"""Candidate directory and qualification details backed by HTTP."""
 
-from typing import Any
+from uuid import uuid4
 
 import streamlit as st
-from minori_frontend.api_client import BackendClient
+from minori_frontend.api_client import BackendClient, read_all
 from minori_frontend.auth import is_admin
 from minori_frontend.components.candidate_profile import render_candidate_profile
 from minori_frontend.components.data_table import render_interactive_table
@@ -12,107 +12,81 @@ from minori_frontend.components.feedback import show_api_error, show_success
 from minori_frontend.components.filters import render_filter_bar
 from minori_frontend.components.layout import apply_theme
 from minori_frontend.components.page_header import render_page_header
+from minori_frontend.components.presentation import section
 from minori_frontend.config import FrontendSettings
 from minori_frontend.utils.constants import JAPAN_PREFECTURES, PROGRAMS
-from minori_frontend.utils.formatting import format_program, format_status_label
+from minori_frontend.utils.formatting import format_status_label
+from minori_frontend.utils.labels import SKILL_LABELS, catalog_label, language_label, program_short
 
 
-@st.dialog("Tambah Kandidat Baru")
-def show_create_candidate_dialog(client: BackendClient) -> None:
+@st.dialog("Tambah kandidat")
+def show_create_candidate_dialog(client):
     with st.form("form_create_candidate"):
-        st.markdown("##### Informasi Administratif")
-        col1, col2 = st.columns(2)
-        with col1:
-            ref = st.text_input("Nomor Referensi *", placeholder="CAND-ID-001")
-            full_name = st.text_input("Nama Lengkap *", placeholder="Nama Kandidat")
-            prog = st.selectbox(
-                "Program Penempatan *",
-                options=[p[0] for p in PROGRAMS],
+        left, right = st.columns(2)
+        with left:
+            name = st.text_input("Nama lengkap *")
+            program = st.selectbox(
+                "Program penempatan",
+                [p[0] for p in PROGRAMS],
                 format_func=lambda x: dict(PROGRAMS)[x],
             )
-        with col2:
-            edu = st.text_input("Pendidikan Terakhir *", value="SMK Teknik")
-            domicile = st.text_input("Kota Domisili *", value="Jakarta")
+            education = st.text_input("Pendidikan terakhir *")
+        with right:
+            city = st.text_input("Kota domisili *")
             status = st.selectbox(
-                "Status Awal", options=["registered", "preparing", "ready"], index=0
+                "Status awal", ["registered", "preparing", "ready"], format_func=format_status_label
             )
-
-        st.markdown("##### Keahlian & Preferensi")
-        skills_raw = st.text_input(
-            "Kode Keahlian (pisahkan dengan koma)", placeholder="AGRICULTURE_GENERAL, WELDING_ARC"
+            preferences = st.multiselect("Preferensi prefektur", JAPAN_PREFECTURES)
+        skills = st.multiselect(
+            "Keahlian", list(SKILL_LABELS), format_func=catalog_label, accept_new_options=True
         )
-        prefs = st.multiselect(
-            "Preferensi Prefektur Jepang", options=JAPAN_PREFECTURES, default=["Tokyo", "Aichi"]
-        )
-
-        submitted = st.form_submit_button(
-            "Simpan Kandidat", type="primary", use_container_width=True
-        )
-        if submitted:
-            if not ref or not full_name:
-                st.error("Nomor referensi dan nama lengkap wajib diisi.")
+        if st.form_submit_button("Simpan kandidat", type="primary", width="stretch"):
+            if not all(value.strip() for value in (name, education, city)):
+                st.error("Lengkapi nama, pendidikan terakhir, dan kota domisili.")
                 return
-
-            skills = [s.strip().upper() for s in skills_raw.split(",") if s.strip()]
-            payload = {
-                "reference": ref.strip(),
-                "full_name": full_name.strip(),
-                "preferred_program": prog,
-                "education_level": edu.strip(),
-                "domicile_city": domicile.strip(),
-                "status": status,
-                "skills": skills,
-                "preferred_prefectures": prefs,
-                "language_tests": [],
-                "certifications": [],
-                "experiences": [],
-            }
             try:
-                created = client.create_candidate(payload)
-                show_success(f"Kandidat {created.get('full_name')} berhasil ditambahkan!")
+                client.create_candidate(
+                    {
+                        "reference": "CAND-" + uuid4().hex[:12].upper(),
+                        "full_name": name.strip(),
+                        "preferred_program": program,
+                        "education_level": education.strip(),
+                        "domicile_city": city.strip(),
+                        "status": status,
+                        "skills": [s.strip().lower().replace(" ", "_") for s in skills],
+                        "preferred_prefectures": preferences,
+                        "language_tests": [],
+                        "certifications": [],
+                        "experiences": [],
+                    }
+                )
+                show_success("Kandidat berhasil ditambahkan.")
                 st.rerun()
             except Exception as exc:
                 show_api_error(exc)
 
 
-def render_candidates_page() -> None:
+def render_candidates_page():
     apply_theme()
-    settings = FrontendSettings()
-    client = BackendClient(settings)
-
+    client = BackendClient(FrontendSettings())
     render_page_header(
-        title="Direktori Kandidat",
-        description="Kelola profil kualifikasi, sertifikasi, kemampuan bahasa Jepang, dan preferensi kerja peserta.",
-        breadcrumb="MINORI Operations / Candidates",
+        "Kandidat", "Kelola profil, kualifikasi, dan kesiapan kandidat untuk penempatan di Jepang."
     )
-
-    # Top action bar
-    can_mutate = is_admin()
-    if can_mutate:
-        col_btn, _ = st.columns([2, 8])
-        with col_btn:
-            if st.button("➕ Tambah Kandidat", type="primary", use_container_width=True):
-                show_create_candidate_dialog(client)
-    else:
-        st.info("Mode Reviewer: Akses penambahan dan pengubahan data kandidat dinonaktifkan.")
-
-    # Filter bar
-    status_options = [
-        ("ready", "Siap Ditempatkan"),
-        ("preparing", "Persiapan/Pelatihan"),
-        ("registered", "Terdaftar"),
-        ("inactive", "Nonaktif/Arsip"),
-    ]
+    if is_admin() and st.button("Tambah kandidat", type="primary", icon=":material/add:"):
+        show_create_candidate_dialog(client)
     filters = render_filter_bar(
-        search_placeholder="Cari nama atau referensi...",
-        show_program=True,
-        show_status=True,
-        status_options=status_options,
+        search_placeholder="Cari nama kandidat…",
+        status_options=[
+            ("ready", "Siap ditempatkan"),
+            ("preparing", "Persiapan"),
+            ("registered", "Terdaftar"),
+            ("inactive", "Nonaktif"),
+        ],
         key_prefix="cand",
     )
-
     try:
-        candidates = client.list_candidates(
+        candidates = read_all(
+            client.list_candidates,
             query=filters.get("query"),
             program=filters.get("program"),
             status=filters.get("status"),
@@ -120,72 +94,44 @@ def render_candidates_page() -> None:
     except Exception as exc:
         show_api_error(exc)
         return
-
     if not candidates:
         render_empty_state(
-            title="Tidak ada kandidat ditemukan",
-            description="Tidak ada profil kandidat yang cocok dengan kriteria filter pencarian Anda.",
+            "Kandidat tidak ditemukan", "Ubah pencarian atau filter untuk melihat kandidat lainnya."
         )
         return
-
-    # Table View
-    table_data = []
-    for c in candidates:
-        tests = c.get("language_tests", [])
-        lang_summary = (
-            ", ".join(f"{t.get('test_type').upper()} {t.get('level')}" for t in tests)
-            if tests
-            else "Belum tes"
-        )
-        table_data.append(
-            {
-                "id": c.get("id"),
-                "Referensi": c.get("reference"),
-                "Nama Lengkap": c.get("full_name"),
-                "Program": format_program(c.get("preferred_program")),
-                "Domisili": c.get("domicile_city"),
-                "Status": format_status_label(c.get("status")),
-                "Bahasa Jepang": lang_summary,
-                "Skills": ", ".join(c.get("skills", [])) or "—",
-            }
-        )
-
-    st.markdown("##### Pilih Kandidat untuk Melihat Detail")
-    selected_indices = render_interactive_table(
-        table_data,
-        key="candidates_table",
-        height=320,
-    )
-
-    selected_candidate: dict[str, Any] | None = None
-    if selected_indices:
-        selected_row = selected_indices[0]
-        selected_id = table_data[selected_row]["id"]
-        try:
-            selected_candidate = client.get_candidate(selected_id)
-        except Exception as exc:
-            show_api_error(exc)
-    else:
-        # Default select first
-        selected_candidate = candidates[0]
-
-    if selected_candidate:
-        st.markdown(
-            "<hr style='margin: 16px 0; border: none; border-top: 1px solid #E2E8F0;'>",
-            unsafe_allow_html=True,
-        )
-        render_candidate_profile(selected_candidate)
-
-        if can_mutate:
-            col_arch, _ = st.columns([2, 8])
-            with col_arch:
-                if selected_candidate.get("status") != "inactive":
-                    if st.button("📁 Arsipkan Kandidat", key="btn_archive_cand"):
+    directory, detail = st.columns([1.45, 1], gap="large")
+    with directory:
+        with st.container(border=True):
+            section("Daftar kandidat", f"{len(candidates)} kandidat sesuai pencarian")
+            rows = [
+                {
+                    "id": c["id"],
+                    "Nama kandidat": c.get("full_name"),
+                    "Program": program_short(c.get("preferred_program")),
+                    "Domisili": c.get("domicile_city"),
+                    "Status": format_status_label(c.get("status")),
+                    "Bahasa Jepang": ", ".join(
+                        f"{language_label(t.get('test_type'))} {t.get('level')}"
+                        for t in c.get("language_tests", [])
+                    )
+                    or "Belum tercatat",
+                }
+                for c in candidates
+            ]
+            selected = render_interactive_table(rows, key="candidates_table", height=400)
+        selected_candidate = candidates[selected[0] if selected else 0]
+    with detail:
+        with st.container(border=True):
+            render_candidate_profile(selected_candidate)
+            if is_admin() and selected_candidate.get("status") != "inactive":
+                with st.popover("Arsipkan kandidat", width="stretch"):
+                    st.write(
+                        "Kandidat akan menjadi nonaktif. Jadwal baru tidak dapat dibuat untuk kandidat ini."
+                    )
+                    if st.button("Konfirmasi arsip", key="btn_archive_cand", width="stretch"):
                         try:
                             client.archive_candidate(selected_candidate["id"])
-                            show_success(
-                                f"Kandidat {selected_candidate.get('full_name')} diarsipkan."
-                            )
+                            show_success("Kandidat berhasil diarsipkan.")
                             st.rerun()
                         except Exception as exc:
                             show_api_error(exc)

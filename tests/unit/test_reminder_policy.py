@@ -10,6 +10,19 @@ from minori.domain.notification_templates import render_notification
 from minori.domain.reminders import PLACEMENT_TRANSITIONS, ReminderPolicy, validate_transition
 
 
+@pytest.mark.parametrize("dry_run", [True, False])
+def test_mailpit_routing_never_uses_candidate_or_demo_override(dry_run):
+    policy = ReminderPolicy(
+        dry_run=dry_run,
+        notification_delivery_mode="mailpit",
+        demo_notification_recipient="unused@example.invalid",
+    )
+    routing = policy.resolve_recipient("DEMO-CAND-TEST")
+    assert routing["delivery_allowed"] is (not dry_run)
+    assert routing["effective_recipient"] == (None if dry_run else "mailpit@minori.local")
+    assert routing["routing_mode"] == ("dry_run" if dry_run else "mailpit")
+
+
 @pytest.mark.parametrize(
     "kind,expected",
     [

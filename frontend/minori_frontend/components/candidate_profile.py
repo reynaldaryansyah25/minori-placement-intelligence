@@ -1,108 +1,62 @@
-"""Detailed candidate profile panel showing qualifications and Japanese job readiness."""
-
-from typing import Any
+"""Candidate qualifications, without identifiers or internal catalog codes."""
 
 import streamlit as st
+from minori_frontend.components.presentation import chips, detail_grid, html, text
 from minori_frontend.components.status_badge import render_status_badge
 from minori_frontend.utils.formatting import format_program
+from minori_frontend.utils.labels import SECTOR_LABELS, catalog_label, language_label
 
 
-def render_candidate_profile(candidate: dict[str, Any]) -> None:
-    """Render full candidate credentials, tests, experiences, and preferences."""
-    st.markdown(
-        f"""
-        <div class="minori-card" style="margin-bottom: 1rem;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <div>
-                    <h3 style="margin: 0; color: #13263F; font-size: 1.25rem;">{candidate.get("full_name", "—")}</h3>
-                    <div style="color: #64748B; font-size: 0.8125rem; margin-top: 2px;">
-                        Referensi: <b>{candidate.get("reference", "—")}</b> | Domisili: {candidate.get("domicile_city", "—")}
-                    </div>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+def render_candidate_profile(candidate):
+    name = candidate.get("full_name") or "Kandidat"
+    initials = "".join(part[0] for part in name.split()[:2])
+    html(
+        f'<div class="profile-head"><div class="avatar">{text(initials)}</div><div>'
+        f"<h3>{text(name)}</h3><p>{text(candidate.get('domicile_city'))} · {text(candidate.get('education_level'))}</p></div></div>"
     )
-
-    tab1, tab2, tab3, tab4 = st.tabs(
-        ["Kemampuan Bahasa & Skill", "Riwayat Pengalaman", "Sertifikasi", "Preferensi & Admin"]
+    render_status_badge(candidate.get("status"))
+    detail_grid(
+        [
+            ("Program", format_program(candidate.get("preferred_program"))),
+            (
+                "Preferensi prefektur",
+                ", ".join(candidate.get("preferred_prefectures", [])) or "Semua prefektur",
+            ),
+        ]
     )
-
-    with tab1:
-        st.markdown("**Hasil Tes Bahasa Jepang (JLPT / JFT-Basic)**")
+    language, experience, certification = st.tabs(["Kualifikasi", "Pengalaman", "Sertifikasi"])
+    with language:
+        st.caption("Kemampuan bahasa Jepang")
         tests = candidate.get("language_tests", [])
         if tests:
-            for t in tests:
-                score_str = f" • Skor: {t.get('score')}" if t.get("score") is not None else ""
-                st.markdown(
-                    f"- **{str(t.get('test_type')).upper()} {t.get('level')}** (Tanggal tes: {t.get('taken_on')}{score_str})"
+            for item in tests:
+                detail_grid(
+                    [
+                        (language_label(item.get("test_type")), item.get("level")),
+                        ("Tanggal tes", item.get("taken_on")),
+                    ]
                 )
         else:
-            st.caption("Belum ada riwayat tes bahasa resmi tercatat.")
-
-        st.markdown(
-            "<hr style='margin: 12px 0; border: none; border-top: 1px solid #E2E8F0;'>",
-            unsafe_allow_html=True,
-        )
-        st.markdown("**Keahlian & Kompetensi Kerja (Skills)**")
-        skills = candidate.get("skills", [])
-        if skills:
-            skills_html = " ".join(
-                f"<span style='background:#F1F5F9; color:#1E293B; padding:3px 8px; border-radius:4px; font-size:12px; margin-right:4px; display:inline-block; margin-bottom:4px;'>{s}</span>"
-                for s in skills
+            st.caption("Belum ada hasil tes bahasa yang tercatat.")
+        st.caption("Keahlian")
+        chips([catalog_label(skill) for skill in candidate.get("skills", [])])
+        if not candidate.get("skills"):
+            st.caption("Belum ada keahlian yang tercatat.")
+    with experience:
+        for item in candidate.get("experiences", []):
+            html(
+                f'<div class="event-row"><div><strong>{text(item.get("role"))}</strong>'
+                f"<p>{text(item.get('employer_name'))} · {text(catalog_label(item.get('sector'), SECTOR_LABELS))}</p>"
+                f"<p>{text(item.get('started_on'))} – {text(item.get('ended_on') or 'Sekarang')}</p></div></div>"
             )
-            st.markdown(skills_html, unsafe_allow_html=True)
-        else:
-            st.caption("Belum ada kode keahlian terdaftar.")
-
-    with tab2:
-        st.markdown("**Riwayat Pekerjaan Sebelumnya**")
-        experiences = candidate.get("experiences", [])
-        if experiences:
-            for exp in experiences:
-                ended = exp.get("ended_on") or "Sekarang"
-                st.markdown(
-                    f"""
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:10px; margin-bottom:8px;">
-                        <div style="font-weight:600; color:#13263F;">{exp.get("role")} — {exp.get("employer_name")}</div>
-                        <div style="font-size:12px; color:#64748B;">Sektor: {exp.get("sector")} • Periode: {exp.get("started_on")} s/d {ended}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-        else:
-            st.caption("Tidak ada riwayat pekerjaan sebelumnya.")
-
-    with tab3:
-        st.markdown("**Sertifikasi & Lisensi Resmi**")
-        certs = candidate.get("certifications", [])
-        if certs:
-            for c in certs:
-                exp_str = (
-                    f" • Berlaku s/d: {c.get('expires_on')}"
-                    if c.get("expires_on")
-                    else " • Berlaku seumur hidup"
-                )
-                st.markdown(
-                    f"- **{c.get('name')}** (`{c.get('code')}`) diterbitkan oleh *{c.get('issuer')}* ({c.get('issued_on')}{exp_str})"
-                )
-        else:
-            st.caption("Belum ada sertifikasi terdaftar.")
-
-    with tab4:
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.markdown(
-                f"**Program Pilihan:** {format_program(candidate.get('preferred_program'))}"
+        if not candidate.get("experiences"):
+            st.caption("Belum ada pengalaman kerja yang tercatat.")
+    with certification:
+        for item in candidate.get("certifications", []):
+            html(
+                f'<div class="event-row"><div><strong>{text(item.get("name"))}</strong>'
+                f"<p>{text(item.get('issuer'))}</p><p>Terbit: {text(item.get('issued_on'))} · "
+                f"Berlaku hingga: {text(item.get('expires_on') or 'Tidak dibatasi')}</p></div></div>"
             )
-            st.markdown(f"**Pendidikan Terakhir:** {candidate.get('education_level', '—')}")
-            st.markdown("**Status Kesiapan:**")
-            render_status_badge(candidate.get("status"))
-        with col_b:
-            st.markdown("**Preferensi Prefektur Jepang:**")
-            prefs = candidate.get("preferred_prefectures", [])
-            if prefs:
-                st.write(", ".join(prefs))
-            else:
-                st.caption("Terbuka untuk semua prefektur di Jepang.")
+        if not candidate.get("certifications"):
+            st.caption("Belum ada sertifikasi yang tercatat.")

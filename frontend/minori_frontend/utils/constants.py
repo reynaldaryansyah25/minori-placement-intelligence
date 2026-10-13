@@ -1,56 +1,56 @@
 """Domain constants, visual design tokens, and Japanese prefecture catalogs."""
 
 # --- Color Tokens (Japanese Minimalist Enterprise) ---
-NAVY = "#13263F"
+NAVY = "#17283f"
 TEAL = "#0F766E"
-BG = "#F5F7FA"
+BG = "#f6f8fb"
 SURFACE = "#FFFFFF"
-TEXT_PRIMARY = "#1E293B"
-TEXT_SECONDARY = "#64748B"
-BORDER = "#E2E8F0"
-SUCCESS = "#15803D"
+TEXT_PRIMARY = "#1c2a3d"
+TEXT_SECONDARY = "#617087"
+BORDER = "#e3e9f0"
+SUCCESS = "#187451"
 WARNING = "#B7791F"
-DANGER = "#B91C1C"
+DANGER = "#aa3b44"
 
 # --- Status Colors & Badges ---
 STATUS_COLORS: dict[str, dict[str, str]] = {
     # Eligibility
     "ELIGIBLE": {
-        "bg": "#DCFCE7",
-        "text": "#15803D",
+        "bg": "#eaf7f1",
+        "text": "#187451",
         "border": "#86EFAC",
         "label": "Memenuhi Persyaratan",
     },
     "NEEDS_REVIEW": {
-        "bg": "#FEF3C7",
-        "text": "#B45309",
+        "bg": "#fff6e6",
+        "text": "#a56815",
         "border": "#FDE68A",
         "label": "Perlu Verifikasi",
     },
     "NOT_ELIGIBLE": {
-        "bg": "#FEE2E2",
-        "text": "#B91C1C",
+        "bg": "#fff0f1",
+        "text": "#aa3b44",
         "border": "#FCA5A5",
         "label": "Belum Memenuhi Persyaratan",
     },
     # Vacancy
-    "open": {"bg": "#CCFBF1", "text": "#0F766E", "border": "#99F6E4", "label": "Aktif"},
+    "open": {"bg": "#eaf7f4", "text": "#0F766E", "border": "#99F6E4", "label": "Aktif"},
     "paused": {
-        "bg": "#FEF3C7",
-        "text": "#B45309",
+        "bg": "#fff6e6",
+        "text": "#a56815",
         "border": "#FDE68A",
         "label": "Ditunda",
     },
-    "closed": {"bg": "#F1F5F9", "text": "#64748B", "border": "#CBD5E1", "label": "Ditutup"},
+    "closed": {"bg": "#F1F5F9", "text": "#617087", "border": "#CBD5E1", "label": "Ditutup"},
     # Candidate
     "registered": {"bg": "#F1F5F9", "text": "#475569", "border": "#CBD5E1", "label": "Terdaftar"},
     "preparing": {
-        "bg": "#FEF3C7",
-        "text": "#B45309",
+        "bg": "#fff6e6",
+        "text": "#a56815",
         "border": "#FDE68A",
         "label": "Persiapan",
     },
-    "ready": {"bg": "#DCFCE7", "text": "#15803D", "border": "#86EFAC", "label": "Siap Ditempatkan"},
+    "ready": {"bg": "#eaf7f1", "text": "#187451", "border": "#86EFAC", "label": "Siap Ditempatkan"},
     "inactive": {
         "bg": "#F1F5F9",
         "text": "#94A3B8",
@@ -58,55 +58,63 @@ STATUS_COLORS: dict[str, dict[str, str]] = {
         "label": "Nonaktif",
     },
     # Match Staff Decision
-    "proposed": {"bg": "#E0F2FE", "text": "#0369A1", "border": "#BAE6FD", "label": "Diusulkan"},
+    "proposed": {"bg": "#eff5ff", "text": "#0369A1", "border": "#BAE6FD", "label": "Diusulkan"},
     "approved": {
-        "bg": "#DCFCE7",
-        "text": "#15803D",
+        "bg": "#eaf7f1",
+        "text": "#187451",
         "border": "#86EFAC",
         "label": "Disetujui Staf",
     },
-    "rejected": {"bg": "#FEE2E2", "text": "#B91C1C", "border": "#FCA5A5", "label": "Ditolak Staf"},
+    "rejected": {"bg": "#fff0f1", "text": "#aa3b44", "border": "#FCA5A5", "label": "Ditolak Staf"},
     # Placement
     "in_progress": {
-        "bg": "#E0E7FF",
+        "bg": "#eff5ff",
         "text": "#4338CA",
         "border": "#C7D2FE",
         "label": "Dalam Proses",
     },
     "completed": {
-        "bg": "#DCFCE7",
-        "text": "#15803D",
+        "bg": "#eaf7f1",
+        "text": "#187451",
         "border": "#86EFAC",
         "label": "Selesai",
     },
-    "cancelled": {"bg": "#FEE2E2", "text": "#991B1B", "border": "#FCA5A5", "label": "Dibatalkan"},
+    "cancelled": {"bg": "#fff0f1", "text": "#991B1B", "border": "#FCA5A5", "label": "Dibatalkan"},
     # Placement Step
     "pending": {
         "bg": "#F1F5F9",
-        "text": "#64748B",
+        "text": "#617087",
         "border": "#CBD5E1",
-        "label": "Menunggu Pengiriman",
+        "label": "Menunggu",
     },
-    "scheduled": {"bg": "#E0F2FE", "text": "#0284C7", "border": "#BAE6FD", "label": "Dijadwalkan"},
+    "scheduled": {"bg": "#eff5ff", "text": "#0284C7", "border": "#BAE6FD", "label": "Dijadwalkan"},
     # Reminder Notification
     "simulated": {
-        "bg": "#EDE9FE",
-        "text": "#6D28D9",
+        "bg": "#eff3f8",
+        "text": "#50627b",
         "border": "#DDD6FE",
         "label": "Simulasi Berhasil",
     },
-    "sent": {"bg": "#DCFCE7", "text": "#15803D", "border": "#86EFAC", "label": "Terkirim"},
-    "failed": {"bg": "#FEE2E2", "text": "#B91C1C", "border": "#FCA5A5", "label": "Gagal Kirim"},
-    "missed": {"bg": "#FEF3C7", "text": "#B45309", "border": "#FDE68A", "label": "Terlewat"},
+    "sent": {"bg": "#eaf7f1", "text": "#187451", "border": "#86EFAC", "label": "Terkirim"},
+    "failed": {"bg": "#fff0f1", "text": "#aa3b44", "border": "#FCA5A5", "label": "Gagal Kirim"},
+    "missed": {"bg": "#fff6e6", "text": "#a56815", "border": "#FDE68A", "label": "Terlewat"},
     "draft": {"bg": "#F1F5F9", "text": "#475569", "border": "#CBD5E1", "label": "Draf"},
-    "published": {"bg": "#DCFCE7", "text": "#15803D", "border": "#86EFAC", "label": "Terbit"},
+    "published": {"bg": "#eaf7f1", "text": "#187451", "border": "#86EFAC", "label": "Terbit"},
+    "processing": {"bg": "#eff5ff", "text": "#416aa3", "border": "#eff5ff", "label": "Diproses"},
+    "succeeded": {"bg": "#eaf7f1", "text": "#187451", "border": "#eaf7f1", "label": "Terkirim"},
+    "abandoned": {
+        "bg": "#fff6e6",
+        "text": "#a56815",
+        "border": "#fff6e6",
+        "label": "Dijadwalkan ulang",
+    },
 }
 
 # --- Programs ---
 PROGRAMS = [
-    ("titp", "TITP (Praktek Kerja Teknis / Magang)"),
+    ("titp", "TITP (Praktik kerja teknis)"),
     ("ssw", "SSW (Tokutei Ginou / Keahlian Khusus)"),
-    ("engineer", "Engineer / Specialist in Humanities"),
+    ("engineer", "Engineer (tenaga ahli)"),
 ]
 
 PROGRAM_MAP = {k: v for k, v in PROGRAMS}

@@ -77,7 +77,7 @@ def main() -> None:
                     "-m",
                     "streamlit",
                     "run",
-                    "minori_frontend/app.py",
+                    "app.py",
                     "--server.address=127.0.0.1",
                     f"--server.port={frontend_port}",
                 ],

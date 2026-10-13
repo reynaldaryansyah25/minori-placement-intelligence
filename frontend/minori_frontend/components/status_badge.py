@@ -11,7 +11,7 @@ def get_status_badge_html(status: str | None) -> str:
     key = status.upper() if status.upper() in STATUS_COLORS else status.lower()
     config = STATUS_COLORS.get(key)
     if not config:
-        label = status.replace("_", " ").title()
+        label = "Belum tersedia"
         return f"<span class='status-pill' style='background:#F1F5F9; color:#475569; border-color:#CBD5E1;'>{label}</span>"
 
     bg = config["bg"]
@@ -23,4 +23,4 @@ def get_status_badge_html(status: str | None) -> str:
 
 def render_status_badge(status: str | None) -> None:
     """Render a standalone status badge pill."""
-    st.markdown(get_status_badge_html(status), unsafe_allow_html=True)
+    st.html(get_status_badge_html(status))

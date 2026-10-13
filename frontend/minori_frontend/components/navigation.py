@@ -1,4 +1,4 @@
-"""Navigation page definitions using Streamlit multipage navigation API."""
+"""Eight native Streamlit pages and functional cross-page navigation."""
 
 import streamlit as st
 from minori_frontend.pages.ai_vacancy_intelligence import render_ai_vacancy_page
@@ -10,57 +10,28 @@ from minori_frontend.pages.reminder_center import render_reminder_page
 from minori_frontend.pages.reports import render_reports_page
 from minori_frontend.pages.vacancies import render_vacancies_page
 
+PAGE_DEFINITIONS = [
+    (render_overview_page, "Ringkasan", "overview", "dashboard"),
+    (render_candidates_page, "Kandidat", "candidates", "group"),
+    (render_vacancies_page, "Lowongan", "vacancies", "work"),
+    (render_matching_page, "Pencocokan Kandidat", "candidate-matching", "target"),
+    (render_pipeline_page, "Alur Penempatan", "placement-pipeline", "layers"),
+    (render_reminder_page, "Pusat Pengingat", "reminder-center", "notifications"),
+    (render_ai_vacancy_page, "Analisis Lowongan", "ai-vacancy-intelligence", "description"),
+    (render_reports_page, "Laporan & Analitik", "reports", "bar_chart"),
+]
 
-def get_navigation_pages() -> list[st.Page]:
-    """Define modern multipage routing with clean URL paths and material icons."""
+
+def get_navigation_pages():
     return [
-        st.Page(
-            render_overview_page,
-            title="Overview",
-            url_path="overview",
-            icon=":material/dashboard:",
-            default=True,
-        ),
-        st.Page(
-            render_candidates_page,
-            title="Candidates",
-            url_path="candidates",
-            icon=":material/person_search:",
-        ),
-        st.Page(
-            render_vacancies_page,
-            title="Vacancies",
-            url_path="vacancies",
-            icon=":material/work:",
-        ),
-        st.Page(
-            render_matching_page,
-            title="Candidate Matching",
-            url_path="candidate-matching",
-            icon=":material/fact_check:",
-        ),
-        st.Page(
-            render_pipeline_page,
-            title="Placement Pipeline",
-            url_path="placement-pipeline",
-            icon=":material/flight_takeoff:",
-        ),
-        st.Page(
-            render_reminder_page,
-            title="Reminder Center",
-            url_path="reminder-center",
-            icon=":material/notifications:",
-        ),
-        st.Page(
-            render_ai_vacancy_page,
-            title="AI Vacancy Intelligence",
-            url_path="ai-vacancy-intelligence",
-            icon=":material/auto_awesome:",
-        ),
-        st.Page(
-            render_reports_page,
-            title="Reports & Analytics",
-            url_path="reports",
-            icon=":material/analytics:",
-        ),
+        st.Page(render, title=title, url_path=path, icon=f":material/{icon}:", default=index == 0)
+        for index, (render, title, path, icon) in enumerate(PAGE_DEFINITIONS)
     ]
+
+
+def navigate_to(path):
+    for definition, page in zip(PAGE_DEFINITIONS, get_navigation_pages(), strict=True):
+        if definition[2] == path:
+            st.switch_page(page)
+            return
+    raise ValueError("Page is not registered")

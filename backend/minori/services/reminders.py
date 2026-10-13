@@ -377,7 +377,7 @@ class ReminderService:
             message = render_notification(
                 row.template_code, candidate.full_name, row.schedule_context
             )
-            routing = self.policy.resolve_recipient(candidate.reference)
+            routing = self.policy.resolve_recipient(candidate.reference, dry_run=row.dry_run)
             self._audit(row, "reminder.claimed", now, attempt_number=row.attempt_count)
             return {
                 "notification": row,
@@ -389,7 +389,7 @@ class ReminderService:
     def recipient_routing(self, identifier):
         row = self._get(identifier)
         candidate = self.ports.candidate.get(row.candidate_id)
-        return self.policy.resolve_recipient(candidate.reference)
+        return self.policy.resolve_recipient(candidate.reference, dry_run=row.dry_run)
 
     def complete(
         self, identifier, token, *, simulated=False, error_code=None, provider_reference=None

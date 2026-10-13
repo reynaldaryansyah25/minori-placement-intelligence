@@ -1,5 +1,8 @@
 # Workflow n8n
 
+Panduan menguji workflow reminder existing dengan database terpisah dan Mailpit:
+[Reminder end-to-end](../docs/reminder_e2e.md).
+
 `n8n/backend_health.json` adalah workflow manual yang meminta `/health` pada backend
 di jaringan Docker. Tidak ada trigger terjadwal, credentials, atau proses bisnis.
 

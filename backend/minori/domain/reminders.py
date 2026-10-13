@@ -38,17 +38,25 @@ class ReminderPolicy:
     notification_delivery_mode: str = "dry_run"
     mailpit_inbox_email: str = "mailpit@minori.local"
 
-    def resolve_recipient(self, candidate_reference: str) -> dict[str, object]:
+    def resolve_recipient(
+        self, candidate_reference: str, *, dry_run: bool | None = None
+    ) -> dict[str, object]:
         clean_ref = candidate_reference.lower().replace("_", "-").strip()
         intended = f"kandidat-{clean_ref}@demo.minori.internal"
 
-        if self.demo_notification_recipient:
-            effective = self.demo_notification_recipient
-            mode = "demo_recipient"
-            allowed = True
+        if self.dry_run if dry_run is None else dry_run:
+            effective = None
+            mode = "dry_run"
+            allowed = False
         elif self.notification_delivery_mode == "mailpit":
             effective = self.mailpit_inbox_email
             mode = "mailpit"
+            allowed = True
+        elif (
+            self.demo_notification_recipient and self.notification_delivery_mode == "demo_recipient"
+        ):
+            effective = self.demo_notification_recipient
+            mode = "demo_recipient"
             allowed = True
         else:
             effective = None

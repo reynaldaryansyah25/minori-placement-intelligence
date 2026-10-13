@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-frontend = ["streamlit>=1.65,<2"]
+frontend = ["streamlit>=1.65,<2", "pandas>=3.0,<4"]
 dev = ["pytest>=9.1,<10", "pytest-cov>=7.1,<8", "ruff>=0.17,<0.18"]
 
 [tool.setuptools.packages.find]

@@ -17,6 +17,16 @@ class ApiClientError(Exception):
         self.detail = detail or message
 
 
+def read_all(fetch_page, *args, **filters):
+    """Read paginated HTTP collections without silently truncating at the API's first 100 rows."""
+    rows = []
+    while True:
+        page = fetch_page(*args, **filters, limit=100, offset=len(rows))
+        rows.extend(page)
+        if len(page) < 100:
+            return rows
+
+
 class BackendClient:
     """Robust client with connection pooling, server-side auth, and error mapping."""
 

@@ -9,7 +9,6 @@
 .ruff_cache
 .coverage
 test-results
-tests
 data/runtime
 build
 dist

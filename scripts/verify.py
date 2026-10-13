@@ -1,15 +1,17 @@
 """Run reproducible foundation checks and preserve real command results."""
 
 import json
+import os
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def main() -> None:
+def verify(directory: str) -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     if hasattr(sys.stderr, "reconfigure"):
@@ -43,10 +45,22 @@ def main() -> None:
     ]
     records = []
     seed_results = {}
+    environment = {
+        **os.environ,
+        "DATABASE_URL": "sqlite:///" + (Path(directory) / "verify.db").as_posix(),
+        "APP_ENV": "test",
+        "LLM_ENABLED": "false",
+    }
     for name, command in checks:
         print(f"Running {name}...", flush=True)
         completed = subprocess.run(
-            command, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace"
+            command,
+            cwd=ROOT,
+            env=environment,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
         )
         output = completed.stdout + completed.stderr
         (results / f"{name}.log").write_text(output, encoding="utf-8")
@@ -82,6 +96,11 @@ def main() -> None:
         encoding="utf-8",
     )
     raise SystemExit(0 if passed else 1)
+
+
+def main() -> None:
+    with tempfile.TemporaryDirectory(prefix="minori-verify-") as directory:
+        verify(directory)
 
 
 if __name__ == "__main__":

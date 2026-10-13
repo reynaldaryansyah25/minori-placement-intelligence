@@ -32,6 +32,7 @@ minori-placement-intelligence/
 │   │   └── main.py
 │   └── alembic/versions/        # Migrasi bisnis, matching, dan placement_reminders.py
 ├── frontend/
+│   ├── app.py                  # Entry point Streamlit
 │   ├── minori_frontend/         # UI dan HTTP client
 │   └── .streamlit/config.toml
 ├── workflows/n8n/backend_health.json
@@ -61,7 +62,7 @@ Python **3.12** diperlukan. Dependency langsung dideklarasikan sekali di
 | --- | --- |
 | Backend | FastAPI, Uvicorn, SQLAlchemy, Alembic, Pydantic, pydantic-settings |
 | Integrasi dan HTTP | OpenAI SDK, HTTPX |
-| Frontend extra | Streamlit |
+| Frontend extra | Streamlit, pandas (format tabel) |
 | Development extra | Pytest, pytest-cov, Ruff |
 | Build package | setuptools |
 | Infrastructure | Docker Engine, Docker Compose, image n8n |
@@ -109,7 +110,7 @@ dari direktorinya agar `.streamlit/config.toml` terbaca:
 
 ```sh
 cd frontend
-python -m streamlit run minori_frontend/app.py --server.address=127.0.0.1 --server.port=8501
+python -m streamlit run app.py --server.address=127.0.0.1 --server.port=8501
 ```
 
 Backend: [health](http://127.0.0.1:8000/health) dan

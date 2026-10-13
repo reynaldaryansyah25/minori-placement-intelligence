@@ -60,6 +60,9 @@ Perubahan scheduled_at, due_at, location, atau pembatalan meningkatkan schedule_
 Medical check-up menyimpan jadwal dan lokasi administratif; tidak ada diagnosis,
 hasil pemeriksaan, atau temuan medis.
 
+Panduan diagnosis insiden dan uji n8n/Mailpit terisolasi tersedia di
+[reminder_e2e.md](reminder_e2e.md).
+
 ## Perhitungan reminder
 
 BUSINESS_TIMEZONE default Asia/Jakarta; REMINDER_DELIVERY_TIME default 09:00.

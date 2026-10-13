@@ -23,13 +23,13 @@ class UserProfile:
 PROFILES: dict[RoleType, UserProfile] = {
     "admin": UserProfile(
         role="admin",
-        display_name="Staff Rekrutmen (Admin)",
+        display_name="Staf Rekrutmen",
         actor_reference="staff.admin",
         description="Akses penuh: matching, keputusan staf, placement, dan reminder.",
     ),
     "reviewer": UserProfile(
         role="reviewer",
-        display_name="Reviewer Eksekutif (Read-Only)",
+        display_name="Peninjau Operasional",
         actor_reference="reviewer.executive",
         description="Akses baca laporan, ranking, audit log, dan status penempatan.",
     ),
@@ -42,9 +42,7 @@ def init_auth_state(settings: "FrontendSettings") -> None:
         st.session_state.auth_initialized = True
         st.session_state.auth_role = "admin"
         default_token = (
-            settings.internal_api_token.get_secret_value()
-            if settings.internal_api_token
-            else "demo_staff_token"
+            settings.internal_api_token.get_secret_value() if settings.internal_api_token else None
         )
         st.session_state.auth_token = default_token
         st.session_state.actor_reference = PROFILES["admin"].actor_reference
@@ -80,15 +78,11 @@ def switch_demo_role(role: RoleType, settings: "FrontendSettings") -> None:
 
     if role == "admin":
         st.session_state.auth_token = (
-            settings.internal_api_token.get_secret_value()
-            if settings.internal_api_token
-            else "demo_staff_token"
+            settings.internal_api_token.get_secret_value() if settings.internal_api_token else None
         )
     else:
         st.session_state.auth_token = (
-            settings.reviewer_api_token.get_secret_value()
-            if settings.reviewer_api_token
-            else "demo_reviewer_token"
+            settings.reviewer_api_token.get_secret_value() if settings.reviewer_api_token else None
         )
 
 
@@ -109,6 +103,6 @@ def apply_custom_token(token: str, client: "BackendClient") -> bool:
         )
         st.session_state.auth_error = None
         return True
-    except Exception as exc:
-        st.session_state.auth_error = f"Token tidak valid: {exc}"
+    except Exception:
+        st.session_state.auth_error = "Akses belum dapat diverifikasi. Hubungi pengelola."
         return False

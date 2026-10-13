@@ -267,6 +267,8 @@ class PlacementService:
             placement = self.get(placement_id)
             if placement.status not in {PlacementStatus.PREPARING, PlacementStatus.IN_PROGRESS}:
                 raise BusinessConflictError("Activities require an active placement")
+            if data.scheduled_at:
+                self._require_active_candidate(placement)
             if data.scheduled_at is not None and data.scheduled_at <= now:
                 raise BusinessConflictError("New activities must be scheduled in the future")
             existing = self.ports.placement_stage.get_by_code(placement_id, data.code)
@@ -287,6 +289,13 @@ class PlacementService:
             )
             return row
 
+    def _require_active_candidate(self, placement):
+        candidate = self._require(self.ports.candidate.get(placement.candidate_id), "Candidate")
+        if candidate.status == CandidateStatus.INACTIVE:
+            raise BusinessConflictError(
+                "Cannot schedule an activity for an inactive candidate; reminders are disabled"
+            )
+
     def update_activity(self, placement_id, identifier, actor, **changes):
         now = self.clock()
         with self.transaction():
@@ -299,6 +308,8 @@ class PlacementService:
             target = changes.get("status") or row.status
             if row.status == PlacementStepStatus.PENDING and changes.get("scheduled_at"):
                 target = changes.get("status") or PlacementStepStatus.SCHEDULED
+            if target in {PlacementStepStatus.SCHEDULED, PlacementStepStatus.IN_PROGRESS}:
+                self._require_active_candidate(placement)
             validate_transition(row.status, target, ACTIVITY_TRANSITIONS)
             if row.status in {PlacementStepStatus.COMPLETED, PlacementStepStatus.CANCELLED}:
                 if all(getattr(row, key) == value for key, value in changes.items()):

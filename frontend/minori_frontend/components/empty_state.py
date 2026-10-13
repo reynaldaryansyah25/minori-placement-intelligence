@@ -1,35 +1,14 @@
-"""Clean operational empty state display."""
+"""Calm empty states with optional real actions."""
 
 import streamlit as st
+from minori_frontend.components.presentation import html, text
 
 
-def render_empty_state(
-    title: str,
-    description: str,
-    icon: str = "📁",
-    action_label: str | None = None,
-    on_action=None,
-) -> None:
-    """Render a clean, minimal empty state box without flashy illustrations."""
-    st.markdown(
-        f"""
-        <div style="
-            background: #FFFFFF;
-            border: 1px dashed #CBD5E1;
-            border-radius: 8px;
-            padding: 2.5rem 1.5rem;
-            text-align: center;
-            margin: 1rem 0;
-        ">
-            <div style="font-size: 2rem; margin-bottom: 0.5rem;">{icon}</div>
-            <div style="font-size: 1rem; font-weight: 600; color: #13263F; margin-bottom: 0.25rem;">{title}</div>
-            <div style="font-size: 0.875rem; color: #64748B; max-width: 460px; margin: 0 auto;">{description}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+def render_empty_state(title, description, icon=None, action_label=None, on_action=None):
+    html(
+        f'<div class="minori-card" style="text-align:center;padding:34px 20px">'
+        f'<h3 style="font-size:14px">{text(title)}</h3>'
+        f'<p style="font-size:12px;color:var(--muted)">{text(description)}</p></div>'
     )
-    if action_label and on_action:
-        col1, col2, col3 = st.columns([2, 1, 2])
-        with col2:
-            if st.button(action_label, use_container_width=True):
-                on_action()
+    if action_label and on_action and st.button(action_label):
+        on_action()

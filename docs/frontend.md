@@ -1,143 +1,115 @@
-# Panduan Operasional Frontend MINORI Placement Intelligence
+# Frontend MINORI Placement Intelligence
 
-Dokumen ini menjelaskan arsitektur antarmuka, design system, hierarki navigasi,
-kontrol otorisasi (RBAC), serta cara pengoperasian seluruh 8 halaman pada
-**MINORI Placement Intelligence**.
+Frontend tetap menggunakan Streamlit. Semua data dan operasi bisnis melalui
+HTTP ke FastAPI; tidak ada akses SQLite, pengganti backend, atau workflow n8n baru.
 
----
+## Referensi dan komponen
 
-## 1. Design Direction — Japanese Minimalist Enterprise
+Bahasa visual mengikuti `minori_design_reference.html` yang diberikan pengguna:
+navy `#17283f`, teal `#0f766e`, latar `#f6f8fb`, kartu putih,
+border `#e3e9f0`, radius 12 px, dan font Inter/Segoe UI dengan fallback sistem.
+Tidak ada data contoh HTML yang dimasukkan ke aplikasi.
 
-Antarmuka dibangun dengan Streamlit (Python 3.12) menggunakan filosofi desain
-**Japanese Minimalist Enterprise** yang terinspirasi dari Ashby ATS dan Greenhouse Recruiting:
-tenang, modern, fungsional, dan padat informasi (*information-dense*).
+Sidebar, header, kartu ringkasan, badge status, panel detail, diagram batang, dan
+timeline memakai komponen bersama. Form, tombol, dialog, filter, pilihan baris,
+tab, pagination, dan unduhan menggunakan widget Streamlit asli. Markup display
+kecil dirender melalui `st.html` dalam DOM aplikasi, tanpa iframe; semua teks
+dinamis di-escape. Grafik menampilkan hitungan backend, tanpa angka dekoratif.
 
-### Design Tokens
-- **Primary Navy:** `#13263F` (Header, sidebar branding, kartu judul)
-- **Primary Teal:** `#0F766E` (Aksen utama, tombol primer, metrik lolos)
-- **Main Background:** `#F5F7FA` (Latar belakang netral yang tenang)
-- **Surface / Card Background:** `#FFFFFF` (Permukaan kartu dan panel data)
-- **Primary Text:** `#1E293B` (Tipografi teks utama, kontras tinggi)
-- **Secondary Text:** `#64748B` (Keterangan, subtitle, metadata pembantu)
-- **Border:** `#E2E8F0` (Garis tepi tipis 1px, pembatas rapi)
-- **Success:** `#15803D` (Badge status Eligible, Sent, Ready, Selesai)
-- **Warning:** `#B7791F` (Badge Needs Review, Paused, Preparing, Pending)
-- **Danger:** `#B91C1C` (Badge Not Eligible, Closed, Inactive, Gagal)
+`frontend/app.py` adalah entry point. Letaknya di luar paket menghindari konflik
+auto-discovery folder `pages` dengan router `st.navigation`. Shell dan delapan
+modul halaman tetap berada di `frontend/minori_frontend/`.
 
-### Prinsip No AI-Slop
-Antarmuka menolak ornamen berlebihan:
-- Tanpa gradien neon ungu-biru atau efek glassmorphism kabur.
-- Tanpa emoji sebagai ikon navigasi utama; navigasi menggunakan Streamlit Material icons konsisten.
-- Tanpa kartu KPI raksasa kosong; setiap angka berasal langsung dari database SQLite.
-- Tanpa kalimat pemasaran bombastis; seluruh teks menggunakan Bahasa Indonesia operasional.
+## Menjalankan frontend
 
----
+Dari root repository, gunakan environment dan token server yang sudah dikonfigurasi:
 
-## 2. Struktur Modul Frontend
-
-Frontend diorganisir dalam paket `frontend/minori_frontend/` dengan pemisahan tanggung jawab yang tegas:
-
-```text
-frontend/
-├── .streamlit/
-│   └── config.toml                  # Tema Streamlit resmi (#0F766E, #F5F7FA)
-└── minori_frontend/
-    ├── app.py                       # Application shell & st.navigation entrypoint
-    ├── config.py                    # FrontendSettings (Pydantic)
-    ├── api_client.py                # HTTP client dengan error mapping & token injection
-    ├── auth.py                      # Session state RBAC & demo profile switcher
-    ├── components/                  # Komponen UI reusable
-    │   ├── candidate_profile.py     # Drawer rincian kualifikasi & pengalaman
-    │   ├── confirmation.py          # Dialog konfirmasi aksi destruktif
-    │   ├── data_table.py            # Tabel interaktif dengan st.dataframe
-    │   ├── empty_state.py           # State visual saat data kosong
-    │   ├── feedback.py              # Alert banner & technical error modal
-    │   ├── filters.py               # Bar pencarian & filter modular
-    │   ├── layout.py                # Injeksi CSS token enterprise
-    │   ├── matching_explanation.py  # Kartu rincian bobot skor (35%, 30%, 20%, 15%)
-    │   ├── metric_card.py           # Kartu KPI ringkas bergaya Ashby
-    │   ├── navigation.py            # Definisi st.Page untuk seluruh 8 halaman
-    │   ├── notification_history.py  # Detail log & pembeda dry-run vs live
-    │   ├── page_header.py           # Header judul, deskripsi, dan status koneksi
-    │   ├── placement_timeline.py    # Pipeline stepper & kartu aktivitas
-    │   └── status_badge.py          # Pil status berkode warna semantik
-    ├── pages/                       # 8 Halaman Operasional
-    │   ├── overview.py              # Operational Command Center
-    │   ├── candidates.py            # Direktori & profil kandidat
-    │   ├── vacancies.py             # Job explorer & spesifikasi lowongan
-    │   ├── candidate_matching.py    # Halaman unggulan ranking & explainability
-    │   ├── placement_pipeline.py    # Pipeline penempatan & penjadwalan
-    │   ├── reminder_center.py       # Monitoring pengingat & dry-run simulation
-    │   ├── ai_vacancy_intelligence.py # Input teks Jepang & draft lowongan manual
-    │   └── reports.py               # Analitik & ekspor CSV resmi
-    └── utils/                       # Utilitas pembantu
-        ├── constants.py             # 47 Prefektur Jepang, katalog program, bobot skor
-        ├── dates.py                 # Konversi waktu sadar zona Asia/Jakarta (WIB)
-        ├── formatting.py            # Skala skor 0-100, format yen, pembersih UUID
-        └── validation.py            # Validator formulir & rentang tanggal
+```powershell
+cd frontend
+python -m streamlit run app.py --server.address=127.0.0.1 --server.port=8501
 ```
 
----
+Menjalankan dari folder frontend memuat `.streamlit/config.toml`. Konfigurasi
+CORS dan perlindungan XSRF yang sudah ada dipertahankan. Tampilan selalu memakai
+tema terang yang sesuai referensi.
 
-## 3. Akses Role-Based Access Control (RBAC)
+Untuk menerapkan perubahan frontend saja:
 
-Aplikasi menyediakan peralihan peran langsung pada sidebar bawah:
-1. **HR Staff (Admin/Tulis):**
-   - Menggunakan `INTERNAL_API_TOKEN` server-side.
-   - Memiliki izin penuh untuk membuat, memperbarui, menyetujui match, menjadwalkan aktivitas, dan mempublikasikan lowongan.
-2. **Reviewer (Read-Only):**
-   - Menggunakan `REVIEWER_API_TOKEN` server-side.
-   - Memiliki izin membaca seluruh dasbor, peringkat, profil, dan laporan.
-   - Endpoint mutasi backend secara otomatis menolak aksi dengan status `403 Forbidden`. Frontend secara visual mengunci tombol tindakan dan menampilkan badge penanda mode tinjau.
-3. **Kustom Token Expander:**
-   - Memungkinkan penguji memasukkan token Bearer kustom untuk diverifikasi langsung ke endpoint `GET /auth/me`.
+```powershell
+docker compose build frontend
+docker compose up -d --no-deps --wait frontend
+```
 
----
+Perintah tersebut tidak membuat ulang backend atau n8n. Frontend menggunakan
+`BACKEND_BASE_URL` dan kredensial server yang sudah tersedia. Token dan pemilih
+peran tidak ditampilkan. Hak tulis pada sesi tetap membatasi tombol; backend
+memvalidasi otorisasi setiap permintaan.
 
-## 4. Panduan Operasional Per Halaman
+## Delapan halaman
 
-### 1. Overview (Dashboard Operasional)
-- **Metrik Utama:** Total Kandidat, Kandidat Siap (Ready), Lowongan Terbuka, Penempatan Aktif, Eligible Matches, dan Pengingat Menunggu.
-- **Action Center:** Menampilkan kandidat yang memerlukan verifikasi manual serta pengingat bermasalah.
-- **Jadwal Mendatang:** Tabel 7 hari ke depan untuk janji temu wawancara kerja dan medical check-up pra-keberangkatan.
-- **Riwayat Audit:** Menampilkan entri log audit transaksi terbaru dari SQLite.
+| Halaman | Operasi |
+| --- | --- |
+| Ringkasan | Metrik backend, prioritas, agenda, distribusi status, aktivitas terkini, tautan menuju halaman terkait |
+| Kandidat | Pencarian/filter, pagination, profil kualifikasi, tambah kandidat, arsip dengan konfirmasi |
+| Lowongan | Pencarian/filter, persyaratan, tambah/tutup lowongan, navigasi ke pencocokan dengan lowongan terpilih |
+| Pencocokan Kandidat | Evaluasi ulang, peringkat/semua kandidat, rincian skor dan pemeriksaan, keputusan staf, pembuatan penempatan |
+| Alur Penempatan | Pencarian/filter, timeline, daftar kegiatan, tandai selesai, penjadwalan dengan tanggal dan waktu WIB |
+| Pusat Pengingat | Filter antrean, sinkronisasi, pemulihan, simulasi, tujuan pengiriman aktual, riwayat percobaan |
+| Analisis Lowongan | Teks sumber sebagai acuan sesi, draf dari backend, penyuntingan, penyimpanan dan penerbitan draf |
+| Laporan & Analitik | Distribusi backend, evaluasi yang perlu ditinjau, unduhan CSV dengan nama dan status yang mudah dibaca |
 
-### 2. Candidates (Direktori Kandidat)
-- **Pencarian & Filter:** Cari kandidat berdasarkan nama atau referensi, filter berdasarkan program (TITP, Tokutei Ginou/SSW, Engineer), dan status kesiapan.
-- **Tabel Data:** Kolom nama, kode referensi, domisili, program, status, dan keahlian.
-- **Drawer Profil:** Membuka riwayat skor JLPT/JFT-Basic, masa berlaku sertifikasi kompetensi, riwayat pekerjaan sebelumnya, dan prefektur tujuan di Jepang.
-- **Tambah/Arsipkan Kandidat:** Form pembuatan kandidat baru dan tombol arsip (status `inactive`) dengan dialog konfirmasi.
+Ekstraksi AI otomatis belum memiliki endpoint use case pada backend saat ini.
+Tidak ada tombol ekstraksi yang berpura-pura bekerja. Peninjauan manual,
+penyimpanan, penyuntingan, dan penerbitan draf merupakan operasi API yang nyata.
+Teks sumber hanya menjadi acuan dalam sesi; dokumen asli tetap perlu diarsipkan
+oleh tim.
 
-### 3. Vacancies (Lowongan Kerja Jepang)
-- **Job Explorer:** Daftar lowongan aktif dengan kuota penempatan, lokasi prefektur (Tokyo, Osaka, Aichi, Ibaraki, dsb.), dan sektor industri.
-- **Detail Kebutuhan:** Menampilkan syarat bahasa Jepang alternatif, keahlian wajib, sertifikasi OTIT/SSW yang diminta, dan batas waktu lamaran.
-- **Aksi Cepat:** Tombol "Lihat Kandidat Cocok" mengarahkan pengguna langsung ke halaman Candidate Matching dengan lowongan yang sudah terpilih.
+## Perilaku tampilan
 
-### 4. Candidate Matching (Halaman Unggulan)
-- **Peringkat Deterministik:** Menampilkan kandidat lolos peringkat teratas berdasarkan evaluasi multi-kriteria backend.
-- **Rincian Skor Bobot Nyata:**
-  - Kemampuan Bahasa Jepang: 35%
-  - Pengalaman Kerja Terkait: 30%
-  - Sertifikasi & Kualifikasi Tambahan: 20%
-  - Kesiapan & Preferensi Lokasi: 15%
-- **Explainability Engine:** Penjelasan rinci kriteria yang terpenuhi dan kriteria yang belum lolos (*reason codes*). Kandidat `NEEDS_REVIEW` dan `NOT_ELIGIBLE` tidak diberi skor kelulusan palsu.
-- **Keputusan Staf & Pembuatan Penempatan:** Tombol setujui (*Approve*) atau tolak (*Reject*), dan tombol langsung untuk membuat catatan penempatan resmi jika memenuhi kuota dan kelayakan.
+- Identifier, UUID, kode template, kode error, referensi internal dan token tidak
+  dirender untuk staf. Identifier tetap digunakan internal untuk memanggil API.
+- Tabel menampilkan sepuluh baris per halaman; riwayat pendek memakai lima baris.
+  Pemilihan baris tetap menunjuk record yang benar setelah berpindah halaman.
+- Koleksi API diambil per 100 catatan sampai selesai, sehingga laporan tidak
+  berhenti pada halaman pertama API. Seluruh angka tetap bersumber dari backend.
+- Kolom status diberi warna melalui pandas Styler yang didukung tabel Streamlit.
+  pandas sudah ada dalam constraints dan sekarang menjadi dependency frontend
+  langsung karena dipakai untuk format tabel.
+- CSV mengganti UUID dengan nama kandidat/posisi, memakai label Indonesia, dan
+  melindungi sel teks yang dapat dianggap formula spreadsheet.
+- Error layanan tampil sebagai langkah yang dapat dilakukan staf, tanpa raw
+  response, stack trace, atau detail konfigurasi.
+- Kandidat nonaktif dan penempatan terminal tidak dapat dijadwalkan lewat form.
+  Penyelesaian aktivitas tersedia setelah waktu kegiatan dimulai.
+- Pada layar sempit, panel menjadi satu kolom, kartu ringkasan menjadi dua kolom,
+  dan menu native menyediakan akses ke seluruh halaman. Tabel/timeline dapat
+  digeser di dalam komponennya tanpa melebarkan halaman.
 
-### 5. Placement Pipeline
-- **Visual Candidate Pipeline:** Stepper tahapan: *Wawancara Employer* ➔ *Medical Check-up* ➔ *Dokumen & COE* ➔ *Orientasi Pra-Terbang* ➔ *Keberangkatan Jepang*.
-- **Penjadwalan Aktivitas:** Staf dapat menjadwalkan wawancara dan MCU dengan waktu sadar zona WIB.
-- **Privasi Medis Terjaga:** Model dan form hanya menyimpan status jadwal MCU tanpa menyimpan data hasil medis, rekam medis, atau diagnosis kandidat.
+## Verifikasi 14 Oktober 2026
 
-### 6. Reminder Center
-- **Monitoring Antrean Notifikasi:** Status pil: `pending`, `simulated`, `sent`, `failed`, `missed`.
-- **Pembedaan Tegas Simulasi vs Pengiriman Nyata:** Status `simulated` secara eksplisit ditandai sebagai uji coba kalender dry-run, bukan pengiriman nyata.
-- **Aksi Operasional:** Tombol sinkronisasi antrean, pemulihan sewa (*recover lease*), dan eksekusi simulasi dry-run secara terkontrol.
+`python scripts/verify.py` selesai dengan exit 0: **289 tes lulus**, pip check,
+Ruff, format, migrasi/check drift, seed idempoten, integritas database, matching,
+dan verifikasi reminder. Database verifikasi bersifat sementara. Provider LLM
+nyata tidak dipanggil.
 
-### 7. AI Vacancy Intelligence
-- **Input Teks Lowongan Asli:** Area masukan untuk menempel teks lowongan berbahasa Jepang dari perusahaan penerima.
-- **Status Integrasi AI:** Menampilkan pemberitahuan transparan bahwa integrasi ekstraksi AI otomatis saat ini menunggu penyelesaian endpoint 9Router backend.
-- **Alur Draf Lowongan Manual:** Staf dapat menyunting seluruh atribut draf pekerjaan (kuota, prefektur, syarat bahasa) secara terstruktur, menyimpannya ke database sebagai `draft`, dan mempublikasikannya menjadi lowongan resmi (`open`) melalui tombol persetujuan manusia.
+Regression tests frontend menggunakan HTTP transport palsu, bukan data aplikasi
+live. Cakupannya meliputi delapan halaman, pagination dan identitas record,
+pencarian tanpa hasil, escaping teks backend, penyamaran error, pembatasan akses
+baca, koleksi lebih dari 100 catatan, ekspor CSV, serta kontrak API simulasi dan
+penyimpanan draf.
 
-### 8. Reports & Analytics
-- **Distribusi Kategori:** Grafik distribusi status kandidat, sebaran sektor pekerjaan, dan ringkasan kendala kualifikasi yang paling sering belum terpenuhi.
-- **Ekspor Dokumen CSV:** Menyediakan tombol unduh CSV resmi berstandar RFC 4180 untuk data kandidat, lowongan, dan notifikasi.
+Pemeriksaan browser langsung dilakukan pada desktop (termasuk viewport
+1440 × 1000) dan **seluruh delapan halaman pada mobile 390 × 819**.
+Tidak ditemukan exception UI, HTML mentah, atau overflow horizontal pada halaman.
+Navigasi sidebar/menu, drawer mobile, dan tampilan tabel/panel diperiksa langsung.
+Bukti screenshot dan pengukuran DOM tersimpan lokal dalam `test-results/`
+yang tidak masuk Git.
+
+Smoke HTTP melalui `scripts/smoke_test.py` juga lulus (exit 0) dengan database uji
+terpisah yang dimigrasikan lebih dahulu: backend health OK, Streamlit health OK,
+dan halaman frontend HTTP 200. Percobaan awal wrapper smoke menemukan file SQLite
+terkunci saat cleanup Windows; pengulangan dengan direktori pengujian terisolasi
+yang dipertahankan sebagai artefak selesai tanpa error. Database demo tidak disentuh.
+
+`docker compose config --quiet` lulus. Image frontend dibangun dan hanya layanan
+frontend dibuat ulang; backend, n8n, dan layanan pengujian reminder tetap berjalan.

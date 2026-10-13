@@ -1,0 +1,38 @@
+# Additive test services. No persistent backend/n8n volumes are mounted here.
+services:
+  backend-reminder-test:
+    image: minori-reminder-test
+    build:
+      context: .
+      target: reminder-test
+    environment:
+      APP_ENV: test
+      DATABASE_URL: sqlite:////app/data/runtime/reminder-test.db
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?Configure INTERNAL_API_TOKEN first}
+      LLM_ENABLED: "false"
+      BUSINESS_TIMEZONE: Asia/Jakarta
+      REMINDER_DELIVERY_TIME: "09:00"
+      NOTIFICATION_DRY_RUN: ${REMINDER_TEST_DRY_RUN:-true}
+      NOTIFICATION_DELIVERY_MODE: mailpit
+      MAILPIT_INBOX_EMAIL: mailpit@minori.local
+      DEMO_NOTIFICATION_RECIPIENT: ""
+      NOTIFICATION_RETRY_BASE_SECONDS: 1
+      NOTIFICATION_RETRY_MAX_SECONDS: 2
+      NOTIFICATION_LEASE_SECONDS: 10
+    tmpfs:
+      - /app/data/runtime:uid=10001,gid=10001,mode=0700
+    ports:
+      - "127.0.0.1:18000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+    depends_on:
+      mailpit-reminder-test:
+        condition: service_started
+
+  mailpit-reminder-test:
+    image: axllent/mailpit@sha256:94f6b70c1436defae6799d9ac7ff0eeff9540465b842026d5cdb018f1c0234ea
+    ports:
+      - "127.0.0.1:18025:8025"

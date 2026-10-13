@@ -39,6 +39,8 @@ from pydantic import SecretStr
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError
 
+from scripts.prepare_reminder_demo import prepare_demo
+
 ROOT = Path(__file__).resolve().parents[2]
 NOW = datetime(2026, 10, 13, 3, 0, tzinfo=UTC)
 TOKEN = "test-only-internal-token-" + "x" * 40
@@ -638,6 +640,136 @@ def test_inactive_candidate_invalidates_due_reminders(scenario):
         provide_repositories(session).candidate.archive(scenario.candidate.id)
     assert scenario.call("reminder", "due") == []
     assert scenario.call("reminder", "get", reminder.id).status == NotificationStatus.CANCELLED
+
+
+def test_inactive_candidate_schedule_fails_explicitly_without_partial_write(client, scenario):
+    placement = scenario.place()
+    with scenario.database.session_factory.begin() as session:
+        provide_repositories(session).candidate.archive(scenario.candidate.id)
+    response = client.post(
+        f"/placements/{placement.id}/activities",
+        headers={"Authorization": "Bearer " + TOKEN},
+        json={
+            "actor_reference": "staff.synthetic",
+            "code": "INTERVIEW_UJI_H3_01",
+            "step_type": "interview",
+            "sequence_number": 1,
+            "scheduled_at": (NOW + timedelta(days=3)).isoformat(),
+        },
+    )
+    assert response.status_code == 409
+    assert "inactive candidate" in response.json()["detail"]
+    assert scenario.call("placement", "activities", placement.id) == []
+    assert scenario.call("reminder", "list", placement_id=placement.id) == []
+
+
+def test_inactive_candidate_pending_activity_cannot_be_scheduled(scenario):
+    placement = scenario.place()
+    activity = scenario.call(
+        "placement",
+        "create_activity",
+        placement.id,
+        PlacementStageData(
+            placement_id=placement.id,
+            code="INTERVIEW_PENDING",
+            step_type=PlacementStepType.INTERVIEW,
+            sequence_number=1,
+        ),
+        "staff.synthetic",
+    )
+    with scenario.database.session_factory.begin() as session:
+        provide_repositories(session).candidate.archive(scenario.candidate.id)
+    with pytest.raises(BusinessConflictError, match="inactive candidate"):
+        scenario.call(
+            "placement",
+            "update_activity",
+            placement.id,
+            activity.id,
+            "staff.synthetic",
+            scheduled_at=NOW + timedelta(days=3),
+        )
+    assert (
+        scenario.call("placement", "activities", placement.id)[0].status
+        == PlacementStepStatus.PENDING
+    )
+    assert scenario.call("reminder", "list", placement_id=placement.id) == []
+
+
+def test_two_due_reminders_created_atomically_without_generate(client, scenario):
+    placement = scenario.place()
+    headers = {"Authorization": "Bearer " + TOKEN}
+    for sequence, (kind, days) in enumerate((("interview", 3), ("medical_check", 1)), 1):
+        response = client.post(
+            f"/placements/{placement.id}/activities",
+            headers=headers,
+            json={
+                "actor_reference": "staff.synthetic",
+                "code": kind.upper(),
+                "step_type": kind,
+                "sequence_number": sequence,
+                "scheduled_at": (NOW + timedelta(days=days)).isoformat(),
+            },
+        )
+        assert response.status_code == 200
+    rows = client.get(
+        "/reminders", headers=headers, params={"placement_id": str(placement.id)}
+    ).json()
+    assert {row["template_code"] for row in rows} == {"interview_h3", "medical_h1"}
+    assert all(row["status"] == "pending" for row in rows)
+    assert all(
+        datetime.fromisoformat(row["scheduled_at"]) <= NOW < datetime.fromisoformat(row["event_at"])
+        for row in rows
+    )
+    due = client.get("/internal/reminders/due", headers=headers).json()
+    assert {row["id"] for row in due} == {row["id"] for row in rows}
+
+
+def test_demo_preparation_preserves_existing_records_and_refuses_reuse(client, scenario):
+    placement, activity, reminder = scenario.schedule()
+    client.headers["Authorization"] = "Bearer " + TOKEN
+    demo = prepare_demo(client, "ISOLATED01", NOW)
+    assert demo["due_count"] == 2
+    assert demo["placement_id"] != str(placement.id)
+    assert scenario.call("placement", "get", placement.id) == placement
+    assert scenario.call("placement", "activities", placement.id) == [activity]
+    assert scenario.call("reminder", "get", reminder.id) == reminder
+    with pytest.raises(ValueError, match="already exists"):
+        prepare_demo(client, "ISOLATED01", NOW)
+    assert len(scenario.call("reminder", "list")) == 3
+
+
+def test_sync_failure_rolls_back_activity(scenario, monkeypatch):
+    placement = scenario.place()
+    with scenario.database.session_factory() as session:
+        service, reminders = scenario.services(session)
+
+        def fail(*args, **kwargs):
+            raise RuntimeError("Synthetic synchronization failure")
+
+        monkeypatch.setattr(reminders, "sync_activity", fail)
+        with pytest.raises(RuntimeError, match="synchronization"):
+            service.create_activity(
+                placement.id,
+                PlacementStageData(
+                    placement_id=placement.id,
+                    code="INTERVIEW",
+                    step_type=PlacementStepType.INTERVIEW,
+                    sequence_number=1,
+                    status=PlacementStepStatus.SCHEDULED,
+                    scheduled_at=NOW + timedelta(days=3),
+                ),
+                "staff.synthetic",
+            )
+    assert scenario.call("placement", "activities", placement.id) == []
+    assert scenario.call("reminder", "list", placement_id=placement.id) == []
+
+
+def test_routing_uses_persisted_notification_mode(scenario):
+    _, _, reminder = scenario.schedule()
+    scenario.policy = replace(scenario.policy, dry_run=False, notification_delivery_mode="mailpit")
+    claim = scenario.call("reminder", "claim", reminder.id)
+    assert claim["recipient_routing"]["routing_mode"] == "dry_run"
+    assert claim["recipient_routing"]["delivery_allowed"] is False
 
 
 def test_pending_activity_can_be_scheduled_then_cannot_start_early(scenario):

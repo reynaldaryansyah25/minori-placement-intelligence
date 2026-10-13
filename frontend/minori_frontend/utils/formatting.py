@@ -29,10 +29,14 @@ def format_status_label(status: str | None) -> str:
     """Get clean domain label from status code."""
     if not status:
         return "—"
-    config = STATUS_COLORS.get(status) or STATUS_COLORS.get(status.lower())
+    config = (
+        STATUS_COLORS.get(status)
+        or STATUS_COLORS.get(status.lower())
+        or STATUS_COLORS.get(status.upper())
+    )
     if config:
         return config["label"]
-    return status.replace("_", " ").title()
+    return "Belum tersedia"
 
 
 def truncate_text(text: str | None, max_length: int = 40) -> str:
