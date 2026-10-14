@@ -189,3 +189,6 @@ Panduan lebih lanjut: [panduan frontend](docs/frontend.md),
 [operasional](docs/operations.md), dan [pedoman pengembangan](AGENTS.md).
 
 Panduan AI operasional, demo profesional, dan konfigurasi workflow n8n: [AI operations](docs/ai_operations.md).
+
+Persiapan frontend publik dengan login reviewer, Tailscale Funnel, dan prosedur
+mematikan akses: [demo publik Windows](docs/public_demo.md).

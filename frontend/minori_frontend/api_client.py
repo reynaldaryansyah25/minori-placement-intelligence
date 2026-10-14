@@ -37,6 +37,11 @@ class BackendClient:
 
     def _headers(self, token: str | None = None) -> dict[str, str]:
         headers = {"Accept": "application/json"}
+        if self._settings.public_reviewer_mode:
+            headers["Authorization"] = (
+                "Bearer " + self._settings.reviewer_api_token.get_secret_value()
+            )
+            return headers
         # Read token passed explicitly, or from session_state if available, or settings
         chosen_token = token
         if not chosen_token:
@@ -53,7 +58,29 @@ class BackendClient:
             headers["Authorization"] = f"Bearer {chosen_token}"
         return headers
 
-    def _request(
+    def _request(self, method: str, path: str, **kwargs) -> Any:
+        if not self._settings.public_reviewer_mode:
+            return self._transport_request(method, path, **kwargs)
+        import streamlit as st
+
+        from minori_frontend.public_auth import session_valid
+
+        if not session_valid(st.session_state, self._settings):
+            raise ApiClientError(401, "Silakan masuk kembali untuk membuka demo.")
+        if method != "GET" or path.startswith("/internal/"):
+            raise ApiClientError(403, "Demo publik hanya menyediakan akses baca.")
+        from minori_frontend.public_data import PublicDemoData
+
+        if not hasattr(self, "_public_data"):
+            self._public_data = PublicDemoData(self._transport_request)
+        return self._public_data.request(path, kwargs.get("params"))
+
+    def verify_public_reviewer(self):
+        if not self._settings.public_reviewer_mode:
+            raise ApiClientError(403, "Akses peninjau publik tidak diaktifkan.")
+        return self._transport_request("GET", "/auth/me")
+
+    def _transport_request(
         self,
         method: str,
         path: str,

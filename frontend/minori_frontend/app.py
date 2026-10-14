@@ -3,7 +3,13 @@
 import streamlit as st
 
 from minori_frontend.api_client import BackendClient
-from minori_frontend.auth import get_profile, init_auth_state
+from minori_frontend.auth import (
+    get_profile,
+    init_auth_state,
+    public_session_watchdog,
+    render_public_logout,
+    require_public_login,
+)
 from minori_frontend.components.layout import apply_theme
 from minori_frontend.components.navigation import get_navigation_pages
 from minori_frontend.components.presentation import html, text
@@ -15,13 +21,21 @@ def main() -> None:
     st.set_page_config(
         page_title="MINORI Placement Intelligence", layout="wide", initial_sidebar_state="auto"
     )
-    settings = FrontendSettings()
+    try:
+        settings = FrontendSettings()
+    except Exception:
+        st.error("Konfigurasi akses aplikasi belum tersedia. Hubungi pengelola.")
+        st.stop()
     init_auth_state(settings)
+    require_public_login(settings)
+    if settings.public_reviewer_mode:
+        public_session_watchdog(settings)
     apply_theme()
     client = BackendClient(settings)
     pages = get_navigation_pages()
     nav = st.navigation(pages, position="hidden")
     with st.sidebar:
+        render_public_logout(settings)
         html(
             '<div class="brand"><div class="brand-mark">M</div><div>'
             '<div class="brand-title">MINORI Group</div>'

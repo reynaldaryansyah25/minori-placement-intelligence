@@ -4,6 +4,7 @@ import streamlit as st
 from minori_frontend.components.data_table import render_interactive_table
 from minori_frontend.components.presentation import detail_grid, section
 from minori_frontend.components.status_badge import render_status_badge
+from minori_frontend.config import FrontendSettings
 from minori_frontend.utils.dates import format_datetime_id
 from minori_frontend.utils.labels import TEMPLATE_LABELS
 
@@ -44,7 +45,9 @@ def render_reminder_details(notification, attempts, routing=None):
             )
         )
     with st.expander("Tujuan pengiriman", expanded=True):
-        if routing is None:
+        if FrontendSettings().public_reviewer_mode:
+            st.caption("Tujuan dan isi email hanya tersedia bagi staf.")
+        elif routing is None:
             st.caption("Informasi tujuan pengiriman belum tersedia.")
         elif not routing.get("delivery_allowed"):
             st.info("Mode simulasi: tidak ada email yang dikirim.")

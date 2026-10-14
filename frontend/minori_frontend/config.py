@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 
-from pydantic import AnyHttpUrl, Field, SecretStr
+from pydantic import AnyHttpUrl, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(
@@ -21,3 +21,29 @@ class FrontendSettings(BaseSettings):
     internal_api_token: SecretStr | None = None
     reviewer_api_token: SecretStr | None = None
     demo_mode: bool = True
+    public_reviewer_mode: bool = False
+    public_demo_username: SecretStr | None = None
+    public_demo_password_hash: SecretStr | None = None
+    public_session_idle_seconds: int = Field(default=900, ge=30, le=3600)
+    public_session_max_seconds: int = Field(default=3600, ge=60, le=28800)
+    public_login_max_attempts: int = Field(default=5, ge=2, le=10)
+    public_login_window_seconds: int = Field(default=300, ge=30, le=3600)
+    public_login_lockout_seconds: int = Field(default=300, ge=30, le=3600)
+
+    @model_validator(mode="after")
+    def isolate_public_credentials(self):
+        if self.public_reviewer_mode:
+            # Fail closed even if an operator accidentally injects an admin credential.
+            if self.internal_api_token is not None:
+                raise ValueError("Frontend publik tidak boleh menerima kredential administrator.")
+            if (
+                not self.reviewer_api_token
+                or not self.public_demo_username
+                or not self.public_demo_password_hash
+            ):
+                raise ValueError("Konfigurasi autentikasi demo publik belum lengkap.")
+            from minori_frontend.public_auth import valid_password_hash
+
+            if not valid_password_hash(self.public_demo_password_hash.get_secret_value()):
+                raise ValueError("Konfigurasi autentikasi demo publik belum valid.")
+        return self

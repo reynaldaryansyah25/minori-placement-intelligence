@@ -55,6 +55,7 @@ def source_controls(client):
         "Upload dokumen",
         type=["pdf", "docx", "xlsx", "csv", "txt"],
         max_upload_size=5,
+        disabled=not is_admin(),
         help="Maksimal 5 MB. Excel/CSV: satu lembar, judul kolom dan maksimal 100 baris.",
     )
     if upload and st.button("Pratinjau dokumen", disabled=not is_admin()):

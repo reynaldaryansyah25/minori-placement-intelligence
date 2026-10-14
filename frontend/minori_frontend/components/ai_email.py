@@ -5,9 +5,12 @@ from uuid import uuid4
 import streamlit as st
 from minori_frontend.auth import is_admin
 from minori_frontend.components.feedback import show_api_error, show_success
+from minori_frontend.config import FrontendSettings
 
 
 def render_email_actions(client, reminder, routing):
+    if FrontendSettings().public_reviewer_mode:
+        return
     if not reminder.get("managed") or reminder.get("template_code") not in {
         "interview_h3",
         "medical_h1",

@@ -1,0 +1,45 @@
+# Standalone addition to the existing project/network; never recreates backend or staff services.
+name: minori-placement-intelligence
+services:
+  frontend-public:
+    build:
+      context: .
+      target: frontend
+    environment:
+      PUBLIC_REVIEWER_MODE: "true"
+      BACKEND_BASE_URL: http://backend:8000
+      HTTP_TIMEOUT_SECONDS: "30"
+      REVIEWER_API_TOKEN: ${REVIEWER_API_TOKEN:?Configure the existing read-only backend token}
+      PUBLIC_DEMO_USERNAME: ${PUBLIC_DEMO_USERNAME:?Run python scripts/setup_public_demo.py}
+      PUBLIC_DEMO_PASSWORD_HASH: ${PUBLIC_DEMO_PASSWORD_HASH:?Run python scripts/setup_public_demo.py}
+      PUBLIC_SESSION_IDLE_SECONDS: ${PUBLIC_SESSION_IDLE_SECONDS:-900}
+      PUBLIC_SESSION_MAX_SECONDS: ${PUBLIC_SESSION_MAX_SECONDS:-3600}
+      PUBLIC_LOGIN_MAX_ATTEMPTS: ${PUBLIC_LOGIN_MAX_ATTEMPTS:-5}
+      PUBLIC_LOGIN_WINDOW_SECONDS: ${PUBLIC_LOGIN_WINDOW_SECONDS:-300}
+      PUBLIC_LOGIN_LOCKOUT_SECONDS: ${PUBLIC_LOGIN_LOCKOUT_SECONDS:-300}
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"
+      STREAMLIT_BROWSER_SERVER_ADDRESS: ${PUBLIC_DEMO_HOST:-localhost}
+      STREAMLIT_CLIENT_TOOLBAR_MODE: viewer
+      STREAMLIT_CLIENT_SHOW_ERROR_DETAILS: "none"
+      STREAMLIT_SERVER_ENABLE_CORS: "true"
+      STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION: "true"
+      STREAMLIT_SERVER_ENABLE_STATIC_SERVING: "false"
+      STREAMLIT_SERVER_FILE_WATCHER_TYPE: none
+      STREAMLIT_SERVER_MAX_UPLOAD_SIZE: "5"
+    ports:
+      - "127.0.0.1:8502:8501"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=5)"]
+      interval: 15s
+      timeout: 6s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:uid=10001,gid=10001,mode=0700,size=128m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128

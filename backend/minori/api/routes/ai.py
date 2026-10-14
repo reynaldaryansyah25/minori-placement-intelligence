@@ -103,18 +103,30 @@ async def preview(staff: Staff, file: Annotated[UploadFile, File()]):
         await file.close()
 
 
-@router.post("/ai/vacancies/analyze", response_model=VacancyAnalysis)
+@router.post(
+    "/ai/vacancies/analyze",
+    response_model=VacancyAnalysis,
+    dependencies=[Depends(require_staff_access)],
+)
 def analyze(request: TextRequest, service: Ai, staff: Staff):
     return ai_invoke(service.analyze, request.text)
 
 
-@router.post("/ai/vacancies/batch", response_model=list[VacancyAnalysis])
+@router.post(
+    "/ai/vacancies/batch",
+    response_model=list[VacancyAnalysis],
+    dependencies=[Depends(require_staff_access)],
+)
 def batch(request: BatchRequest, service: Ai, staff: Staff):
     # No writes until every selected source has a valid result; at most five calls.
     return [ai_invoke(service.analyze, text) for text in request.texts]
 
 
-@router.post("/ai/matching/explanation", response_model=MatchingAiRead)
+@router.post(
+    "/ai/matching/explanation",
+    response_model=MatchingAiRead,
+    dependencies=[Depends(require_staff_access)],
+)
 def explain(request: MatchingAiRequest, service: Ai, staff: Staff):
     return ai_invoke(service.explain, request.candidate_id, request.vacancy_id)
 
@@ -132,7 +144,11 @@ def prepare_activity_email(placement_id: UUID, activity_id: UUID, service: Remin
     return invoke(service.prepare_activity_email, placement_id, activity_id)
 
 
-@router.post("/reminders/{notification_id}/email/draft", response_model=EmailPreview)
+@router.post(
+    "/reminders/{notification_id}/email/draft",
+    response_model=EmailPreview,
+    dependencies=[Depends(require_staff_access)],
+)
 def email_draft(notification_id: UUID, service: Reminder, gateway: Gateway, staff: Staff):
     return ai_invoke(service.draft_email, notification_id, gateway)
 
