@@ -61,7 +61,7 @@ Medical check-up menyimpan jadwal dan lokasi administratif; tidak ada diagnosis,
 hasil pemeriksaan, atau temuan medis.
 
 Panduan diagnosis insiden dan uji n8n/Mailpit terisolasi tersedia di
-[reminder_e2e.md](reminder_e2e.md).
+[panduan AI/n8n](ai_operations.md).
 
 ## Perhitungan reminder
 
@@ -197,6 +197,6 @@ docker compose run --rm --no-deps backend python scripts/verify_reminders.py
 docker compose exec -T backend python scripts/reminder_worker.py --base-url http://127.0.0.1:8000 --generate --simulate
 ```
 
-Kedua perintah merupakan verifikasi lokal, bukan deployment. Kontrak endpoint ada
-di [API](api.md), migrasi di [database](database.md), bukti eksekusi di
-[hasil pengujian](../test-results/verification.md).
+Kedua perintah merupakan verifikasi lokal, bukan deployment. Kontrak endpoint tersedia melalui Swagger UI FastAPI (`http://localhost:8000/docs`),
+migrasi dijelaskan dalam [database](database.md), dan perintah di atas dapat
+digunakan untuk mengulang verifikasi.

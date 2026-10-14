@@ -163,38 +163,8 @@ Referensi resmi: [Tailscale Funnel CLI](https://tailscale.com/docs/reference/tai
 [Python scrypt](https://docs.python.org/3.12/library/hashlib.html#hashlib.scrypt),
 [konteks sesi Streamlit](https://docs.streamlit.io/develop/api-reference/caching-and-state/st.context).
 
-## Hasil verifikasi 14 Oktober 2026
+## Memeriksa deployment
 
-- Docker: `python scripts/verify.py` menyelesaikan seluruh 11 pemeriksaan dengan
-  sukses. **363 tes lulus** dalam 261,00 detik pada image final, termasuk seluruh regresi existing,
-  login publik, timeout, isolasi role/token, filter data, dan RBAC seluruh operasi tulis.
-- Ruff lint/format serta konfigurasi Compose utama dan publik lulus.
-- Verifier final memakai scrypt N=131072, r=8, p=1. Sebanyak 19 tes autentikasi
-  terarah juga lulus pada host. Login nyata pada container sehat tanpa restart/OOM.
-- Handshake WebSocket dengan origin HTTPS Tailscale yang dikonfigurasi diterima;
-  origin asing ditolak 403 tanpa menonaktifkan CORS/XSRF. Pemeriksaan desktop 1440
-  dan mobile 390 piksel tidak menunjukkan overflow halaman.
-- Preflight runtime membuktikan **32 endpoint mutasi** menolak reviewer dan pengunjung
-  anonim. Role admin lokal tetap benar dan kedua frontend sehat. Tidak ada mutasi
-  ber-token admin yang dilakukan oleh preflight.
-- Browser nyata: deep link anonim hanya menampilkan login; password salah ditolak;
-  akun sah membuka dashboard reviewer dan kedelapan halaman. Kontrol operasi staf
-  tidak dapat digunakan, kontak/isi email tidak ditampilkan, dan hanya seed sintetis
-  terverifikasi yang muncul.
-- Uji browser terisolasi pada port sementara 18502 membuktikan lockout lintas dua tab,
-  login berhasil setelah lockout selesai, serta dashboard otomatis kembali ke login
-  setelah sesi idle kedaluwarsa. Container sementara telah dihapus.
-- Listener 9Router dibatasi ke localhost dengan izin pengguna. Discovery model host
-  dan Docker tetap berhasil menggunakan model existing; tidak ada penggantian model
-  atau kredensial. Tailscale sudah terpasang dan aktif pada tailnet, tetapi
-  `tailscale funnel status` masih **No serve config**.
-- Pembuatan katalog awal sempat mengikuti konfigurasi Alembic lokal dan menambahkan
-  kolom migrasi pada `data/runtime/minori.db`. Kolom baru dipastikan kosong, perubahan
-  dikembalikan melalui downgrade yang dijaga, dan fingerprint seluruh baris bisnis,
-  foreign key, serta integritas diverifikasi. Revisi semula `placement_reminders`
-  telah dipulihkan. Database demo persisten Docker tidak terkena; tidak ada reset data.
+Jalankan `scripts/verify_public_demo.py` setelah recreate service publik. Uji dari browser anonim dan perangkat di jaringan lain: halaman login harus muncul lebih dahulu, endpoint mutasi harus ditolak, dan tampilan reviewer tidak boleh menampilkan data kontak atau isi email.
 
-Log/bukti lokal versi final berada di `test-results/public-docker-final/`,
-`test-results/public-runtime-preflight.log`, dan screenshot `test-results/public-*.jpg`;
-semuanya diabaikan Git. Pengujian HTTPS internet melalui Funnel sengaja belum
-dijalankan karena aktivasi harus dilakukan pengelola secara manual.
+Laporan publik dan screenshot yang dikirim kepada reviewer dirangkum dalam **satu dokumen PDF submission**, bukan disimpan sebagai log investigasi dalam repository. Prosedur berhenti dan rotasi kredensial berada pada bagian sebelumnya.

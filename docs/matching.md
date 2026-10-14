@@ -161,4 +161,5 @@ docker compose exec -T backend python scripts/verify_matching.py --base-url http
 Script memakai fixture 8 kandidat/5 lowongan yang belum disunting, menjalankan
 evaluasi dua kali, memeriksa hasil/ID, serta detail/explanation/ranking lewat HTTP.
 Dibatasi development/test. Perubahan fixture yang disengaja membutuhkan pembaruan
-ekspektasi. Lihat [API](api.md) dan [hasil verifikasi](../test-results/verification.md).
+ekspektasi. Kontrak API dapat diperiksa melalui `http://localhost:8000/docs`; hasil
+verifikasi dapat direproduksi dengan perintah di atas.
