@@ -63,7 +63,7 @@ Adapter evaluation melakukan append/read tanpa commit, sementara service memakai
 satu transaksi untuk batch dan penggantian aggregate beserta recompute. API hanya
 memvalidasi transport, memanggil service, dan menerjemahkan error HTTP.
 Evaluasi tersimpan terpisah dari Match staf. Ranking membaca data/waktu terkini;
-GET tidak menulis history. Lihat [algoritma](matching.md) dan [API](api.md).
+GET tidak menulis history. Lihat [algoritma](matching.md); kontrak API tersedia melalui Swagger UI FastAPI pada `http://localhost:8000/docs`.
 
 PlacementService menerima approval staf eksplisit serta memvalidasi kuota dan
 transisi. ReminderService menghasilkan intent, mengelola lease/retry, dan memproses
@@ -86,7 +86,7 @@ Frontend diimplementasikan dengan **Python 3.12 + Streamlit** multi-page shell
   stepper visual pipeline, status pills, filter bars, alert dialogs).
 - `pages/`: 8 halaman operasional independen yang hanya mengakses backend via HTTP,
   tanpa akses langsung ke SQLite atau model ORM backend (diverifikasi oleh uji batas arsitektur).
-Detail operasional dan antarmuka didokumentasikan dalam [panduan frontend](frontend.md).
+Cara menjalankan dan daftar fitur tersedia di [README](../README.md).
 
 Acuan: [router modular FastAPI](https://fastapi.tiangolo.com/tutorial/bigger-applications/),
 [SQLite SQLAlchemy](https://docs.sqlalchemy.org/en/20/dialects/sqlite.html),

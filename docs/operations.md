@@ -108,7 +108,7 @@ Script verifikasi menjalankan server HTTP/database sementara terisolasi, membukt
 alur lengkap, dan menghentikannya setelah selesai. Worker memakai API backend yang
 sudah berjalan serta token dari environment. Lease recovery berjalan ketika
 generate/claim/recover/due dipanggil; tidak ada dispatcher background saat startup.
-Lihat [kebijakan reminder](placements_reminders.md) dan [API](api.md).
+Lihat [kebijakan reminder](placements_reminders.md) dan Swagger UI FastAPI (`http://localhost:8000/docs`).
 
 ## Operasional Frontend Streamlit
 
@@ -136,7 +136,7 @@ docker compose up -d --build
 - File `.env` memuat `INTERNAL_API_TOKEN` (Admin/Tulis) dan `REVIEWER_API_TOKEN` (Reviewer Read-Only).
 - Pada sidebar bawah frontend, penguji dapat beralih peran demo antara **HR Staff (Admin/Tulis)** dan **Reviewer (Read-Only)** tanpa perlu memasukkan token manual.
 - Untuk menguji verifikasi token khusus, gunakan menu lipat (*expander*) **🔑 Masukkan Token Kustom** pada sidebar.
-- Panduan lengkap seluruh halaman dan elemen antarmuka tersedia di [panduan frontend](frontend.md).
+- Panduan lengkap seluruh halaman dan elemen antarmuka tersedia di [README](../README.md).
 
 ## Dependency
 
