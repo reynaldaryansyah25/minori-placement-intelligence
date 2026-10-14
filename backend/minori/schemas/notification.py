@@ -10,6 +10,11 @@ from minori.schemas.common import Code, InputSchema, RecordFields, Reference
 
 
 class NotificationCreate(InputSchema):
+    approved_message: dict[str, str] | None = None
+    approved_by: str | None = None
+    approved_at: AwareDatetime | None = None
+    approval_fingerprint: str | None = None
+    manual_request_key: str | None = None
     reference: Reference
     deduplication_key: str = Field(min_length=1, max_length=160)
     candidate_id: UUID
@@ -65,7 +70,7 @@ class NotificationCreate(InputSchema):
 
 
 class NotificationRead(NotificationCreate, RecordFields):
-    """No recipient contact data or message bodies are stored."""
+    """Queue state and optional staff-approved snapshot; claim secrets stay private."""
 
     claim_token_hash: str | None = Field(default=None, exclude=True)
 

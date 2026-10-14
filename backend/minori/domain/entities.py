@@ -74,6 +74,9 @@ class CandidateData:
     certifications: tuple[CertificationData, ...] = ()
     experiences: tuple[ExperienceData, ...] = ()
     preferred_prefectures: tuple[str, ...] = ()
+    email: str | None = None
+    email_verified: bool = False
+    email_consent: bool = False
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -114,6 +117,7 @@ class VacancyDraftData:
     proposed_data: dict[str, object]
     status: DraftStatus = DraftStatus.DRAFT
     published_vacancy_id: UUID | None = None
+    analysis_metadata: dict[str, object] | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -196,6 +200,11 @@ class NotificationData:
     claim_token_hash: str | None = None
     processed_at: datetime | None = None
     last_error_code: str | None = None
+    approved_message: dict[str, str] | None = None
+    approved_by: str | None = None
+    approved_at: datetime | None = None
+    approval_fingerprint: str | None = None
+    manual_request_key: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

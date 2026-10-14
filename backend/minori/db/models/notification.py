@@ -27,6 +27,11 @@ if TYPE_CHECKING:
 
 
 class Notification(ReferenceMixin, IdentityTimestampMixin, Base):
+    approved_message: Mapped[dict | None] = mapped_column(JSON(none_as_null=True))
+    approved_by: Mapped[str | None] = mapped_column(String(80))
+    approved_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    approval_fingerprint: Mapped[str | None] = mapped_column(String(64))
+    manual_request_key: Mapped[str | None] = mapped_column(String(80))
     __tablename__ = "notifications"
     __table_args__ = (
         ForeignKeyConstraint(
@@ -66,6 +71,7 @@ class Notification(ReferenceMixin, IdentityTimestampMixin, Base):
         ),
         Index("ix_notifications_status_scheduled_at", "status", "scheduled_at"),
         Index("ix_notifications_queue_due", "managed", "status", "available_at"),
+        Index("ix_notifications_manual_request_key", "manual_request_key", unique=True),
     )
 
     deduplication_key: Mapped[str] = mapped_column(String(160), unique=True)

@@ -81,6 +81,7 @@ class VacancyLanguageRequirement(IdentityTimestampMixin, Base):
 
 
 class VacancyDraft(ReferenceMixin, IdentityTimestampMixin, Base):
+    analysis_metadata: Mapped[dict | None] = mapped_column(JSON(none_as_null=True))
     __tablename__ = "vacancy_drafts"
     __table_args__ = (
         UniqueConstraint("source_channel", "source_reference"),

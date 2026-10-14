@@ -1,0 +1,55 @@
+# Standalone isolated AI/SMTP verification; existing backend/n8n volumes are not mounted.
+name: minori-placement-intelligence
+services:
+  backend-ai-test:
+    image: minori-ai-verification
+    build:
+      context: .
+      target: reminder-test
+    environment:
+      APP_ENV: test
+      DATABASE_URL: sqlite:////app/data/runtime/ai-test.db
+      INTERNAL_API_TOKEN: ${AI_TEST_API_TOKEN:?Configure an isolated test token}
+      LLM_ENABLED: ${LLM_ENABLED:-false}
+      NINE_ROUTER_BASE_URL: ${NINE_ROUTER_DOCKER_BASE_URL:-}
+      NINE_ROUTER_API_KEY: ${NINE_ROUTER_API_KEY:-}
+      NINE_ROUTER_MODEL: ${NINE_ROUTER_MODEL:-}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-90}
+      LLM_MAX_RETRIES: ${LLM_MAX_RETRIES:-1}
+      DEMO_CLOCK_AT: ${AI_TEST_CLOCK_AT:?Configure the deterministic test clock}
+      NOTIFICATION_DRY_RUN: ${AI_TEST_DRY_RUN:-false}
+      NOTIFICATION_DELIVERY_MODE: mailpit
+      MAILPIT_INBOX_EMAIL: mailpit@minori.local
+      NOTIFICATION_RETRY_BASE_SECONDS: 1
+      NOTIFICATION_RETRY_MAX_SECONDS: 2
+    tmpfs:
+      - /app/data/runtime:uid=10001,gid=10001,mode=0700
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:18100:8000"
+    command: ["sh", "-c", "python -m alembic upgrade head && python scripts/seed_professional_demo.py && exec python -m uvicorn minori.main:create_app --factory --host 0.0.0.0 --port 8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 3s
+      timeout: 6s
+      retries: 30
+    depends_on:
+      mailpit-ai-test:
+        condition: service_started
+  frontend-ai-test:
+    build:
+      context: .
+      target: frontend
+    environment:
+      BACKEND_BASE_URL: http://backend-ai-test:8000
+      INTERNAL_API_TOKEN: ${AI_TEST_API_TOKEN:?Configure an isolated test token}
+    ports:
+      - "127.0.0.1:18501:8501"
+    depends_on:
+      backend-ai-test:
+        condition: service_healthy
+  mailpit-ai-test:
+    image: axllent/mailpit@sha256:94f6b70c1436defae6799d9ac7ff0eeff9540465b842026d5cdb018f1c0234ea
+    ports:
+      - "127.0.0.1:18035:8025"

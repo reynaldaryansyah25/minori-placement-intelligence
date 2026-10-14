@@ -18,6 +18,8 @@ COPY data/dummy ./data/dummy
 COPY scripts/seed_database.py scripts/check_database.py scripts/verify_matching.py ./scripts/
 COPY scripts/verify_reminders.py scripts/reminder_worker.py ./scripts/
 COPY scripts/diagnose_reminders.py scripts/prepare_reminder_demo.py scripts/verify_reminder_delivery.py ./scripts/
+COPY scripts/reset_demo.py scripts/verify_ai_gateway.py ./scripts/
+COPY scripts/seed_professional_demo.py ./scripts/
 USER minori
 EXPOSE 8000
 CMD ["sh", "-c", "python -m alembic upgrade head && exec python -m uvicorn minori.main:create_app --factory --host 0.0.0.0 --port 8000"]

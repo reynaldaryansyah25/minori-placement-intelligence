@@ -25,6 +25,9 @@ LANGUAGE_CHECK = (
 
 
 class Candidate(ReferenceMixin, IdentityTimestampMixin, Base):
+    email: Mapped[str | None] = mapped_column(String(254))
+    email_verified: Mapped[bool] = mapped_column(default=False, server_default="0")
+    email_consent: Mapped[bool] = mapped_column(default=False, server_default="0")
     __tablename__ = "candidates"
     __table_args__ = (
         CheckConstraint("length(trim(full_name)) > 0", name="full_name_not_blank"),

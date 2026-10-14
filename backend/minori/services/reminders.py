@@ -2,11 +2,14 @@
 
 import hashlib
 import hmac
+import json
+import re
 import secrets
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
+from minori.domain.ai import AiOutputError
 from minori.domain.catalogs import (
     AttemptStatus,
     AuditEntityType,
@@ -188,6 +191,26 @@ class ReminderService:
         )
         if current and current.schedule_revision == activity.schedule_revision:
             return current
+        if current and current.approved_message:
+            # A staff-approved snapshot is immutable; retain it when the schedule changes.
+            self._abandon(current, now, DeliveryErrorCode.SCHEDULE_CHANGED)
+            saved = self._save(
+                current,
+                status=NotificationStatus.CANCELLED,
+                claimed_at=None,
+                lease_expires_at=None,
+                claim_token_hash=None,
+                processed_at=now,
+                last_error_code=DeliveryErrorCode.SCHEDULE_CHANGED,
+            )
+            self._audit(saved, "reminder.approval_invalidated", now, actor)
+            return self._new(
+                activity,
+                placement,
+                f"reminder:{activity.id}:r{activity.schedule_revision}",
+                template,
+                now,
+            )
         if current and current.status not in {
             NotificationStatus.SENT,
             NotificationStatus.SIMULATED,
@@ -292,6 +315,12 @@ class ReminderService:
                     or row.schedule_revision != activity.schedule_revision
                 )
             )
+            if row.approved_message and not invalid:
+                try:
+                    _, digest = self.email_facts(row.id)
+                    invalid = digest != row.approval_fingerprint
+                except BusinessConflictError:
+                    invalid = True
             if invalid or row.event_at <= now:
                 error = (
                     DeliveryErrorCode.RECIPIENT_INACTIVE
@@ -374,7 +403,7 @@ class ReminderService:
                 )
             )
             candidate = self.ports.candidate.get(row.candidate_id)
-            message = render_notification(
+            message = row.approved_message or render_notification(
                 row.template_code, candidate.full_name, row.schedule_context
             )
             routing = self.policy.resolve_recipient(candidate.reference, dry_run=row.dry_run)
@@ -390,6 +419,153 @@ class ReminderService:
         row = self._get(identifier)
         candidate = self.ports.candidate.get(row.candidate_id)
         return self.policy.resolve_recipient(candidate.reference, dry_run=row.dry_run)
+
+    def email_facts(self, identifier):
+        row = self._get(identifier)
+        candidate = self.ports.candidate.get(row.candidate_id)
+        activity = (
+            self.ports.placement_stage.get(row.placement_stage_id)
+            if row.placement_stage_id
+            else None
+        )
+        placement = self.ports.placement.get(row.placement_id) if row.placement_id else None
+        if not row.managed or not activity or not placement:
+            raise BusinessConflictError(
+                "Pengingat lama tidak memiliki jadwal operasional yang valid."
+            )
+        if (
+            candidate.status == CandidateStatus.INACTIVE
+            or activity.scheduled_at is None
+            or activity.scheduled_at <= self.clock()
+            or activity.status
+            not in {PlacementStepStatus.SCHEDULED, PlacementStepStatus.IN_PROGRESS}
+            or placement.status not in {PlacementStatus.PREPARING, PlacementStatus.IN_PROGRESS}
+            or activity.schedule_revision != row.schedule_revision
+            or row.template_code not in {"interview_h3", "medical_h1"}
+        ):
+            raise BusinessConflictError("Kandidat atau jadwal berubah. Muat ulang pengingat.")
+        from zoneinfo import ZoneInfo
+
+        facts = {
+            "candidate_name": candidate.full_name,
+            "activity": "wawancara"
+            if activity.step_type == PlacementStepType.INTERVIEW
+            else "pemeriksaan kesehatan",
+            "scheduled_wib": activity.scheduled_at.astimezone(ZoneInfo("Asia/Jakarta")).strftime(
+                "%d-%m-%Y %H:%M WIB"
+            ),
+            "location": activity.location,
+            "preparation_instructions": None,
+            "sender": "MINORI Placement Intelligence",
+            "schedule_revision": activity.schedule_revision,
+        }
+        protected = {
+            "facts": facts,
+            "candidate_status": candidate.status.value,
+            "routing": self.recipient_routing(identifier),
+            "dry_run": row.dry_run,
+        }
+        digest = hashlib.sha256(json.dumps(protected, sort_keys=True).encode()).hexdigest()
+        return facts, digest
+
+    def draft_email(self, identifier, gateway=None):
+        row = self._get(identifier)
+        facts, digest = self.email_facts(identifier)
+        introduction = "Kami mengingatkan Anda mengenai kegiatan yang telah dijadwalkan."
+        closing = "Terima kasih atas perhatian dan kerja sama Anda."
+        if gateway:
+            wording = gateway.generate("email", facts)
+            # Free model wording cannot introduce facts. A constrained vocabulary permits
+            # polite connective language; the server alone inserts dates/location/instructions.
+            allowed = set(
+                "kami mengingatkan anda mengenai kegiatan yang telah dijadwalkan ini merupakan pengingat untuk mengikuti sesuai jadwal tercantum di bawah silakan tinjau informasi berikut mohon perhatian dan konfirmasi kehadiran kepada staf terima kasih atas kerja sama waktu salam hormat tim minori placement intelligence dengan baik bapak ibu saudara saudari disiapkan membantu menyampaikan serta kembali pada email dapat menghubungi apabila ada pertanyaan berharap lancar partisipasi kesediaan jadwal pelaksanaan atasnya".split()
+            )
+            if any(
+                word.casefold() not in allowed
+                for word in re.findall(r"\w+", wording["introduction"] + " " + wording["closing"])
+            ):
+                raise AiOutputError(
+                    "Bahasa draf AI memuat informasi yang perlu dikonfirmasi. Gunakan template aman."
+                )
+            introduction, closing = wording["introduction"], wording["closing"]
+        subject = f"Pengingat {facts['activity']} — MINORI"
+        body = (
+            f"Halo {facts['candidate_name']},\n\n{introduction}\n\n"
+            f"Kegiatan: {facts['activity']}\nJadwal: {facts['scheduled_wib']}\n"
+            f"Lokasi: {facts['location'] or 'Perlu konfirmasi kepada staf'}\n"
+            "Persiapan: belum ada instruksi tambahan yang tercatat; konfirmasikan kepada staf.\n\n"
+            f"{closing}\n\n{facts['sender']}"
+        )
+        return {
+            "subject": subject,
+            "body": body,
+            "facts": facts,
+            "facts_fingerprint": digest,
+            "schedule_revision": row.schedule_revision,
+            "source": "ai" if gateway else "template",
+        }
+
+    def approve_email(self, identifier, subject, body, fingerprint, key, actor):
+        now = self.clock()
+        with self.transaction():
+            row = self._get(identifier)
+            facts, current = self.email_facts(identifier)
+            if current != fingerprint:
+                raise BusinessConflictError(
+                    "Data kandidat, jadwal, atau penerima berubah. Susun ulang email."
+                )
+            message = {"subject": subject.strip(), "body": body.strip()}
+            if (
+                facts["scheduled_wib"] not in body
+                or facts["candidate_name"] not in body
+                or (facts["location"] and facts["location"] not in body)
+            ):
+                raise ValueError(
+                    "Nama kandidat, jadwal WIB dan lokasi resmi harus tetap tercantum dalam pesan."
+                )
+            if not all(message.values()) or any(c in subject for c in "\r\n\x00") or "\x00" in body:
+                raise ValueError("Subject dan isi email harus berupa teks yang valid.")
+            if row.manual_request_key == key:
+                if row.approved_message == message and row.approval_fingerprint == fingerprint:
+                    return row
+                raise BusinessConflictError(
+                    "Kunci persetujuan sudah digunakan untuk pesan berbeda."
+                )
+            if (
+                row.status != NotificationStatus.PENDING
+                or row.attempt_count
+                or row.approved_message
+            ):
+                raise BusinessConflictError(
+                    "Pengingat sudah disetujui atau pernah diproses. Pengiriman ganda diblokir."
+                )
+            routing = self.recipient_routing(identifier)
+            if not row.dry_run and (
+                not routing["delivery_allowed"] or routing["routing_mode"] != "mailpit"
+            ):
+                raise BusinessConflictError(
+                    "Pengiriman manual saat ini hanya diizinkan ke Mailpit lokal atau simulasi."
+                )
+            saved = self._save(
+                row,
+                approved_message=message,
+                approved_by=actor,
+                approved_at=now,
+                approval_fingerprint=fingerprint,
+                manual_request_key=key,
+                scheduled_at=now,
+                available_at=now,
+            )
+            self._audit(
+                saved,
+                "reminder.email_approved",
+                now,
+                actor,
+                facts_fingerprint=fingerprint,
+                schedule_revision=row.schedule_revision,
+                delivery_mode=routing["routing_mode"],
+            )
+            return saved
 
     def complete(
         self, identifier, token, *, simulated=False, error_code=None, provider_reference=None

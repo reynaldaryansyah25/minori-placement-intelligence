@@ -30,6 +30,9 @@ def input_fingerprint(candidate: CandidateRecord, vacancy: VacancyRecord) -> str
                 "education_level",
                 "domicile_city",
                 "reference",
+                "email",
+                "email_verified",
+                "email_consent",
             }
         },
         "vacancy": {

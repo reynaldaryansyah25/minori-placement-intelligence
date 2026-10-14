@@ -42,7 +42,7 @@ class ReminderPolicy:
         self, candidate_reference: str, *, dry_run: bool | None = None
     ) -> dict[str, object]:
         clean_ref = candidate_reference.lower().replace("_", "-").strip()
-        intended = f"kandidat-{clean_ref}@demo.minori.internal"
+        intended = f"kandidat-{clean_ref}@minori.invalid"
 
         if self.dry_run if dry_run is None else dry_run:
             effective = None

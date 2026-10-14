@@ -73,6 +73,13 @@ class ExperienceCreate(InputSchema):
 
 
 class CandidateCreate(InputSchema):
+    email: str | None = Field(
+        default=None,
+        max_length=254,
+        pattern=r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$",
+    )
+    email_verified: bool = False
+    email_consent: bool = False
     reference: Reference
     full_name: NonBlank
     preferred_program: Program

@@ -15,3 +15,5 @@ docker compose exec n8n n8n import:workflow --input=/workflows/backend_health.js
 Impor tidak menjalankan workflow. Buka workflow dan pilih **Execute workflow** untuk
 memeriksa backend. Untuk n8n yang berjalan di luar jaringan Compose, ubah URL node
 HTTP Request sesuai alamat backend. Jangan menyimpan secrets di JSON workflow.
+
+Panduan AI operasional, demo profesional, dan konfigurasi workflow n8n: [AI operations](../docs/ai_operations.md).

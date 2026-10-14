@@ -117,7 +117,7 @@ def test_demo_recipient_routing_never_sends_to_dummy():
         demo_notification_recipient=None,
     )
     routing_dry = policy_dry.resolve_recipient("DEMO-CAND-AGRI")
-    assert routing_dry["intended_recipient"] == "kandidat-demo-cand-agri@demo.minori.internal"
+    assert routing_dry["intended_recipient"] == "kandidat-demo-cand-agri@minori.invalid"
     assert routing_dry["effective_recipient"] is None
     assert routing_dry["routing_mode"] == "dry_run"
     assert routing_dry["delivery_allowed"] is False
@@ -130,7 +130,7 @@ def test_demo_recipient_routing_never_sends_to_dummy():
         mailpit_inbox_email="mailpit@minori.local",
     )
     routing_mailpit = policy_mailpit.resolve_recipient("DEMO-CAND-FOOD")
-    assert routing_mailpit["intended_recipient"] == "kandidat-demo-cand-food@demo.minori.internal"
+    assert routing_mailpit["intended_recipient"] == "kandidat-demo-cand-food@minori.invalid"
     assert routing_mailpit["effective_recipient"] == "mailpit@minori.local"
     assert routing_mailpit["routing_mode"] == "mailpit"
     assert routing_mailpit["delivery_allowed"] is True
@@ -142,7 +142,7 @@ def test_demo_recipient_routing_never_sends_to_dummy():
         demo_notification_recipient="staff-test@minori-partner.ac.id",
     )
     routing_env = policy_env.resolve_recipient("DEMO-CAND-WELD")
-    assert routing_env["intended_recipient"] == "kandidat-demo-cand-weld@demo.minori.internal"
+    assert routing_env["intended_recipient"] == "kandidat-demo-cand-weld@minori.invalid"
     assert routing_env["effective_recipient"] == "staff-test@minori-partner.ac.id"
     assert routing_env["routing_mode"] == "demo_recipient"
     assert routing_env["delivery_allowed"] is True
@@ -163,7 +163,7 @@ def test_claim_and_routing_api(demo_client):
     assert resp.status_code == 200
     routing = resp.json()
     assert "intended_recipient" in routing
-    assert routing["intended_recipient"].endswith("@demo.minori.internal")
+    assert routing["intended_recipient"].endswith("@minori.invalid")
     assert "safety_notice" in routing
 
     # Internal claim endpoint returns recipient routing
@@ -176,9 +176,7 @@ def test_claim_and_routing_api(demo_client):
     claim_data = resp_claim.json()
     if claim_data is not None:
         assert "recipient_routing" in claim_data
-        assert claim_data["recipient_routing"]["intended_recipient"].endswith(
-            "@demo.minori.internal"
-        )
+        assert claim_data["recipient_routing"]["intended_recipient"].endswith("@minori.invalid")
 
 
 def test_reviewer_cannot_perform_mutations(demo_client):

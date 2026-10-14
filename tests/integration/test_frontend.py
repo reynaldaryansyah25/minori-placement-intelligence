@@ -204,6 +204,43 @@ def test_all_pages_render_without_exception(page_filename, frontend_backend):
         assert all(hidden not in table.value.to_string() for table in app.dataframe)
 
 
+def test_ai_analysis_button_populates_review_form(frontend_backend):
+    from minori.schemas.ai import VacancyAnalysis
+
+    frontend_backend["_allowed_posts"]["/ai/vacancies/analyze"] = VacancyAnalysis.model_validate(
+        {
+            "extraction": {
+                "title": "Staf pertanian",
+                "employer_name": "Perusahaan Demo Sintetis",
+                "program": "ssw",
+                "sector": "agriculture",
+                "prefecture": "Hokkaido",
+                "quota": 3,
+                "minimum_experience_months": 12,
+                "language_requirements": [{"test_type": "jlpt", "minimum_level": "N4"}],
+            },
+            "translation": "Lowongan demo sintetis membutuhkan JLPT N4.",
+            "review": {"questions": ["Konfirmasi tenggat."]},
+        }
+    ).model_dump(mode="json")
+    app = AppTest.from_file(
+        str(ROOT / "frontend/minori_frontend/pages/ai_vacancy_intelligence.py")
+    ).run()
+    app.text_area(key="vacancy_source_text").set_value("日本語能力試験N4以上。").run()
+    next(button for button in app.button if button.label == "Analisis dengan AI").click().run()
+    assert not app.exception
+    assert [tab.label for tab in app.tabs] == [
+        "Hasil Ekstraksi",
+        "Terjemahan Indonesia",
+        "Pemeriksaan Persyaratan",
+    ]
+    assert (
+        next(field for field in app.text_input if field.label == "Posisi pekerjaan *").value
+        == "Staf pertanian"
+    )
+    assert any(call[1] == "/ai/vacancies/analyze" for call in frontend_backend["_calls"])
+
+
 def test_no_token_leakage_in_rendered_ui(monkeypatch, frontend_backend):
     secret_token = "super-secret-token-not-to-be-leaked"
     monkeypatch.setenv("INTERNAL_API_TOKEN", secret_token)

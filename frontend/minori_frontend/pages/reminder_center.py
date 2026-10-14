@@ -3,6 +3,7 @@
 import streamlit as st
 from minori_frontend.api_client import BackendClient, read_all
 from minori_frontend.auth import is_admin
+from minori_frontend.components.ai_email import render_email_actions
 from minori_frontend.components.data_table import render_interactive_table
 from minori_frontend.components.empty_state import render_empty_state
 from minori_frontend.components.feedback import show_api_error, show_success
@@ -42,7 +43,11 @@ def render_reminder_page():
     render_metrics(
         [
             ("Menunggu", counts.get("pending", 0), "Menunggu jadwal pengiriman"),
-            ("Terkirim", counts.get("sent", 0), "Pengiriman selesai"),
+            (
+                "Terkirim ke server email",
+                counts.get("sent", 0),
+                "SMTP berhasil; penerimaan kandidat belum dipastikan",
+            ),
             ("Simulasi selesai", counts.get("simulated", 0), "Tanpa pengiriman email"),
             (
                 "Perlu diperiksa",
@@ -140,6 +145,7 @@ def render_reminder_page():
                 show_api_error(exc)
                 return
             render_reminder_details(reminder, attempts, routing)
+            render_email_actions(client, reminder, routing)
 
 
 if __name__ == "__main__":

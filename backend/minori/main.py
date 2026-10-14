@@ -4,9 +4,13 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from minori import __version__
+from minori.api.ai_input_limits import AiInputLimitMiddleware
+from minori.api.routes.ai import router as ai_router
 from minori.api.routes.auth import router as auth_router
 from minori.api.routes.candidates import router as candidate_router
 from minori.api.routes.health import router as health_router
@@ -48,8 +52,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_url="/openapi.json" if configuration.app_env != "production" else None,
     )
     application.state.settings = configuration
+
+    application.add_middleware(AiInputLimitMiddleware)
+
+    @application.exception_handler(RequestValidationError)
+    async def safe_ai_validation(request: Request, exc: RequestValidationError):
+        if request.url.path.startswith("/ai/") or "/email/" in request.url.path:
+            return JSONResponse(
+                status_code=422,
+                content={"detail": "Periksa format masukan dan batas ukuran dokumen."},
+            )
+        from fastapi.exception_handlers import request_validation_exception_handler
+
+        return await request_validation_exception_handler(request, exc)
+
     application.include_router(health_router)
     application.include_router(auth_router)
+    application.include_router(ai_router)
     application.include_router(overview_router)
     application.include_router(candidate_router)
     application.include_router(vacancy_router)

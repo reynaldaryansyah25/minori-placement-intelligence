@@ -1,16 +1,20 @@
 """Infrastructure adapters injected at the HTTP boundary."""
 
 from collections.abc import Iterator
+from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import Depends, Request
+from fastapi import Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from minori.core.config import Settings
 from minori.db.session import immediate_transaction
 from minori.domain.reminders import ReminderPolicy
+from minori.integrations.nine_router.client import NineRouterClient
+from minori.integrations.nine_router.structured import ValidatedAiGateway
 from minori.repositories.health import SqlAlchemyDatabaseProbe
 from minori.repositories.provider import Repositories, provide_repositories
+from minori.services.ai import AiService
 from minori.services.candidates import CandidateService
 from minori.services.health import HealthService
 from minori.services.matching import MatchingService
@@ -22,6 +26,10 @@ from minori.services.vacancies import VacancyService
 
 def get_app_settings(request: Request) -> Settings:
     return request.app.state.settings
+
+
+def operational_clock(settings):
+    return lambda: settings.demo_clock_at or datetime.now(UTC)
 
 
 def get_db_session(request: Request) -> Iterator[Session]:
@@ -37,7 +45,32 @@ def get_repositories(session: Annotated[Session, Depends(get_db_session)]) -> Re
     return provide_repositories(session)
 
 
-def get_matching_service(session: Annotated[Session, Depends(get_db_session)]) -> MatchingService:
+def get_ai_gateway(
+    settings: Annotated[Settings, Depends(get_app_settings)],
+) -> Iterator[ValidatedAiGateway]:
+    if not settings.llm_enabled:
+        raise HTTPException(
+            status_code=503, detail="AI belum diaktifkan. Gunakan peninjauan manual."
+        )
+    client = NineRouterClient(settings)
+    try:
+        yield ValidatedAiGateway(client)
+    finally:
+        client.close()
+
+
+def get_ai_service(
+    ports: Annotated[Repositories, Depends(get_repositories)],
+    gateway: Annotated[ValidatedAiGateway, Depends(get_ai_gateway)],
+    settings: Annotated[Settings, Depends(get_app_settings)],
+) -> AiService:
+    return AiService(ports, gateway, operational_clock(settings))
+
+
+def get_matching_service(
+    session: Annotated[Session, Depends(get_db_session)],
+    settings: Annotated[Settings, Depends(get_app_settings)],
+) -> MatchingService:
     repositories = provide_repositories(session)
     return MatchingService(
         repositories.candidate,
@@ -45,6 +78,7 @@ def get_matching_service(session: Annotated[Session, Depends(get_db_session)]) -
         repositories.match,
         repositories.evaluation,
         session.begin,
+        operational_clock(settings),
     )
 
 
@@ -71,6 +105,7 @@ def get_reminder_service(
         provide_repositories(session),
         lambda: immediate_transaction(session),
         reminder_policy(settings),
+        operational_clock(settings),
     )
 
 
@@ -83,8 +118,10 @@ def get_placement_service(
     def transaction():
         return immediate_transaction(session)
 
-    reminder = ReminderService(ports, transaction, reminder_policy(settings))
-    return PlacementService(ports, transaction, reminder)
+    reminder = ReminderService(
+        ports, transaction, reminder_policy(settings), operational_clock(settings)
+    )
+    return PlacementService(ports, transaction, reminder, operational_clock(settings))
 
 
 def get_candidate_service(
@@ -105,6 +142,7 @@ def get_vacancy_service(
 
 def get_overview_service(
     session: Annotated[Session, Depends(get_db_session)],
+    settings: Annotated[Settings, Depends(get_app_settings)],
 ) -> OverviewService:
     ports = provide_repositories(session)
     return OverviewService(
@@ -115,4 +153,5 @@ def get_overview_service(
         ports.notification,
         ports.evaluation,
         ports.audit_log,
+        operational_clock(settings),
     )

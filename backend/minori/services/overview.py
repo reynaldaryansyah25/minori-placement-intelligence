@@ -63,6 +63,7 @@ class OverviewService:
         notifications: NotificationRepository,
         evaluations,
         audit_logs: AuditLogRepository,
+        clock=lambda: datetime.now(UTC),
     ) -> None:
         self._candidates = candidates
         self._vacancies = vacancies
@@ -71,13 +72,23 @@ class OverviewService:
         self._notifications = notifications
         self._evaluations = evaluations
         self._audit_logs = audit_logs
+        self.clock = clock
+
+    @staticmethod
+    def _all(fetch, *args):
+        rows = []
+        while True:
+            page = fetch(*args, limit=100, offset=len(rows))
+            rows.extend(page)
+            if len(page) < 100:
+                return rows
 
     def get_summary(self) -> OverviewSummary:
-        all_candidates = self._candidates.list(limit=100)
+        all_candidates = self._all(self._candidates.list)
         total_candidates = len(all_candidates)
         ready_candidates = sum(1 for c in all_candidates if c.status == CandidateStatus.READY)
 
-        all_vacancies = self._vacancies.list(limit=100)
+        all_vacancies = self._all(self._vacancies.list)
         active_vacancies = sum(1 for v in all_vacancies if v.status == VacancyStatus.OPEN)
         vacancies_by_status: dict[str, int] = {}
         vacancies_by_program: dict[str, int] = {}
@@ -85,7 +96,7 @@ class OverviewService:
             vacancies_by_status[v.status.value] = vacancies_by_status.get(v.status.value, 0) + 1
             vacancies_by_program[v.program.value] = vacancies_by_program.get(v.program.value, 0) + 1
 
-        all_placements = self._placements.list(limit=100)
+        all_placements = self._all(self._placements.list)
         active_placements = sum(
             1
             for p in all_placements
@@ -96,7 +107,11 @@ class OverviewService:
             placements_by_status[p.status.value] = placements_by_status.get(p.status.value, 0) + 1
 
         # Evaluations
-        all_evals = self._evaluations.list(limit=100)
+        # Repository orders newest evaluations first. Count each pair once, across all pages.
+        latest = {}
+        for evaluation in self._all(self._evaluations.list):
+            latest.setdefault((evaluation.candidate_id, evaluation.vacancy_id), evaluation)
+        all_evals = list(latest.values())
         eligible_matches = sum(
             1 for e in all_evals if e.eligibility_status == EligibilityStatus.ELIGIBLE
         )
@@ -115,7 +130,7 @@ class OverviewService:
         failed_reminders = 0
         missed_reminders = 0
         for cand in all_candidates:
-            for notif in self._notifications.list_for_candidate(cand.id, limit=100):
+            for notif in self._all(self._notifications.list_for_candidate, cand.id):
                 if notif.status == NotificationStatus.PENDING:
                     pending_reminders += 1
                 elif notif.status.value == "simulated":
@@ -128,9 +143,9 @@ class OverviewService:
                     missed_reminders += 1
 
         # Upcoming activities: scheduled stages with scheduled_at in future
-        now = datetime.now(UTC)
+        now = self.clock()
         upcoming: list[UpcomingActivityItem] = []
-        all_stages = self._stages.list(limit=100)
+        all_stages = self._all(self._stages.list)
         for stage in all_stages:
             if (
                 stage.status == PlacementStepStatus.SCHEDULED

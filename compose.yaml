@@ -29,6 +29,7 @@ services:
       NINE_ROUTER_MODEL: ${NINE_ROUTER_MODEL:-}
       LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-30}
       LLM_MAX_RETRIES: ${LLM_MAX_RETRIES:-2}
+      DEMO_CLOCK_AT: ${DEMO_CLOCK_AT:-}
     ports:
       - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     volumes:

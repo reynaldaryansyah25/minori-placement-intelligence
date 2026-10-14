@@ -1,5 +1,6 @@
 """Vacancy requirement and draft contracts, independent of inference."""
 
+import json
 from typing import Self
 from uuid import UUID
 
@@ -78,6 +79,7 @@ class VacancyRead(VacancyCreate, RecordFields):
 
 
 class VacancyDraftCreate(InputSchema):
+    analysis_metadata: dict[str, object] | None = None
     reference: Reference
     source_channel: Code
     source_reference: str = Field(min_length=1, max_length=120)
@@ -87,6 +89,11 @@ class VacancyDraftCreate(InputSchema):
 
     @model_validator(mode="after")
     def validate_publication(self) -> Self:
+        if (
+            self.analysis_metadata is not None
+            and len(json.dumps(self.analysis_metadata, ensure_ascii=False)) > 50000
+        ):
+            raise ValueError("AI review metadata exceeds the bounded source limit")
         if (self.status == DraftStatus.PUBLISHED) != (self.published_vacancy_id is not None):
             raise ValueError("Only published drafts must link to a published vacancy")
         return self

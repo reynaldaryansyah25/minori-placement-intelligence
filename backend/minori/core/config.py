@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Literal, Self
 from zoneinfo import ZoneInfo
 
-from pydantic import AnyHttpUrl, Field, SecretStr, field_validator, model_validator
+from pydantic import AnyHttpUrl, AwareDatetime, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 
@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "MINORI Placement Intelligence"
-    app_env: Literal["development", "test", "production"] = "development"
+    app_env: Literal["development", "demo", "test", "production"] = "development"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     database_url: str = "sqlite:///./data/runtime/minori.db"
     sqlite_timeout_seconds: float = Field(default=5, gt=0, le=60)
@@ -49,6 +49,12 @@ class Settings(BaseSettings):
     mailpit_inbox_email: str = "mailpit@minori.local"
     internal_api_token: SecretStr | None = None
     reviewer_api_token: SecretStr | None = None
+    demo_clock_at: AwareDatetime | None = None
+
+    @field_validator("demo_clock_at", mode="before")
+    @classmethod
+    def normalize_demo_clock(cls, value):
+        return None if value == "" else value
 
     @field_validator("business_timezone")
     @classmethod
@@ -110,6 +116,12 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_router_configuration(self) -> Self:
+        if self.app_env == "production" and self.notification_delivery_mode != "dry_run":
+            raise ValueError(
+                "Production email delivery requires a separately authorized verified-recipient adapter"
+            )
+        if self.demo_clock_at is not None and self.app_env not in {"demo", "test"}:
+            raise ValueError("DEMO_CLOCK_AT is restricted to demo/test environments")
         if self.llm_enabled and not all(
             (self.nine_router_base_url, self.nine_router_api_key, self.nine_router_model)
         ):

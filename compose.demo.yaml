@@ -1,0 +1,24 @@
+# Explicit demo profile: preserves the original backend_data and n8n_data volumes.
+services:
+  backend:
+    environment:
+      APP_ENV: demo
+      DATABASE_URL: sqlite:////app/data/runtime/professional-demo.db
+      DEMO_CLOCK_AT: ${DEMO_CLOCK_AT:-}
+      NOTIFICATION_DRY_RUN: "false"
+      NOTIFICATION_DELIVERY_MODE: mailpit
+      MAILPIT_INBOX_EMAIL: mailpit@minori.local
+      DEMO_NOTIFICATION_RECIPIENT: ""
+    volumes: !override
+      - professional_demo_data:/app/data/runtime
+    depends_on:
+      mailpit-demo:
+        condition: service_started
+  mailpit-demo:
+    image: axllent/mailpit@sha256:94f6b70c1436defae6799d9ac7ff0eeff9540465b842026d5cdb018f1c0234ea
+    ports:
+      - "127.0.0.1:8025:8025"
+    restart: unless-stopped
+
+volumes:
+  professional_demo_data:

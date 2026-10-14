@@ -15,6 +15,28 @@ def show_api_error(exc: Exception) -> None:
         504: "Layanan memerlukan waktu lebih lama. Silakan coba lagi.",
     }
     message = messages.get(exc.status_code) if isinstance(exc, ApiClientError) else None
+    safe_ai_messages = {
+        "Dokumen tidak memuat teks. PDF scan memerlukan OCR terlebih dahulu.",
+        "Ukuran dokumen harus antara 1 byte dan 5 MB.",
+        "Arsip dokumen melebihi batas aman.",
+        "Dokumen dengan makro atau objek tertanam tidak didukung.",
+        "Dokumen dengan referensi eksternal tidak didukung.",
+        "Maksimal 100 baris lowongan per dokumen.",
+        "Dokumen rusak atau formatnya tidak sesuai. Ekspor ulang dokumen.",
+        "Struktur hasil AI tidak valid. Analisis ulang atau tinjau secara manual.",
+        "Bukti AI tidak ditemukan dalam sumber. Tinjau dokumen atau analisis ulang.",
+        "AI belum diaktifkan. Gunakan peninjauan manual.",
+        "AI sementara tidak tersedia. Coba kembali atau gunakan peninjauan manual.",
+        "Data kandidat, jadwal, atau penerima berubah. Susun ulang email.",
+        "Pengingat sudah disetujui atau pernah diproses. Pengiriman ganda diblokir.",
+        "Bahasa draf AI memuat informasi yang perlu dikonfirmasi. Gunakan template aman.",
+    }
+    if (
+        isinstance(exc, ApiClientError)
+        and isinstance(exc.detail, str)
+        and exc.detail in safe_ai_messages
+    ):
+        message = exc.detail
     if (
         isinstance(exc, ApiClientError)
         and exc.status_code == 409

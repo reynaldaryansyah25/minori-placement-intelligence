@@ -161,6 +161,7 @@ def main():
             "DATABASE_URL": url,
             "APP_ENV": "test",
             "LLM_ENABLED": "false",
+            "DEMO_CLOCK_AT": "",
             "INTERNAL_API_TOKEN": token,
             "NOTIFICATION_DRY_RUN": "true",
             "BUSINESS_TIMEZONE": "Asia/Jakarta",
@@ -235,7 +236,16 @@ def main():
                     print(json.dumps(report, indent=2, default=str))
         finally:
             if process is not None:
-                process.terminate()
+                if os.name == "nt":
+                    # The Windows venv launcher can leave its Python child holding server.log.
+                    # Stop only the process tree launched by this verification run.
+                    subprocess.run(
+                        ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                        capture_output=True,
+                        check=False,
+                    )
+                else:
+                    process.terminate()
                 try:
                     process.wait(timeout=10)
                 except subprocess.TimeoutExpired:

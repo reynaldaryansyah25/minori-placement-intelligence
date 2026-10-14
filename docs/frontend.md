@@ -52,17 +52,17 @@ memvalidasi otorisasi setiap permintaan.
 | Ringkasan | Metrik backend, prioritas, agenda, distribusi status, aktivitas terkini, tautan menuju halaman terkait |
 | Kandidat | Pencarian/filter, pagination, profil kualifikasi, tambah kandidat, arsip dengan konfirmasi |
 | Lowongan | Pencarian/filter, persyaratan, tambah/tutup lowongan, navigasi ke pencocokan dengan lowongan terpilih |
-| Pencocokan Kandidat | Evaluasi ulang, peringkat/semua kandidat, rincian skor dan pemeriksaan, keputusan staf, pembuatan penempatan |
+| Pencocokan Kandidat | Evaluasi ulang, peringkat/semua kandidat, rincian skor dan pemeriksaan, penjelasan AI, keputusan staf, pembuatan penempatan |
 | Alur Penempatan | Pencarian/filter, timeline, daftar kegiatan, tandai selesai, penjadwalan dengan tanggal dan waktu WIB |
-| Pusat Pengingat | Filter antrean, sinkronisasi, pemulihan, simulasi, tujuan pengiriman aktual, riwayat percobaan |
-| Analisis Lowongan | Teks sumber sebagai acuan sesi, draf dari backend, penyuntingan, penyimpanan dan penerbitan draf |
+| Pusat Pengingat | Filter antrean, sinkronisasi, pemulihan, simulasi, susun email AI/template, edit dan konfirmasi, antrean pengiriman, riwayat percobaan |
+| Analisis Lowongan | Upload/tempel, pratinjau baris, ekstraksi AI, terjemahan dan pemeriksaan, koreksi, simpan/publikasikan draf oleh staf |
 | Laporan & Analitik | Distribusi backend, evaluasi yang perlu ditinjau, unduhan CSV dengan nama dan status yang mudah dibaca |
 
-Ekstraksi AI otomatis belum memiliki endpoint use case pada backend saat ini.
-Tidak ada tombol ekstraksi yang berpura-pura bekerja. Peninjauan manual,
-penyimpanan, penyuntingan, dan penerbitan draf merupakan operasi API yang nyata.
-Teks sumber hanya menjadi acuan dalam sesi; dokumen asli tetap perlu diarsipkan
-oleh tim.
+Fitur AI menggunakan endpoint FastAPI dan gateway 9Router yang sama. Dokumen
+diparsing pada backend; hasil JSON, bukti sumber, terjemahan dan review divalidasi.
+Metadata analisis disimpan bersama draf setelah staf mengoreksi dan mengonfirmasi
+hasilnya. Dokumen asli tetap perlu diarsipkan oleh tim. AI tidak menerbitkan
+lowongan, mengubah skor matching atau mengirim email secara langsung.
 
 ## Perilaku tampilan
 
@@ -113,3 +113,5 @@ yang dipertahankan sebagai artefak selesai tanpa error. Database demo tidak dise
 
 `docker compose config --quiet` lulus. Image frontend dibangun dan hanya layanan
 frontend dibuat ulang; backend, n8n, dan layanan pengujian reminder tetap berjalan.
+
+Panduan AI operasional, demo profesional, dan konfigurasi workflow n8n: [AI operations](ai_operations.md).

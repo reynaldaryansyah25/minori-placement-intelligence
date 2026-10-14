@@ -198,6 +198,7 @@ class VacancyService:
                 proposed_data=draft.proposed_data,
                 status=DraftStatus.PUBLISHED,
                 published_vacancy_id=vacancy.id,
+                analysis_metadata=draft.analysis_metadata,
             )
             self._drafts.replace(draft_id, updated_draft_data)
             return vacancy

@@ -61,17 +61,22 @@ class BackendClient:
         params: dict[str, Any] | None = None,
         json: Any = None,
         token: str | None = None,
+        files: Any = None,
     ) -> Any:
         url = f"{self._base_url}{path}"
         cleaned_params = {k: str(v) for k, v in params.items() if v is not None} if params else None
         try:
-            with httpx.Client(timeout=self._timeout) as client:
+            timeout = (
+                300 if path.startswith("/ai/") or path.endswith("/email/draft") else self._timeout
+            )
+            with httpx.Client(timeout=timeout) as client:
                 response = client.request(
                     method=method,
                     url=url,
                     params=cleaned_params,
                     json=json,
                     headers=self._headers(token),
+                    files=files,
                 )
         except httpx.ConnectError as exc:
             raise ApiClientError(
@@ -121,6 +126,33 @@ class BackendClient:
         if response.status_code == 204 or not response.content:
             return None
         return response.json()
+
+    def ai_status(self):
+        return self._request("GET", "/ai/status")
+
+    def preview_document(self, filename, data, content_type):
+        return self._request(
+            "POST", "/ai/documents/preview", files={"file": (filename, data, content_type)}
+        )
+
+    def analyze_vacancy(self, text):
+        return self._request("POST", "/ai/vacancies/analyze", json={"text": text})
+
+    def explain_with_ai(self, candidate_id, vacancy_id):
+        return self._request(
+            "POST",
+            "/ai/matching/explanation",
+            json={"candidate_id": candidate_id, "vacancy_id": vacancy_id},
+        )
+
+    def draft_reminder_email(self, identifier, *, template=False):
+        return self._request(
+            "GET" if template else "POST",
+            f"/reminders/{identifier}/email/" + ("template" if template else "draft"),
+        )
+
+    def approve_reminder_email(self, identifier, payload):
+        return self._request("POST", f"/reminders/{identifier}/email/approve", json=payload)
 
     # --- Health & Auth ---
     def get_health(self) -> dict[str, Any]:

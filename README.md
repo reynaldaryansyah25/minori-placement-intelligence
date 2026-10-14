@@ -11,7 +11,7 @@ Sistem menyediakan operasional penempatan menyeluruh:
 - **Candidate Matching (Showcase):** Peringkat deterministik, explainability engine, rincian bobot skor (35% Bahasa, 30% Pengalaman, 20% Sertifikasi, 15% Preferensi), dan persetujuan staf.
 - **Placement Pipeline:** Stepper tahapan seleksi (Interview ➔ Medical ➔ Dokumen ➔ Orientasi ➔ Terbang) dan penjadwalan sadar zona waktu WIB.
 - **Reminder Center:** Monitoring pengingat, dry-run simulation, pemulihan sewa (*lease*), dan penelusuran riwayat percobaan.
-- **AI Vacancy Intelligence:** Masukan teks lowongan bahasa Jepang, formulir draf terstruktur, dan alur publikasi manusiawi (integrasi AI ekstraksi otomatis siap menunggu penyelesaian endpoint 9Router).
+- **AI Vacancy Intelligence:** Ekstraksi teks/PDF/DOCX/XLSX/CSV/TXT, terjemahan Indonesia dan pemeriksaan persyaratan melalui 9Router, lalu koreksi dan publikasi oleh staf.
 - **Reports & Analytics:** Distribusi kategori, ringkasan kendala kualifikasi, dan ekspor CSV resmi RFC 4180.
 - **Role-Based Access Control (RBAC):** Pemisahan tegas peran HR Staff (Admin/Tulis) dan Reviewer (Read-Only) di frontend dan backend.
 
@@ -187,3 +187,5 @@ Panduan lebih lanjut: [panduan frontend](docs/frontend.md),
 [algoritma matching](docs/matching.md), [kontrak API](docs/api.md),
 [placement dan reminder](docs/placements_reminders.md),
 [operasional](docs/operations.md), dan [pedoman pengembangan](AGENTS.md).
+
+Panduan AI operasional, demo profesional, dan konfigurasi workflow n8n: [AI operations](docs/ai_operations.md).

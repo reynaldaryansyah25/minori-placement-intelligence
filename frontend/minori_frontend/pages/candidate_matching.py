@@ -145,6 +145,39 @@ def render_matching_page():
                 show_api_error(exc)
                 return
             render_matching_explanation(result)
+            ai_key = "matching_ai_" + candidate_id + "_" + vacancy_id
+            if st.button("Jelaskan dengan AI", disabled=not is_admin(), width="stretch"):
+                try:
+                    with st.spinner("Menjelaskan hasil resmi…"):
+                        st.session_state[ai_key] = client.explain_with_ai(candidate_id, vacancy_id)
+                except Exception as exc:
+                    show_api_error(exc)
+            explanation_ai = st.session_state.get(ai_key)
+            if explanation_ai:
+                if (
+                    explanation_ai["official"].get("input_fingerprint")
+                    != result.get("input_fingerprint")
+                    or explanation_ai["official"]["eligibility_status"]
+                    != result.get("eligibility_status")
+                    or explanation_ai["official"]["total_score"] != result.get("total_score")
+                    or explanation_ai["official"]["staff_status"]
+                    != result.get("staff_status", "proposed")
+                ):
+                    st.info("Hasil resmi berubah. Jalankan kembali penjelasan AI.")
+                else:
+                    st.caption(
+                        "Penjelasan AI untuk ditinjau staf; keputusan mengikuti hasil resmi di atas."
+                    )
+                    st.text(explanation_ai["narrative"]["summary"])
+                    for key, label in [
+                        ("strengths", "Keunggulan"),
+                        ("unmet_requirements", "Belum dipenuhi"),
+                        ("verification_needed", "Perlu verifikasi"),
+                        ("next_steps", "Langkah administratif"),
+                    ]:
+                        st.write(label)
+                        for item in explanation_ai["narrative"][key]:
+                            st.text("• " + item)
             with st.expander("Profil kandidat"):
                 render_candidate_profile(candidates.get(candidate_id, {}))
             render_policy_note()

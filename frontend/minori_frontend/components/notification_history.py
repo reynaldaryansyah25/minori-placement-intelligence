@@ -61,7 +61,7 @@ def render_reminder_details(notification, attempts, routing=None):
         st.caption("Belum ada percobaan pengiriman yang tercatat.")
     else:
         labels = {
-            "succeeded": "Terkirim",
+            "succeeded": "Terkirim ke server email",
             "simulated": "Simulasi selesai",
             "failed": "Gagal",
             "abandoned": "Dijadwalkan ulang",

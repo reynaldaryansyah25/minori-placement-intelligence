@@ -1,8 +1,9 @@
 """Bounded audit context instead of arbitrary entity or provider payloads."""
 
+from typing import Literal
 from uuid import UUID
 
-from pydantic import AwareDatetime
+from pydantic import AwareDatetime, Field
 
 from minori.domain.catalogs import AuditEntityType
 from minori.domain.entities import AuditLogData
@@ -23,6 +24,8 @@ class AuditContext(InputSchema):
     previous_planned_departure_at: str | None = None
     planned_departure_at: str | None = None
     attempt_number: int | None = None
+    facts_fingerprint: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    delivery_mode: Literal["dry_run", "mailpit", "demo_recipient"] | None = None
 
 
 class AuditLogCreate(InputSchema):
