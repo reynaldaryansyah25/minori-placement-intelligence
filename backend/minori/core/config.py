@@ -35,7 +35,9 @@ class Settings(BaseSettings):
     nine_router_base_url: AnyHttpUrl | None = None
     nine_router_api_key: SecretStr | None = None
     nine_router_model: str | None = None
+    nine_router_fallback_models: str = ""
     llm_timeout_seconds: float = Field(default=30, gt=0, le=300)
+    llm_attempt_timeout_seconds: float = Field(default=30, gt=0, le=300)
     llm_max_retries: int = Field(default=2, ge=0, le=5)
     business_timezone: str = "Asia/Jakarta"
     reminder_delivery_time: time = time(9, 0)
@@ -68,6 +70,16 @@ class Settings(BaseSettings):
     @classmethod
     def normalize_demo_clock(cls, value):
         return None if value == "" else value
+
+    @field_validator("nine_router_fallback_models")
+    @classmethod
+    def validate_fallback_models(cls, value: str) -> str:
+        models = [item.strip() for item in value.split(",") if item.strip()]
+        if len(models) > 3 or len(models) != len(set(models)):
+            raise ValueError("Configure at most three distinct fallback model IDs")
+        if any(len(model) > 160 or any(char.isspace() for char in model) for model in models):
+            raise ValueError("Fallback model IDs must be short and contain no whitespace")
+        return ",".join(models)
 
     @field_validator("business_timezone")
     @classmethod

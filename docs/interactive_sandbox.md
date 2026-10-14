@@ -18,7 +18,22 @@ Setup hanya menambahkan `SANDBOX_GATEWAY_TOKEN` dan `SANDBOX_WORKER_TOKEN` ke `.
 
 Untuk pembaruan selanjutnya gunakan build/up yang sama. Hanya empat service sandbox/publik tersebut yang diganti. Backend harus satu proses, satu replica. Restart backend mengakhiri sesi aktif dan membersihkan salinan sesi lama; batas bersama per jam tetap tersimpan. Restart sandbox sebelum periode penilaian baru agar jadwal contoh relatif terhadap waktu startup terbaru.
 
-Tidak ada perintah perubahan Funnel dalam setup. Target existing tetap `127.0.0.1:8502`. Pemeriksaan read-only:
+Tidak ada perintah perubahan Funnel dalam setup. Target existing tetap `127.0.0.1:8502`.
+
+AI memakai daftar cadangan `NINE_ROUTER_FALLBACK_MODELS` dari `.env` yang sama.
+Saat primary terkena kuota/provider gagal, backend mencoba model cadangan teruji
+melalui 9Router existing. Lihat `ai_operations.md` untuk urutan dan batas waktu.
+Batas AI sesi/jam menghitung operasi pengguna; satu operasi dapat mencoba maksimal
+empat model. Upload, RBAC, validasi keluaran dan persetujuan email tetap berlaku.
+Untuk memasang pembaruan adapter hanya pada sandbox:
+
+```powershell
+docker compose -f compose.public-demo.yaml build backend-sandbox
+docker compose -f compose.public-demo.yaml up -d --no-deps --no-build backend-sandbox
+```
+
+Login ulang setelah restart backend. Service staf, workflow n8n, Mailpit dan Funnel
+tidak memerlukan perubahan. Pemeriksaan Funnel read-only:
 
 ```powershell
 & 'C:\Program Files\Tailscale\tailscale.exe' serve status

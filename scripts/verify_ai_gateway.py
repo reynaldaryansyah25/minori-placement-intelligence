@@ -36,8 +36,9 @@ def main():
     if args.discover:
         print(json.dumps({"available_models": models}))
         return
-    if settings.nine_router_model not in models:
-        raise SystemExit("Configured model was not present in router discovery")
+    configured = [settings.nine_router_model, *settings.nine_router_fallback_models.split(",")]
+    if any(model and model not in models for model in configured):
+        raise SystemExit("A configured model was not present in router discovery")
     client = NineRouterClient(settings)
     try:
         result = AiService(None, ValidatedAiGateway(client)).analyze(SYNTHETIC_SOURCE)
@@ -45,7 +46,12 @@ def main():
         client.close()
     print(
         json.dumps(
-            {"passed": True, "model": settings.nine_router_model, "synthetic_result": result},
+            {
+                "passed": True,
+                "model": client.last_model,
+                "primary_model": settings.nine_router_model,
+                "synthetic_result": result,
+            },
             ensure_ascii=False,
             indent=2,
         )

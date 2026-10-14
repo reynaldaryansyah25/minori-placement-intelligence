@@ -16,7 +16,9 @@ NINE_ROUTER_BASE_URL=http://localhost:20128/v1
 NINE_ROUTER_DOCKER_BASE_URL=http://host.docker.internal:20128/v1
 NINE_ROUTER_API_KEY=<key gateway lokal>
 NINE_ROUTER_MODEL=<ID hasil discovery yang berhasil diuji>
+NINE_ROUTER_FALLBACK_MODELS=<maksimal tiga ID cadangan teruji, dipisahkan koma>
 LLM_TIMEOUT_SECONDS=90
+LLM_ATTEMPT_TIMEOUT_SECONDS=30
 LLM_MAX_RETRIES=1
 INTERNAL_API_TOKEN=<token existing, minimal 32 karakter>
 REVIEWER_API_TOKEN=<token reviewer, minimal 16 karakter>
@@ -31,6 +33,29 @@ Pada verifikasi lokal, discovery `/v1/models` dan Chat Completions berhasil deng
 `cx/gpt-6-sol`. ID tersebut merupakan hasil discovery dan smoke test, bukan default
 yang ditanam dalam adapter. Model Gemini yang diuji terlebih dahulu mengalami
 timeout. Discovery saja tidak membuktikan sebuah model dapat dipanggil.
+
+Adapter sekarang mengirim `stream=false` secara eksplisit: beberapa provider 9Router
+mengembalikan SSE jika field ini tidak disertakan, walaupun SDK mengharapkan JSON.
+Pada verifikasi lanjutan, `ag/gemini-3.8-flash`, `gemini/gemini-3.8-flash`, dan
+`ds/deepseek-chat` berhasil menghasilkan ekstraksi, terjemahan serta review yang
+lulus validasi Pydantic dan bukti sumber. Model yang sekadar terdaftar belum tentu
+layak dipakai; `ag/claude-sonnet-4-6` mengembalikan pemberitahuan model dihentikan.
+
+Contoh urutan teruji: primary `cx/gpt-6-sol`, kemudian
+`NINE_ROUTER_FALLBACK_MODELS=ag/gemini-3.8-flash,ds/deepseek-chat,gemini/gemini-3.8-flash`.
+Semua fitur AI memakai urutan yang sama. Saat timeout/koneksi gagal atau HTTP
+408/429/500/502/503/504, adapter mencoba model berikutnya. 9Router dapat membungkus
+batas penggunaan provider sebagai HTTP 503. HTTP 400/401/403/422 dan hasil yang
+melanggar kontrak tidak dilewati dengan fallback.
+
+Dengan fallback aktif, setiap model dicoba sekali, maksimal empat percobaan per
+operasi. SDK retry dimatikan untuk mencegah percobaan berlipat. Timeout jaringan
+per percobaan memakai `LLM_ATTEMPT_TIMEOUT_SECONDS`; tidak memulai percobaan baru
+setelah budget `LLM_TIMEOUT_SECONDS` habis. Timeout transport berlaku pada tahap
+koneksi/baca, bukan pembatalan absolut seluruh request. Tanpa fallback, pengaturan
+timeout/retry SDK existing tetap berlaku. Log hanya memuat ID model, kategori
+kegagalan dan status HTTP, tidak body error, prompt, key atau data kandidat.
+Smoke test melaporkan model yang benar-benar menjawab, bukan hanya primary.
 
 ```powershell
 python scripts/verify_ai_gateway.py --discover

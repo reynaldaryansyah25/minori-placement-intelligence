@@ -49,7 +49,22 @@ def test_router_url_rejects_embedded_credentials():
         Settings(_env_file=None, nine_router_base_url="http://user:secret@localhost:20128/v1")
 
 
-@pytest.mark.parametrize("field,value", [("llm_timeout_seconds", 0), ("llm_max_retries", -1)])
+@pytest.mark.parametrize(
+    "field,value",
+    [("llm_timeout_seconds", 0), ("llm_attempt_timeout_seconds", 0), ("llm_max_retries", -1)],
+)
 def test_invalid_request_limits_are_rejected(field, value):
     with pytest.raises(ValidationError):
         Settings(_env_file=None, **{field: value})
+
+
+def test_fallback_model_configuration_is_explicit_and_normalized():
+    assert Settings(_env_file=None).nine_router_fallback_models == ""
+    settings = Settings(_env_file=None, nine_router_fallback_models=" backup-one, backup-two ")
+    assert settings.nine_router_fallback_models == "backup-one,backup-two"
+
+
+@pytest.mark.parametrize("value", ["a,b,c,d", "a,a", "model with spaces", "x" * 161])
+def test_invalid_fallback_configuration_is_rejected(value):
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, nine_router_fallback_models=value)
