@@ -34,7 +34,9 @@ class SandboxBoundaryMiddleware:
             if worker:
                 if path == "/sandbox/worker/sessions" and method == "GET":
                     return await self.app(scope, receive, send)
-                if not path.startswith("/internal/reminders/"):
+                if not path.startswith("/internal/reminders/") and not (
+                    settings.app_env == "test" and path == "/internal/demo/clock"
+                ):
                     raise SandboxDenied(403, "Worker hanya dapat memproses antrean sandbox.")
                 row = manager.worker_session(
                     headers.get(b"x-sandbox-session", b"").decode(),
@@ -100,7 +102,8 @@ class SandboxBoundaryMiddleware:
                 if path.endswith("/email/approve"):
                     # A repeated approval consumes no additional email budget; the service
                     # separately validates snapshot and idempotency before enqueueing.
-                    manager.consume(row, "emails", key=f"generation-{row.counts['resets']}:{path}")
+                    identifier = path.split("/")[2]
+                    manager.consume(row, "emails", key=manager.email_key(row, identifier))
             control = path in {"/sandbox/reset", "/sandbox/logout"}
             if not control:
                 manager.begin(row, touch=not worker)

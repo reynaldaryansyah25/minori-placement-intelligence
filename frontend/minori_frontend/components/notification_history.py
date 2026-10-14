@@ -29,6 +29,12 @@ def render_reminder_details(notification, attempts, routing=None):
     render_status_badge(notification.get("status"))
     detail_grid(
         [
+            (
+                "Jenis pengiriman",
+                {"automatic": "Pengingat otomatis", "manual": "Email manual"}.get(
+                    notification.get("delivery_kind"), "Pengingat lama"
+                ),
+            ),
             ("Mode", "Simulasi" if notification.get("dry_run", True) else "Pengiriman"),
             ("Jadwal kirim", format_datetime_id(notification.get("scheduled_at"))),
             (

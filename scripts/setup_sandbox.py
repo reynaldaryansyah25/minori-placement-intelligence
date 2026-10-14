@@ -18,7 +18,7 @@ def main():
     }
     updates = []
     revised = original
-    for name in ("SANDBOX_GATEWAY_TOKEN", "SANDBOX_WORKER_TOKEN"):
+    for name in ("SANDBOX_GATEWAY_TOKEN", "SANDBOX_WORKER_TOKEN", "SANDBOX_N8N_ENCRYPTION_KEY"):
         if not values.get(name):
             line = name + "=" + secrets.token_urlsafe(48)
             if name in values:

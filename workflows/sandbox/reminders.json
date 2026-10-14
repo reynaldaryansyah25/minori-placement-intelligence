@@ -1,0 +1,834 @@
+{
+  "id": "MinoriSandboxReminders",
+  "name": "MINORI Sandbox — Pengingat Otomatis",
+  "active": false,
+  "nodes": [
+    {
+      "id": "Polling15detik",
+      "name": "Polling 15 detik",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 15
+            },
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "UjiManual",
+      "name": "Uji Manual",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "DaftarSesiAktif",
+      "name": "Daftar Sesi Aktif",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "url": "http://backend-sandbox:8000/sandbox/worker/sessions",
+        "method": "GET",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "responseFormat": "json",
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MinoriSandboxApi",
+          "name": "MINORI Sandbox HTTP"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "DaftarSesi",
+      "name": "Daftar Sesi",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const r=$input.first().json; const sessions=(r.body||r).sessions; if(!Array.isArray(sessions))return []; return sessions.slice(0,8).filter(s=>/^[a-f0-9]{32}$/.test(s)).map(s=>({json:{session_id:s},pairedItem:{item:0}}));"
+      }
+    },
+    {
+      "id": "PulihkanLease",
+      "name": "Pulihkan Lease",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "url": "http://backend-sandbox:8000/internal/reminders/recover",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "responseFormat": "json",
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Sandbox-Session",
+              "value": "={{ $json.session_id }}"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MinoriSandboxApi",
+          "name": "MINORI Sandbox HTTP"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "SesiSiap",
+      "name": "Sesi Siap",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return $input.all().flatMap((item,i)=>{if(item.json.statusCode>=400||item.json.error)return [];return [{json:{session_id:$('Daftar Sesi').itemMatching(i).json.session_id},pairedItem:{item:i}}];});"
+      }
+    },
+    {
+      "id": "AmbilReminderDue",
+      "name": "Ambil Reminder Due",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "url": "http://backend-sandbox:8000/internal/reminders/due?limit=5",
+        "method": "GET",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "responseFormat": "json",
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Sandbox-Session",
+              "value": "={{ $json.session_id }}"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MinoriSandboxApi",
+          "name": "MINORI Sandbox HTTP"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "PisahkanPengingat",
+      "name": "Pisahkan Pengingat",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return $input.all().flatMap((item,i)=>{if(item.json.statusCode>=400)return []; const rows=item.json.body; if(!Array.isArray(rows))return []; const sid=$('Sesi Siap').itemMatching(i).json.session_id; return rows.slice(0,5).filter(r=>typeof r.id==='string').map(r=>({json:{session_id:sid,notification_id:r.id},pairedItem:{item:i}}));});"
+      }
+    },
+    {
+      "id": "KlaimPengingat",
+      "name": "Klaim Pengingat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        0
+      ],
+      "parameters": {
+        "url": "http://backend-sandbox:8000/internal/reminders/claim",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "responseFormat": "json",
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Sandbox-Session",
+              "value": "={{ $json.session_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {notification_id:$json.notification_id} }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MinoriSandboxApi",
+          "name": "MINORI Sandbox HTTP"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "ValidasiKlaim",
+      "name": "Validasi Klaim",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return $input.all().flatMap((item,i)=>{const c=item.json.body; const job=$('Pisahkan Pengingat').itemMatching(i).json; if(item.json.statusCode>=400||!c||!c.notification||c.notification.id!==job.notification_id||c.notification.status!=='processing'||typeof c.claim_token!=='string'||c.claim_token.length<32||c.claim_token.length>128)return []; return [{json:{session_id:job.session_id,...c},pairedItem:{item:i}}];});"
+      }
+    },
+    {
+      "id": "ModeSimulasi",
+      "name": "Mode Simulasi",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2200,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "Mode Simulasi",
+              "leftValue": "={{ $json.notification.dry_run === true }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "SiapkanSimulasi",
+      "name": "Siapkan Simulasi",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return $input.all().map((item,i)=>({json:{...item.json,outcome:'simulated'},pairedItem:{item:i}}));"
+      }
+    },
+    {
+      "id": "ValidasiTujuan",
+      "name": "Validasi Tujuan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return $input.all().map((item,i)=>{const c=item.json,n=c.notification,r=c.recipient_routing,m=c.message;const approved=n.delivery_kind==='automatic'?['interview_h3','medical_h1'].includes(n.template_code):Boolean(n.approved_message&&n.approved_at&&n.approved_by);const allowed=approved&&n.managed===true&&n.dry_run===false&&r&&r.delivery_allowed===true&&r.routing_mode==='mailpit'&&r.effective_recipient==='mailpit@minori.local'&&m&&typeof m.subject==='string'&&m.subject.length>0&&m.subject.length<=160&&!/[\\r\\n]/.test(m.subject)&&typeof m.body==='string'&&m.body.length>0&&m.body.length<=8000;return {json:{...c,route_allowed:Boolean(allowed),error_code:'PROVIDER_REJECTED'},pairedItem:{item:i}};});"
+      }
+    },
+    {
+      "id": "TujuanAman",
+      "name": "Tujuan Aman",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2860,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "Tujuan Aman",
+              "leftValue": "={{ $json.route_allowed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "SMTPMailpitSandbox",
+      "name": "SMTP Mailpit Sandbox",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        3080,
+        0
+      ],
+      "parameters": {
+        "fromEmail": "MINORI Placement Intelligence <sandbox@minori.invalid>",
+        "toEmail": "={{ $json.recipient_routing.effective_recipient }}",
+        "subject": "={{ $json.message.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.message.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "id": "MinoriSandboxSmtp",
+          "name": "MINORI Sandbox Mailpit"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "HasilSMTP",
+      "name": "Hasil SMTP",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3300,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return $input.all().map((item,i)=>{const c=$('Validasi Klaim').itemMatching(i).json,s=item.json;const accepted=Array.isArray(s.accepted)&&s.accepted.includes('mailpit@minori.local');const reference=typeof s.messageId==='string'?s.messageId.replace(/[^A-Za-z0-9_.:-]/g,'').slice(0,100):'';const sent=!s.error&&accepted&&Boolean(reference);return {json:{...c,smtp_sent:sent,outcome:'sent',provider_reference:sent?'mailpit:'+reference:undefined,error_code:'PROVIDER_UNAVAILABLE'},pairedItem:{item:i}};});"
+      }
+    },
+    {
+      "id": "SMTPBerhasil",
+      "name": "SMTP Berhasil",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3520,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "SMTP Berhasil",
+              "leftValue": "={{ $json.smtp_sent }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "CatatTerkirim",
+      "name": "Catat Terkirim",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3740,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'http://backend-sandbox:8000/internal/reminders/'+$json.notification.id+'/complete' }}",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "responseFormat": "json",
+              "fullResponse": true,
+              "neverError": false
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Sandbox-Session",
+              "value": "={{ $json.session_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {claim_token:$json.claim_token,outcome:'sent',provider_reference:$json.provider_reference} }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MinoriSandboxApi",
+          "name": "MINORI Sandbox HTTP"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "CatatSimulasi",
+      "name": "Catat Simulasi",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3960,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'http://backend-sandbox:8000/internal/reminders/'+$json.notification.id+'/complete' }}",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "responseFormat": "json",
+              "fullResponse": true,
+              "neverError": false
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Sandbox-Session",
+              "value": "={{ $json.session_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {claim_token:$json.claim_token,outcome:'simulated'} }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MinoriSandboxApi",
+          "name": "MINORI Sandbox HTTP"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "CatatGagal",
+      "name": "Catat Gagal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4180,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'http://backend-sandbox:8000/internal/reminders/'+$json.notification.id+'/fail' }}",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "responseFormat": "json",
+              "fullResponse": true,
+              "neverError": false
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Sandbox-Session",
+              "value": "={{ $json.session_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {claim_token:$json.claim_token,error_code:$json.error_code} }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MinoriSandboxApi",
+          "name": "MINORI Sandbox HTTP"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "HasilPengiriman",
+      "name": "Hasil Pengiriman",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4400,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return $input.all().map((item,i)=>({json:{recorded:item.json.statusCode>=200&&item.json.statusCode<300,status:item.json.body?.status||'callback_pending'},pairedItem:{item:i}}));"
+      }
+    }
+  ],
+  "connections": {
+    "Polling 15 detik": {
+      "main": [
+        [
+          {
+            "node": "Daftar Sesi Aktif",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Uji Manual": {
+      "main": [
+        [
+          {
+            "node": "Daftar Sesi Aktif",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daftar Sesi Aktif": {
+      "main": [
+        [
+          {
+            "node": "Daftar Sesi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daftar Sesi": {
+      "main": [
+        [
+          {
+            "node": "Pulihkan Lease",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pulihkan Lease": {
+      "main": [
+        [
+          {
+            "node": "Sesi Siap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sesi Siap": {
+      "main": [
+        [
+          {
+            "node": "Ambil Reminder Due",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ambil Reminder Due": {
+      "main": [
+        [
+          {
+            "node": "Pisahkan Pengingat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pisahkan Pengingat": {
+      "main": [
+        [
+          {
+            "node": "Klaim Pengingat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Klaim Pengingat": {
+      "main": [
+        [
+          {
+            "node": "Validasi Klaim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validasi Klaim": {
+      "main": [
+        [
+          {
+            "node": "Mode Simulasi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode Simulasi": {
+      "main": [
+        [
+          {
+            "node": "Siapkan Simulasi",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Validasi Tujuan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Siapkan Simulasi": {
+      "main": [
+        [
+          {
+            "node": "Catat Simulasi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validasi Tujuan": {
+      "main": [
+        [
+          {
+            "node": "Tujuan Aman",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tujuan Aman": {
+      "main": [
+        [
+          {
+            "node": "SMTP Mailpit Sandbox",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Catat Gagal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SMTP Mailpit Sandbox": {
+      "main": [
+        [
+          {
+            "node": "Hasil SMTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hasil SMTP": {
+      "main": [
+        [
+          {
+            "node": "SMTP Berhasil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SMTP Berhasil": {
+      "main": [
+        [
+          {
+            "node": "Catat Terkirim",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Catat Gagal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Catat Simulasi": {
+      "main": [
+        [
+          {
+            "node": "Hasil Pengiriman",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Catat Terkirim": {
+      "main": [
+        [
+          {
+            "node": "Hasil Pengiriman",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Catat Gagal": {
+      "main": [
+        [
+          {
+            "node": "Hasil Pengiriman",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta",
+    "executionTimeout": 120,
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false
+  },
+  "pinData": {},
+  "tags": []
+}

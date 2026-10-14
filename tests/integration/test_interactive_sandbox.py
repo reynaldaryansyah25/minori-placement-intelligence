@@ -13,7 +13,7 @@ from minori.integrations.nine_router.structured import ValidatedAiGateway
 from minori.main import create_app
 from pydantic import ValidationError
 
-from scripts.sandbox_worker import INBOX, process_session
+INBOX = "mailpit@minori.local"
 
 GATEWAY = "synthetic-sandbox-gateway-" + "a" * 40
 WORKER = "synthetic-sandbox-worker-" + "b" * 40
@@ -77,6 +77,7 @@ def sandbox(tmp_path):
         notification_dry_run=False,
         notification_delivery_mode="mailpit",
         notification_retry_base_seconds=1,
+        demo_clock_at=datetime(2026, 10, 14, 2, 0, tzinfo=UTC),
     )
     app = create_app(settings)
     fake = FakeLlm()
@@ -242,15 +243,23 @@ def test_ai_explanation_never_changes_official_result(sandbox):
 def test_approved_mailpit_job_claim_retry_and_callback(sandbox):
     client, manager, _, _ = sandbox
     headers = worker_headers(manager)
-    assert client.get("/internal/reminders/due", headers=headers).json() == []
     pending = client.get("/reminders").json()[0]
+    pending = client.post(
+        f"/placements/{pending['placement_id']}/activities/{pending['placement_stage_id']}/email/prepare"
+    ).json()
     assert (
         client.post(
             "/internal/reminders/claim", headers=headers, json={"notification_id": pending["id"]}
         ).status_code
         == 409
     )
-    row, approval = approve_first(client)
+    preview = client.get(f"/reminders/{pending['id']}/email/template").json()
+    approval = {k: preview[k] for k in ("subject", "body", "facts_fingerprint")}
+    approval.update(confirmed=True, idempotency_key="synthetic-manual-approval-key")
+    assert (
+        client.post(f"/reminders/{pending['id']}/email/approve", json=approval).status_code == 200
+    )
+    row = pending
     path = f"/reminders/{row['id']}"
     assert client.post(path + "/email/approve", json=approval).status_code == 200
     assert client.get("/sandbox/session").json()["used"]["emails"] == 1
@@ -287,7 +296,7 @@ def test_approved_mailpit_job_claim_retry_and_callback(sandbox):
         ).status_code
         == 200
     )
-    clock = datetime.now(UTC) + timedelta(seconds=2)
+    clock = manager.settings.demo_clock_at + timedelta(seconds=2)
     manager.settings.demo_clock_at = clock
     retry = client.post(
         "/internal/reminders/claim", headers=headers, json={"notification_id": row["id"]}
@@ -305,31 +314,45 @@ def test_approved_mailpit_job_claim_retry_and_callback(sandbox):
     assert len(client.get(path + "/attempts").json()) == 2
 
 
-def test_isolated_worker_uses_fixed_smtp_and_records_attempt(sandbox):
+def test_calendar_jobs_at_nine_without_manual_approval(sandbox):
     client, manager, _, _ = sandbox
-    row, _ = approve_first(client)
-    delivered = []
+    rows = client.get("/reminders").json()
+    automatic = [r for r in rows if r["delivery_kind"] == "automatic"]
+    assert automatic
+    # Use the first due calendar date from the real seeded schedule.
+    due = min(datetime.fromisoformat(r["scheduled_at"]) for r in automatic)
+    manager.settings.demo_clock_at = due - timedelta(seconds=1)
+    headers = worker_headers(manager)
+    assert client.get("/internal/reminders/due", headers=headers).json() == []
+    manager.settings.demo_clock_at = due
+    ready = client.get("/internal/reminders/due", headers=headers).json()
+    assert {r["template_code"] for r in ready} == {"interview_h3", "medical_h1"}
+    for row in ready:
+        assert not row["approved_message"]
+        claim = client.post(
+            "/internal/reminders/claim", headers=headers, json={"notification_id": row["id"]}
+        )
+        assert claim.status_code == 200
+        assert claim.json()["notification"]["delivery_kind"] == "automatic"
+    assert client.get("/sandbox/session").json()["used"]["emails"] == len(ready)
 
-    class Smtp:
-        def __init__(self, host, port, **kwargs):
-            assert (host, port) == ("mailpit-sandbox", 1025)
 
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args):
-            pass
-
-        def send_message(self, message):
-            assert message["To"] == INBOX
-            delivered.append(message)
-
-    client.headers["Authorization"] = "Bearer " + WORKER
-    assert process_session(client, next(iter(manager.sessions)), Smtp) == 1
-    assert len(delivered) == 1
-    assert process_session(client, next(iter(manager.sessions)), Smtp) == 0
-    client.headers["Authorization"] = "Bearer " + sandbox[3]
-    assert client.get(f"/reminders/{row['id']}").json()["status"] == "sent"
+def test_automatic_dispatch_cannot_exceed_email_budget(sandbox):
+    client, manager, _, _ = sandbox
+    manager.settings.sandbox_email_limit = 1
+    manager.settings.demo_clock_at = datetime(2026, 10, 14, 2, 0, tzinfo=UTC)
+    ready = client.get("/internal/reminders/due", headers=worker_headers(manager)).json()
+    assert len(ready) == 2
+    headers = worker_headers(manager)
+    first = client.post(
+        "/internal/reminders/claim", headers=headers, json={"notification_id": ready[0]["id"]}
+    )
+    assert first.status_code == 200
+    second = client.post(
+        "/internal/reminders/claim", headers=headers, json={"notification_id": ready[1]["id"]}
+    )
+    assert second.status_code == 429
+    assert client.get(f"/reminders/{ready[1]['id']}").json()["status"] == "pending"
 
 
 def test_reset_cannot_reuse_email_budget_by_replaying_seed_identifier(sandbox):

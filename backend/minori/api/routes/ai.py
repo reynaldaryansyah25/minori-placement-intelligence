@@ -140,8 +140,15 @@ def email_template(notification_id: UUID, service: Reminder, staff: Staff):
     "/placements/{placement_id}/activities/{activity_id}/email/prepare",
     response_model=NotificationRead,
 )
-def prepare_activity_email(placement_id: UUID, activity_id: UUID, service: Reminder, staff: Staff):
-    return invoke(service.prepare_activity_email, placement_id, activity_id)
+def prepare_activity_email(
+    placement_id: UUID, activity_id: UUID, http: Request, service: Reminder, staff: Staff
+):
+    return invoke(
+        service.prepare_activity_email,
+        placement_id,
+        activity_id,
+        separate_manual=http.app.state.settings.sandbox_enabled,
+    )
 
 
 @router.post(

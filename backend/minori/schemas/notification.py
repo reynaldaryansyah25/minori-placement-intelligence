@@ -1,11 +1,12 @@
 """Notification records and attempts, without dispatch or reminder behavior."""
 
-from typing import Self
+from typing import Literal, Self
 from uuid import UUID
 
-from pydantic import AwareDatetime, Field, StrictInt, model_validator
+from pydantic import AwareDatetime, Field, StrictInt, computed_field, model_validator
 
 from minori.domain.catalogs import AttemptStatus, NotificationChannel, NotificationStatus
+from minori.domain.reminders import is_automatic_reminder
 from minori.schemas.common import Code, InputSchema, RecordFields, Reference
 
 
@@ -73,6 +74,13 @@ class NotificationRead(NotificationCreate, RecordFields):
     """Queue state and optional staff-approved snapshot; claim secrets stay private."""
 
     claim_token_hash: str | None = Field(default=None, exclude=True)
+
+    @computed_field
+    @property
+    def delivery_kind(self) -> Literal["automatic", "manual", "legacy"]:
+        if not self.managed:
+            return "legacy"
+        return "automatic" if is_automatic_reminder(self) else "manual"
 
 
 class NotificationAttemptCreate(InputSchema):

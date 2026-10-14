@@ -8,7 +8,7 @@ flowchart LR
     Frontend[Streamlit staf] --> API[FastAPI utama]
     N8N[n8n] --> API
     Public[Streamlit sandbox] --> Sandbox[FastAPI sandbox]
-    Worker[Worker sandbox] --> Sandbox
+    Worker[n8n sandbox] --> Sandbox
     API --> UseCases[Services dan domain]
     Sandbox --> UseCases
     UseCases --> Repository[Repository melalui ports]

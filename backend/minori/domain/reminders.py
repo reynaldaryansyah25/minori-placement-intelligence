@@ -14,6 +14,17 @@ from minori.domain.entities import NotificationRecord
 from minori.domain.errors import BusinessConflictError
 
 
+def is_automatic_reminder(notification) -> bool:
+    """Calendar intents are server-generated; manual drafts never grant automatic consent."""
+    return (
+        notification.managed
+        and notification.deduplication_key.startswith("reminder:")
+        and notification.template_code in {"interview_h3", "medical_h1"}
+        and not notification.manual_request_key
+        and not notification.approved_message
+    )
+
+
 class DeliveryErrorCode(StrEnum):
     PROVIDER_UNAVAILABLE = "PROVIDER_UNAVAILABLE"
     PROVIDER_TIMEOUT = "PROVIDER_TIMEOUT"

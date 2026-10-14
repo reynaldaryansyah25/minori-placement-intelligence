@@ -64,12 +64,31 @@ def verify_boundaries():
     )
     main_networks = set(inspect("backend")["NetworkSettings"]["Networks"])
     main_mounts = {m["Source"] for m in inspect("backend")["Mounts"]}
-    for name in ("frontend-public", "backend-sandbox", "worker-sandbox", "mailpit-sandbox"):
+    for name in ("frontend-public", "backend-sandbox", "n8n-sandbox", "mailpit-sandbox"):
         item = inspect(name)
         assert not main_networks & set(item["NetworkSettings"]["Networks"])
         assert not main_mounts & {m["Source"] for m in item["Mounts"]}
         if name != "frontend-public":
             assert not item["HostConfig"]["PortBindings"]
+    sandbox_n8n = inspect("n8n-sandbox")
+    n8n_env = dict(item.split("=", 1) for item in sandbox_n8n["Config"]["Env"])
+    main_n8n = inspect("n8n")
+    main_n8n_env = dict(item.split("=", 1) for item in main_n8n["Config"]["Env"])
+    assert n8n_env["N8N_ENCRYPTION_KEY"] != main_n8n_env["N8N_ENCRYPTION_KEY"]
+    assert (
+        not {
+            "INTERNAL_API_TOKEN",
+            "REVIEWER_API_TOKEN",
+            "SANDBOX_GATEWAY_TOKEN",
+            "NINE_ROUTER_API_KEY",
+        }
+        & n8n_env.keys()
+    )
+    assert not {m["Source"] for m in main_n8n["Mounts"]} & {
+        m["Source"] for m in sandbox_n8n["Mounts"]
+    }
+    for network in sandbox_n8n["NetworkSettings"]["Networks"]:
+        assert json.loads(output("docker", "network", "inspect", network))[0]["Internal"]
     with httpx.Client(base_url="http://127.0.0.1:8000", timeout=30) as client:
         for name in ("SANDBOX_GATEWAY_TOKEN", "SANDBOX_WORKER_TOKEN"):
             headers = {"Authorization": "Bearer " + cfg[name]}

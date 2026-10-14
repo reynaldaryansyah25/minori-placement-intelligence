@@ -27,7 +27,7 @@ from minori.domain.notification_templates import (
     render_notification,
 )
 from minori.domain.operations import OperationsPorts, record_data
-from minori.domain.reminders import DeliveryErrorCode, ReminderPolicy
+from minori.domain.reminders import DeliveryErrorCode, ReminderPolicy, is_automatic_reminder
 
 
 def utc_now():
@@ -372,10 +372,17 @@ class ReminderService:
     def list(self, **filters):
         return self.ports.queue.list(**filters)
 
-    def due(self, *, limit=100, offset=0):
+    def due(self, *, limit=100, offset=0, sandbox_ready=False):
         now = self.clock()
         with self.transaction():
             self._maintenance(now)
+            if sandbox_ready:
+                rows = [
+                    row
+                    for row in self._all(self.ports.queue, due_before=now)
+                    if row.approved_message or is_automatic_reminder(row)
+                ]
+                return rows[offset : offset + limit]
             return self.ports.queue.list(due_before=now, limit=limit, offset=offset)
 
     def get(self, identifier):
@@ -387,12 +394,25 @@ class ReminderService:
             identifier, limit=limit, offset=offset
         )
 
-    def claim(self, identifier=None, *, dry_run_only=False, require_approval=False):
+    def claim(
+        self,
+        identifier=None,
+        *,
+        dry_run_only=False,
+        require_approval=False,
+        allow_automatic=False,
+        on_claim=None,
+    ):
         now = self.clock()
         with self.transaction():
             self._maintenance(now)
-            if require_approval and (
-                identifier is None or not self._get(identifier).approved_message
+            eligible = self._get(identifier) if require_approval and identifier else None
+            if require_approval and not (
+                eligible
+                and (
+                    eligible.approved_message
+                    or (allow_automatic and is_automatic_reminder(eligible))
+                )
             ):
                 raise BusinessConflictError(
                     "Persetujuan peserta demo diperlukan sebelum pengiriman."
@@ -408,6 +428,8 @@ class ReminderService:
             )
             if row is None:
                 return None
+            if on_claim:
+                on_claim(row)
             self.ports.notification_attempt.append(
                 NotificationAttemptData(
                     notification_id=row.id,
@@ -436,7 +458,7 @@ class ReminderService:
         candidate = self.ports.candidate.get(row.candidate_id)
         return self.policy.resolve_recipient(candidate.reference, dry_run=row.dry_run)
 
-    def prepare_activity_email(self, placement_id, activity_id):
+    def prepare_activity_email(self, placement_id, activity_id, *, separate_manual=False):
         now = self.clock()
         with self.transaction():
             activity = self.ports.placement_stage.get(activity_id)
@@ -456,12 +478,17 @@ class ReminderService:
                     "Pilih kegiatan mendatang pada kandidat dan penempatan aktif."
                 )
             self._maintenance(now)
-            if activity.step_type.value in MANUAL_ACTIVITY_TEMPLATES:
+            if separate_manual or activity.step_type.value in MANUAL_ACTIVITY_TEMPLATES:
+                template = MANUAL_ACTIVITY_TEMPLATES.get(activity.step_type.value) or (
+                    "interview_h3"
+                    if activity.step_type == PlacementStepType.INTERVIEW
+                    else "medical_h1"
+                )
                 row = self._new(
                     activity,
                     placement,
                     f"manual-activity:{activity.id}:r{activity.schedule_revision}",
-                    MANUAL_ACTIVITY_TEMPLATES[activity.step_type.value],
+                    template,
                     now,
                     manual=True,
                 )

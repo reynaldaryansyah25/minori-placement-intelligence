@@ -72,7 +72,7 @@ class DemoSandbox:
         command.upgrade(config, "head")
         template_db = Database(settings)
         try:
-            seed_professional_demo(template_db, dry_run=False)
+            seed_professional_demo(template_db, anchor=settings.demo_clock_at, dry_run=False)
         finally:
             template_db.dispose()
 
@@ -201,6 +201,10 @@ class DemoSandbox:
             row.counts[kind] += amount
             if key:
                 row.email_keys.add(key)
+
+    @staticmethod
+    def email_key(row, identifier):
+        return f"generation-{row.counts['resets']}:notification-{str(identifier).lower()}"
 
     def usage(self, row):
         return {

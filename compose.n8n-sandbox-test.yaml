@@ -1,0 +1,20 @@
+# Only use with -p minori-n8n-sandbox-test. No host ports or persistent business DB.
+services:
+  backend-sandbox:
+    environment:
+      APP_ENV: test
+      LLM_ENABLED: "false"
+      DEMO_CLOCK_AT: "2026-10-14T01:59:50Z"
+      SANDBOX_GATEWAY_TOKEN: synthetic-n8n-sandbox-gateway-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      SANDBOX_WORKER_TOKEN: synthetic-n8n-sandbox-worker-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    volumes: !override []
+    tmpfs:
+      - /app/data/sandbox:uid=10001,gid=10001,mode=0700,size=128m
+  n8n-sandbox:
+    environment:
+      SANDBOX_WORKER_TOKEN: synthetic-n8n-sandbox-worker-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      N8N_ENCRYPTION_KEY: synthetic-n8n-sandbox-encryption-cccccccccccccccccccccccccccccccc
+      SANDBOX_N8N_POLL_ENABLED: "false"
+    volumes: !override []
+    tmpfs:
+      - /home/node/.n8n:uid=1000,gid=1000,mode=0700,size=128m

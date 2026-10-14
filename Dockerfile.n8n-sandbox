@@ -1,0 +1,4 @@
+FROM docker.n8n.io/n8nio/n8n:2.43.4@sha256:c34ee9107a42b837e25cec0c8a927ab90a45b776aa2ccbf15e5b9cda466fad2c
+COPY --chown=node:node workflows/sandbox /opt/minori
+USER node
+ENTRYPOINT ["tini", "--", "/bin/sh", "/opt/minori/start.sh"]

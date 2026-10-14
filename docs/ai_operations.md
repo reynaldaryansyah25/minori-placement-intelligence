@@ -125,7 +125,8 @@ Jika node SMTP menyediakan `messageId`, normalisasikan nilai itu sebelum callbac
 Jika referensi tidak tersedia atau hasil normalisasi kosong, periksa hasil SMTP;
 jangan mencatat sukses dengan referensi buatan.
 
-Sandbox memakai worker terisolasi dan Mailpit tersendiri, bukan workflow utama.
+Sandbox memakai n8n terisolasi dan Mailpit tersendiri. Workflow serta credentials
+utama tidak berubah. Lihat [alur dan tes sandbox](interactive_sandbox.md).
 
 ## Pengujian end-to-end
 

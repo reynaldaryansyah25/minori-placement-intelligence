@@ -50,24 +50,55 @@ services:
     mem_limit: 768m
     cpus: 1.0
     pids_limit: 128
-  worker-sandbox:
+  n8n-sandbox:
     build:
       context: .
-      target: backend
-    command: ["python", "scripts/sandbox_worker.py"]
+      dockerfile: Dockerfile.n8n-sandbox
     environment:
       SANDBOX_WORKER_TOKEN: ${SANDBOX_WORKER_TOKEN:?Run scripts/setup_sandbox.py}
+      N8N_ENCRYPTION_KEY: ${SANDBOX_N8N_ENCRYPTION_KEY:?Run scripts/setup_sandbox.py}
+      GENERIC_TIMEZONE: Asia/Jakarta
+      TZ: Asia/Jakarta
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+      N8N_UNVERIFIED_PACKAGES_ENABLED: "false"
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "true"
+      N8N_DISABLED_MODULES: mcp-registry
+      N8N_DISABLE_UI: "true"
+      N8N_RUNNERS_TASK_TIMEOUT: "60"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_CONCURRENCY_PRODUCTION_LIMIT: "1"
+      N8N_RUNNERS_MAX_CONCURRENCY: "1"
+      N8N_LOG_LEVEL: warn
+      EXECUTIONS_DATA_SAVE_ON_SUCCESS: none
+      EXECUTIONS_DATA_SAVE_ON_ERROR: none
+      EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS: "false"
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "1"
+      N8N_SECURE_COOKIE: "true"
+    volumes:
+      - n8n_sandbox_data:/home/node/.n8n
     depends_on:
       backend-sandbox: {condition: service_healthy}
       mailpit-sandbox: {condition: service_healthy}
     networks: [sandbox_app, sandbox_mail]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5678/healthz/readiness').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 6s
+      retries: 10
+      start_period: 120s
     restart: unless-stopped
     read_only: true
+    tmpfs:
+      - /tmp:uid=1000,gid=1000,mode=0700,size=64m
+      - /home/node/.cache:uid=1000,gid=1000,mode=0700,size=32m
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
-    mem_limit: 192m
-    cpus: 0.5
-    pids_limit: 64
+    mem_limit: 768m
+    cpus: 1.0
+    pids_limit: 128
   mailpit-sandbox:
     image: axllent/mailpit@sha256:94f6b70c1436defae6799d9ac7ff0eeff9540465b842026d5cdb018f1c0234ea
     environment:
@@ -133,6 +164,7 @@ services:
     pids_limit: 128
 volumes:
   sandbox_data:
+  n8n_sandbox_data:
 networks:
   sandbox_app:
     internal: true

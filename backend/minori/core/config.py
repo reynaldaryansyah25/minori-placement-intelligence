@@ -161,8 +161,8 @@ class Settings(BaseSettings):
             database = Path(make_url(self.database_url).database or "").resolve()
             if not database.is_relative_to(root) or database.name != "template.db":
                 raise ValueError("Sandbox template database must be inside SANDBOX_ROOT")
-            if self.demo_clock_at:
-                raise ValueError("Sandbox uses real time; no inherited demo clock")
+            if self.demo_clock_at and self.app_env != "test":
+                raise ValueError("Sandbox clock control is restricted to isolated tests")
         if self.app_env == "production" and self.notification_delivery_mode != "dry_run":
             raise ValueError(
                 "Production email delivery requires a separately authorized verified-recipient adapter"

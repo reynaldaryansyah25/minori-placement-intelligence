@@ -33,12 +33,13 @@ dan idempotency key. Pekerjaan langsung tersedia; Streamlit tidak mengirim SMTP.
 
 Perubahan jadwal/kandidat/tujuan dapat membatalkan persetujuan lama.
 Double click dengan kunci yang sama tidak membuat pekerjaan tambahan.
-Sandbox hanya menyerahkan pekerjaan yang sudah disetujui kepada worker.
+Sandbox menyerahkan pengingat kalender H-3/H-1 secara otomatis pada 09.00 WIB.
+Email manual memiliki pekerjaan terpisah dan wajib disetujui sebelum diklaim.
 
 ## Kontrak worker
 
 Endpoint utama memerlukan bearer token internal.
-Worker sandbox menggunakan credential tersendiri dan scope sesi server.
+n8n sandbox menggunakan credential tersendiri dan scope sesi server.
 
 | Metode dan endpoint | Fungsi |
 | --- | --- |

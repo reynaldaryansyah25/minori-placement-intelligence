@@ -27,7 +27,7 @@ di `.env`; Compose publik menetapkannya hanya pada sandbox.
 | --- | --- |
 | `compose.yaml` | Staf/backend/n8n lokal, volume `backend_data`, default dry-run |
 | `compose.yaml + compose.demo.yaml` | `professional_demo_data/professional-demo.db` dan Mailpit demo |
-| `compose.public-demo.yaml` | Backend per sesi, frontend 8502, worker dan Mailpit sandbox |
+| `compose.public-demo.yaml` | Backend per sesi, frontend 8502, n8n dan Mailpit sandbox |
 | `compose.ai-test.yaml` | Database uji tmpfs dan port uji terpisah |
 | `compose.reminder-test.yaml` | Uji reminder terisolasi tanpa AI |
 

@@ -24,6 +24,24 @@ def render_email_actions(client, reminder, routing):
     state = prefix + "_preview"
     st.divider()
     st.write("Email pengingat")
+    if FrontendSettings().interactive_demo_mode and reminder.get("delivery_kind") == "automatic":
+        st.info(
+            "Pengingat H-3/H-1 diproses otomatis pada pukul 09.00 WIB. Riwayat di atas mencatat hasil pengiriman sesi Anda."
+        )
+        if reminder.get("status") in {"pending", "sent", "simulated"} and st.button(
+            "Siapkan email manual",
+            key=prefix + "_prepare_manual",
+            disabled=not can_operate(),
+        ):
+            try:
+                manual = client.prepare_activity_email(
+                    reminder["placement_id"], reminder["placement_stage_id"]
+                )
+                st.session_state["prepared_reminder_id"] = manual["id"]
+                st.rerun()
+            except Exception as exc:
+                show_api_error(exc)
+        return
     if reminder.get("approved_message"):
         st.info(
             "Menunggu pengiriman"
@@ -98,7 +116,7 @@ def render_email_actions(client, reminder, routing):
                         },
                     )
                     show_success(
-                        "Pesan disetujui dan menunggu worker sandbox ke Mailpit lokal."
+                        "Pesan disetujui dan menunggu n8n sandbox ke Mailpit lokal."
                         if FrontendSettings().interactive_demo_mode
                         else "Pesan disetujui dan menunggu pengiriman melalui antrean n8n."
                     )

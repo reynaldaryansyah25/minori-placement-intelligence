@@ -85,18 +85,29 @@ def recover(service: Service):
 
 @internal_router.get("/due", response_model=list[NotificationRead])
 def due(request: Request, service: Service, limit: Limit = 100, offset: Offset = 0):
-    rows = invoke(service.due, limit=limit, offset=offset)
-    if request.app.state.settings.sandbox_enabled:
-        return [row for row in rows if row.approved_message]
-    return rows
+    return invoke(
+        service.due,
+        limit=limit,
+        offset=offset,
+        sandbox_ready=request.app.state.settings.sandbox_enabled,
+    )
 
 
 @internal_router.post("/claim", response_model=ClaimRead | None)
 def claim(request: ClaimRequest, http: Request, service: Service):
+    sandbox = http.app.state.settings.sandbox_enabled
+
+    def charge(row):
+        manager = http.app.state.sandbox
+        session = http.state.sandbox_session
+        manager.consume(session, "emails", key=manager.email_key(session, row.id))
+
     return invoke(
         service.claim,
         request.notification_id,
-        require_approval=http.app.state.settings.sandbox_enabled,
+        require_approval=sandbox,
+        allow_automatic=sandbox,
+        on_claim=charge if sandbox else None,
     )
 
 
