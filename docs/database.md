@@ -227,7 +227,7 @@ Get mengembalikan None bila tidak ditemukan. Update/archive yang tidak menemukan
 record melempar RecordNotFoundError. Identitas reference dan pemilik history tidak
 dapat diganti oleh replace. List mendukung pagination 1..100 dengan urutan stabil.
 Matching menyediakan endpoint evaluasi, history, ranking, explanation, dan
-penggantian profil dengan recompute. Lihat [kontrak HTTP](api.md).
+penggantian profil dengan recompute. Kontrak HTTP tersedia melalui Swagger UI FastAPI pada `http://localhost:8000/docs`.
 
 ## Migrasi dan seed
 
