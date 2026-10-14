@@ -70,6 +70,8 @@ def frontend_backend(monkeypatch, candidate_payload, vacancy_payload):
         "/reminders": [reminder],
         "/vacancies/drafts": [],
         "/matching/results": [evaluation],
+        "/placements/approved-candidates": [],
+        f"/matching/vacancies/{vacancy['id']}/candidates": [evaluation],
         f"/matching/vacancies/{vacancy['id']}/ranking": [evaluation],
         f"/matching/candidates/{candidate['id']}/vacancies/{vacancy['id']}/explanation": evaluation,
         f"/placements/{placement['id']}/activities": [],
@@ -266,17 +268,138 @@ def test_pagination_preserves_candidate_identity(frontend_backend):
     app.button(key="candidates_table_next").click().run()
     assert not app.exception
     assert app.dataframe[0].value.iloc[0]["Nama kandidat"] == "Peserta 11"
+    assert "Peserta 1" in rendered_html(app)
+    app.selectbox(key="candidate_detail_id").select("private-10").run()
+    assert not app.exception
     assert "Peserta 11" in rendered_html(app)
 
 
 def test_placement_search_without_matches_has_no_traceback(frontend_backend):
     app = AppTest.from_file(
-        str(ROOT / "frontend/minori_frontend/pages/placement_pipeline.py")
+        str(ROOT / "frontend/minori_frontend/pages/placement_pipeline.py"), default_timeout=15
     ).run()
     app.text_input(key="plc_search").set_value("tidak-ada-hasil").run()
     assert not app.exception
     assert not app.dataframe
     assert "Penempatan tidak ditemukan" in rendered_html(app)
+
+
+def test_candidate_dialog_includes_vacancy_and_editable_qualifications(frontend_backend):
+    app = AppTest.from_file(
+        str(ROOT / "frontend/minori_frontend/pages/candidates.py"), default_timeout=15
+    ).run()
+    next(button for button in app.button if button.label == "Tambah kandidat").click().run()
+    assert not app.exception
+    labels = {select.label for select in app.selectbox}
+    assert "Lowongan untuk ditinjau" in labels
+    assert "Status kesiapan" in labels
+    assert len(app.dataframe) == 4
+    assert {"Tes", "Tingkat", "Tanggal tes"} <= set(app.dataframe[1].value.columns)
+    assert any(button.label == "Simpan dan tinjau pencocokan" for button in app.button)
+
+
+def test_matching_handoff_keeps_new_candidate_selected(frontend_backend):
+    sample = frontend_backend["/candidates"][0]
+    new = {**sample, "id": "new-private-candidate", "full_name": "Peserta Baru Sintetis"}
+    frontend_backend["/candidates"].append(new)
+    vacancy = frontend_backend["/vacancies"][0]
+    evaluation = frontend_backend[f"/matching/vacancies/{vacancy['id']}/candidates"][0]
+    frontend_backend[f"/matching/vacancies/{vacancy['id']}/candidates"].append(
+        {**evaluation, "candidate_id": new["id"], "eligibility_status": "NEEDS_REVIEW"}
+    )
+    frontend_backend[f"/matching/candidates/{new['id']}/vacancies/{vacancy['id']}/explanation"] = {
+        **evaluation,
+        "candidate_id": new["id"],
+        "eligibility_status": "NEEDS_REVIEW",
+    }
+    app = AppTest.from_file(
+        str(ROOT / "frontend/minori_frontend/pages/candidate_matching.py"), default_timeout=15
+    )
+    app.session_state["matching_handoff"] = {"candidate_id": new["id"], "vacancy_id": vacancy["id"]}
+    app.run()
+    assert not app.exception
+    assert app.selectbox(key="selected_detail_candidate").value == new["id"]
+    assert app.radio(key="matching_view").value == "Semua kandidat"
+    assert "Peserta Baru Sintetis" in app.dataframe[0].value["Kandidat"].tolist()
+
+
+def test_pipeline_lists_approved_candidates_before_placement(frontend_backend):
+    frontend_backend["/placements/approved-candidates"] = [
+        {
+            "match_id": "approved-private-match",
+            "candidate_id": "candidate-private-id",
+            "vacancy_id": "vacancy-private-id",
+            "candidate_name": "Peserta Disetujui Sintetis",
+            "vacancy_title": "Lowongan pertanian",
+            "can_start": True,
+            "reason": None,
+        }
+    ]
+    app = AppTest.from_file(
+        str(ROOT / "frontend/minori_frontend/pages/placement_pipeline.py"), default_timeout=15
+    ).run()
+    assert not app.exception
+    selector = next(
+        select for select in app.selectbox if select.label == "Persetujuan yang diproses"
+    )
+    assert selector.value == "approved-private-match"
+    assert not next(
+        button for button in app.button if button.label == "Mulai persiapan penempatan"
+    ).disabled
+    assert "approved-private-match" not in rendered_html(app)
+
+
+def test_reminder_picker_opens_selected_document_email_and_requires_confirmation(frontend_backend):
+    from datetime import UTC, datetime, timedelta
+
+    data = frontend_backend
+    placement = data["/placements"][0]
+    scheduled = (datetime.now(UTC) + timedelta(days=7)).isoformat()
+    activity = {
+        "id": "document-private-activity",
+        "step_type": "documents",
+        "status": "scheduled",
+        "scheduled_at": scheduled,
+        "location": "Ruang Administrasi",
+    }
+    data[f"/placements/{placement['id']}/activities"] = [activity]
+    reminder = {
+        **data["/reminders"][0],
+        "id": "documents-private-reminder",
+        "template_code": "documents_schedule",
+        "managed": True,
+        "event_at": scheduled,
+    }
+    data["/reminders"].append(reminder)
+    path = f"/placements/{placement['id']}/activities/{activity['id']}/email/prepare"
+    data["_allowed_posts"][path] = reminder
+    data[f"/reminders/{reminder['id']}/attempts"] = []
+    data[f"/reminders/{reminder['id']}/routing"] = {
+        "routing_mode": "dry_run",
+        "delivery_allowed": False,
+    }
+    data[f"/reminders/{reminder['id']}/email/template"] = {
+        "subject": "Pengingat dokumen",
+        "body": "Jadwal resmi peserta dalam WIB.",
+        "facts_fingerprint": "a" * 64,
+    }
+    app = AppTest.from_file(
+        str(ROOT / "frontend/minori_frontend/pages/reminder_center.py"), default_timeout=15
+    ).run()
+    next(
+        button for button in app.button if button.label == "Siapkan email untuk jadwal ini"
+    ).click().run()
+    assert not app.exception
+    assert app.selectbox(key="reminder_detail_id").value == reminder["id"]
+    next(button for button in app.button if button.label == "Gunakan template").click().run()
+    assert not app.exception
+    next(
+        button for button in app.button if button.label == "Kirim Pengingat Sekarang"
+    ).click().run()
+    assert not app.exception and app.warning
+    assert not any(
+        method == "POST" and url.endswith("/email/approve") for method, url, _ in data["_calls"]
+    )
 
 
 def test_backend_error_is_not_exposed_to_staff(monkeypatch, frontend_backend):
@@ -301,7 +424,9 @@ def test_profile_escapes_backend_text(frontend_backend):
 
 def test_simulation_button_calls_existing_backend_contract(monkeypatch, frontend_backend):
     frontend_backend["_allowed_posts"]["/internal/reminders/simulate"] = None
-    app = AppTest.from_file(str(ROOT / "frontend/minori_frontend/pages/reminder_center.py")).run()
+    app = AppTest.from_file(
+        str(ROOT / "frontend/minori_frontend/pages/reminder_center.py"), default_timeout=15
+    ).run()
     next(button for button in app.button if button.label == "Uji simulasi").click().run()
     assert not app.exception
     assert [
@@ -357,7 +482,9 @@ def test_frontend_reads_beyond_first_api_page():
 
 
 def test_reviewer_cannot_trigger_staff_operations(frontend_backend):
-    app = AppTest.from_file(str(ROOT / "frontend/minori_frontend/pages/reminder_center.py"))
+    app = AppTest.from_file(
+        str(ROOT / "frontend/minori_frontend/pages/reminder_center.py"), default_timeout=15
+    )
     app.session_state["auth_role"] = "reviewer"
     app.run()
     assert not app.exception

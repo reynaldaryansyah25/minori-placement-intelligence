@@ -13,12 +13,19 @@ from minori.domain.catalogs import (
 )
 from minori.domain.entities import NotificationAttemptRecord, NotificationRecord
 from minori.domain.errors import BusinessConflictError
+from minori.domain.notification_templates import MANUAL_ACTIVITY_TEMPLATES
 from minori.repositories.mapping import pagination, require_row, to_record
 
 
 class SqlAlchemyNotificationQueue:
     def __init__(self, session: Session):
         self._session = session
+
+    @staticmethod
+    def _approved_for_delivery():
+        return Notification.template_code.not_in(
+            list(MANUAL_ACTIVITY_TEMPLATES.values())
+        ) | Notification.approved_at.is_not(None)
 
     def list(
         self,
@@ -43,6 +50,7 @@ class SqlAlchemyNotificationQueue:
             query = query.where(Notification.status == status)
         if due_before is not None:
             query = query.where(
+                self._approved_for_delivery(),
                 Notification.managed.is_(True),
                 Notification.status == NotificationStatus.PENDING,
                 Notification.available_at <= due_before,
@@ -77,6 +85,7 @@ class SqlAlchemyNotificationQueue:
             )
         )
         query = select(Notification.id).where(
+            self._approved_for_delivery(),
             Notification.managed.is_(True),
             Notification.status == NotificationStatus.PENDING,
             Notification.available_at <= now,
@@ -100,6 +109,7 @@ class SqlAlchemyNotificationQueue:
             update(Notification)
             .where(
                 Notification.id == selected,
+                self._approved_for_delivery(),
                 Notification.status == NotificationStatus.PENDING,
                 Notification.available_at <= now,
                 Notification.event_at > now,

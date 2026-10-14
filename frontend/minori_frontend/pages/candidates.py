@@ -5,6 +5,7 @@ from uuid import uuid4
 import streamlit as st
 from minori_frontend.api_client import BackendClient, read_all
 from minori_frontend.auth import is_admin
+from minori_frontend.components.candidate_form import candidate_fields
 from minori_frontend.components.candidate_profile import render_candidate_profile
 from minori_frontend.components.data_table import render_interactive_table
 from minori_frontend.components.empty_state import render_empty_state
@@ -14,53 +15,58 @@ from minori_frontend.components.layout import apply_theme
 from minori_frontend.components.page_header import render_page_header
 from minori_frontend.components.presentation import section
 from minori_frontend.config import FrontendSettings
-from minori_frontend.utils.constants import JAPAN_PREFECTURES, PROGRAMS
 from minori_frontend.utils.formatting import format_status_label
-from minori_frontend.utils.labels import SKILL_LABELS, catalog_label, language_label, program_short
+from minori_frontend.utils.labels import language_label, program_short
 
 
-@st.dialog("Tambah kandidat")
-def show_create_candidate_dialog(client):
+@st.dialog("Profil dan kualifikasi kandidat", width="large")
+def show_create_candidate_dialog(client, initial=None):
+    initial = initial or {}
+    try:
+        vacancies = read_all(client.list_vacancies, status="open")
+    except Exception as exc:
+        show_api_error(exc)
+        return
     with st.form("form_create_candidate"):
-        left, right = st.columns(2)
-        with left:
-            name = st.text_input("Nama lengkap *")
-            program = st.selectbox(
-                "Program penempatan",
-                [p[0] for p in PROGRAMS],
-                format_func=lambda x: dict(PROGRAMS)[x],
-            )
-            education = st.text_input("Pendidikan terakhir *")
-        with right:
-            city = st.text_input("Kota domisili *")
-            status = st.selectbox(
-                "Status awal", ["registered", "preparing", "ready"], format_func=format_status_label
-            )
-            preferences = st.multiselect("Preferensi prefektur", JAPAN_PREFECTURES)
-        skills = st.multiselect(
-            "Keahlian", list(SKILL_LABELS), format_func=catalog_label, accept_new_options=True
+        payload = candidate_fields("candidate_edit_" + initial.get("id", "new"), initial)
+        vacancy_options = {v["id"]: f"{v['title']} · {v['employer_name']}" for v in vacancies}
+        vacancy_id = st.selectbox(
+            "Lowongan untuk ditinjau",
+            [None, *vacancy_options],
+            format_func=lambda value: vacancy_options.get(value, "Pilih lowongan (opsional)"),
         )
-        if st.form_submit_button("Simpan kandidat", type="primary", width="stretch"):
-            if not all(value.strip() for value in (name, education, city)):
+        save = st.form_submit_button("Simpan kandidat", width="stretch")
+        review = st.form_submit_button(
+            "Simpan dan tinjau pencocokan", type="primary", disabled=not vacancies, width="stretch"
+        )
+        if save or review:
+            if not all(payload[k] for k in ("full_name", "education_level", "domicile_city")):
                 st.error("Lengkapi nama, pendidikan terakhir, dan kota domisili.")
                 return
+            if review and not vacancy_id:
+                st.warning("Pilih lowongan yang akan ditinjau.")
+                return
             try:
-                client.create_candidate(
-                    {
-                        "reference": "CAND-" + uuid4().hex[:12].upper(),
-                        "full_name": name.strip(),
-                        "preferred_program": program,
-                        "education_level": education.strip(),
-                        "domicile_city": city.strip(),
-                        "status": status,
-                        "skills": [s.strip().lower().replace(" ", "_") for s in skills],
-                        "preferred_prefectures": preferences,
-                        "language_tests": [],
-                        "certifications": [],
-                        "experiences": [],
-                    }
+                payload["reference"] = (
+                    initial.get("reference") or "CAND-" + uuid4().hex[:12].upper()
                 )
-                show_success("Kandidat berhasil ditambahkan.")
+                saved = (
+                    client.replace_candidate(initial["id"], payload)
+                    if initial
+                    else client.create_candidate(payload)
+                )
+                st.session_state["candidate_saved_id"] = saved["id"]
+                show_success(
+                    "Profil disimpan dan pencocokan diperbarui berdasarkan kualifikasi resmi."
+                )
+                if review:
+                    st.session_state["matching_handoff"] = {
+                        "candidate_id": saved["id"],
+                        "vacancy_id": vacancy_id,
+                    }
+                    from minori_frontend.components.navigation import navigate_to
+
+                    navigate_to("candidate-matching")
                 st.rerun()
             except Exception as exc:
                 show_api_error(exc)
@@ -69,6 +75,12 @@ def show_create_candidate_dialog(client):
 def render_candidates_page():
     apply_theme()
     client = BackendClient(FrontendSettings())
+    saved = st.session_state.pop("candidate_saved_id", None)
+    if saved:
+        st.session_state["candidate_detail_id"] = saved
+        st.session_state["cand_query"] = ""
+        st.session_state["cand_program"] = "all"
+        st.session_state["cand_status"] = "all"
     render_page_header(
         "Kandidat", "Kelola profil, kualifikasi, dan kesiapan kandidat untuk penempatan di Jepang."
     )
@@ -118,11 +130,34 @@ def render_candidates_page():
                 }
                 for c in candidates
             ]
-            selected = render_interactive_table(rows, key="candidates_table", height=400)
-        selected_candidate = candidates[selected[0] if selected else 0]
+            selected = render_interactive_table(
+                rows, key="candidates_table", height=400, default_first=False
+            )
+        options = {c["id"]: c["full_name"] for c in candidates}
+        if selected:
+            signature = candidates[selected[0]]["id"]
+            if signature != st.session_state.get("candidate_table_selection"):
+                st.session_state["candidate_detail_id"] = signature
+                st.session_state["candidate_table_selection"] = signature
+        if st.session_state.get("candidate_detail_id") not in options:
+            st.session_state["candidate_detail_id"] = candidates[0]["id"]
+        identifier = st.selectbox(
+            "Kandidat yang ditinjau",
+            list(options),
+            format_func=options.get,
+            key="candidate_detail_id",
+        )
+        selected_candidate = next(c for c in candidates if c["id"] == identifier)
     with detail:
         with st.container(border=True):
             render_candidate_profile(selected_candidate)
+            if is_admin() and st.button("Edit profil dan kualifikasi", width="stretch"):
+                show_create_candidate_dialog(client, selected_candidate)
+            if st.button("Tinjau pencocokan kandidat", width="stretch"):
+                st.session_state["matching_handoff"] = {"candidate_id": selected_candidate["id"]}
+                from minori_frontend.components.navigation import navigate_to
+
+                navigate_to("candidate-matching")
             if is_admin() and selected_candidate.get("status") != "inactive":
                 with st.popover("Arsipkan kandidat", width="stretch"):
                     st.write(

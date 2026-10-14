@@ -8,6 +8,9 @@ STEP_LABELS = {
     "departure": "Keberangkatan",
 }
 TEMPLATE_LABELS = {
+    "documents_schedule": "Pengurusan dokumen",
+    "orientation_schedule": "Orientasi",
+    "departure_schedule": "Keberangkatan",
     "interview_h3": "Wawancara · H-3",
     "interview_schedule": "Jadwal wawancara",
     "medical_h1": "Pemeriksaan kesehatan · H-1",

@@ -3,6 +3,7 @@
 import streamlit as st
 from minori_frontend.api_client import BackendClient, read_all
 from minori_frontend.auth import is_admin
+from minori_frontend.components.activity_email import render_activity_email_picker
 from minori_frontend.components.ai_email import render_email_actions
 from minori_frontend.components.data_table import render_interactive_table
 from minori_frontend.components.empty_state import render_empty_state
@@ -37,6 +38,12 @@ def render_reminder_page():
     except Exception as exc:
         show_api_error(exc)
         return
+    render_activity_email_picker(client, candidates)
+    prepared = st.session_state.pop("prepared_reminder_id", None)
+    if prepared:
+        st.session_state["reminder_detail_id"] = prepared
+        st.session_state["reminder_status_filter"] = None
+        st.session_state["reminder_search"] = ""
     counts = {}
     for item in reminders:
         counts[item.get("status")] = counts.get(item.get("status"), 0) + 1
@@ -85,7 +92,10 @@ def render_reminder_page():
     query_col, status_col = st.columns([3, 1])
     with query_col:
         query = st.text_input(
-            "Pencarian pengingat", placeholder="Cari nama kandidat…", label_visibility="collapsed"
+            "Pencarian pengingat",
+            placeholder="Cari nama kandidat…",
+            label_visibility="collapsed",
+            key="reminder_search",
         )
     with status_col:
         status = st.selectbox(
@@ -95,6 +105,7 @@ def render_reminder_page():
                 "Semua status" if value is None else format_status_label(value)
             ),
             label_visibility="collapsed",
+            key="reminder_status_filter",
         )
     records = [
         r
@@ -134,8 +145,30 @@ def render_reminder_page():
                 ],
                 key="reminders_table",
                 height=380,
+                default_first=False,
             )
-        reminder = records[selected[0] if selected else 0]
+        if selected:
+            signature = records[selected[0]]["id"]
+            if signature != st.session_state.get("reminder_table_selection"):
+                st.session_state["reminder_detail_id"] = signature
+                st.session_state["reminder_table_selection"] = signature
+        options = {
+            r["id"]: candidates.get(r["candidate_id"], {}).get("full_name", "Kandidat")
+            + " · "
+            + TEMPLATE_LABELS.get(r["template_code"], "Pengingat")
+            + " · "
+            + format_datetime_id(r.get("event_at"))
+            for r in records
+        }
+        if st.session_state.get("reminder_detail_id") not in options:
+            st.session_state["reminder_detail_id"] = records[0]["id"]
+        identifier = st.selectbox(
+            "Pengingat yang ditinjau",
+            list(options),
+            format_func=options.get,
+            key="reminder_detail_id",
+        )
+        reminder = next(r for r in records if r["id"] == identifier)
     with details:
         with st.container(border=True):
             try:

@@ -21,7 +21,11 @@ from minori.domain.catalogs import (
 )
 from minori.domain.entities import AuditLogData, NotificationAttemptData, NotificationData
 from minori.domain.errors import BusinessConflictError, RecordNotFoundError
-from minori.domain.notification_templates import render_notification
+from minori.domain.notification_templates import (
+    ACTIVITY_LABELS,
+    MANUAL_ACTIVITY_TEMPLATES,
+    render_notification,
+)
 from minori.domain.operations import OperationsPorts, record_data
 from minori.domain.reminders import DeliveryErrorCode, ReminderPolicy
 
@@ -79,11 +83,17 @@ class ReminderService:
             "revision": activity.schedule_revision,
         }
 
-    def _new(self, activity, placement, key, template, now, *, notice=False):
+    def _new(self, activity, placement, key, template, now, *, notice=False, manual=False):
         existing = self.ports.notification.get_by_deduplication_key(key)
         if existing:
             return existing
-        due = now if notice else self.policy.scheduled_at(activity.scheduled_at, activity.step_type)
+        due = (
+            now
+            if notice
+            else activity.scheduled_at
+            if manual
+            else self.policy.scheduled_at(activity.scheduled_at, activity.step_type)
+        )
         expired = not notice and activity.scheduled_at <= now
         row = self.ports.notification.create(
             NotificationData(
@@ -420,6 +430,43 @@ class ReminderService:
         candidate = self.ports.candidate.get(row.candidate_id)
         return self.policy.resolve_recipient(candidate.reference, dry_run=row.dry_run)
 
+    def prepare_activity_email(self, placement_id, activity_id):
+        now = self.clock()
+        with self.transaction():
+            activity = self.ports.placement_stage.get(activity_id)
+            placement = self.ports.placement.get(placement_id)
+            if not activity or not placement or activity.placement_id != placement_id:
+                raise RecordNotFoundError("Jadwal kegiatan tidak ditemukan pada penempatan ini.")
+            candidate = self.ports.candidate.get(placement.candidate_id)
+            if (
+                candidate.status == CandidateStatus.INACTIVE
+                or placement.status not in {PlacementStatus.PREPARING, PlacementStatus.IN_PROGRESS}
+                or activity.status
+                not in {PlacementStepStatus.SCHEDULED, PlacementStepStatus.IN_PROGRESS}
+                or not activity.scheduled_at
+                or activity.scheduled_at <= now
+            ):
+                raise BusinessConflictError(
+                    "Pilih kegiatan mendatang pada kandidat dan penempatan aktif."
+                )
+            self._maintenance(now)
+            if activity.step_type.value in MANUAL_ACTIVITY_TEMPLATES:
+                row = self._new(
+                    activity,
+                    placement,
+                    f"manual-activity:{activity.id}:r{activity.schedule_revision}",
+                    MANUAL_ACTIVITY_TEMPLATES[activity.step_type.value],
+                    now,
+                    manual=True,
+                )
+            else:
+                row = self.sync_activity(activity, now)
+            if not row or row.status != NotificationStatus.PENDING or row.attempt_count:
+                raise BusinessConflictError(
+                    "Pengingat kegiatan ini telah diproses. Pilih jadwal lain."
+                )
+            return row
+
     def email_facts(self, identifier):
         row = self._get(identifier)
         candidate = self.ports.candidate.get(row.candidate_id)
@@ -441,16 +488,15 @@ class ReminderService:
             not in {PlacementStepStatus.SCHEDULED, PlacementStepStatus.IN_PROGRESS}
             or placement.status not in {PlacementStatus.PREPARING, PlacementStatus.IN_PROGRESS}
             or activity.schedule_revision != row.schedule_revision
-            or row.template_code not in {"interview_h3", "medical_h1"}
+            or row.template_code
+            not in {"interview_h3", "medical_h1", *MANUAL_ACTIVITY_TEMPLATES.values()}
         ):
             raise BusinessConflictError("Kandidat atau jadwal berubah. Muat ulang pengingat.")
         from zoneinfo import ZoneInfo
 
         facts = {
             "candidate_name": candidate.full_name,
-            "activity": "wawancara"
-            if activity.step_type == PlacementStepType.INTERVIEW
-            else "pemeriksaan kesehatan",
+            "activity": ACTIVITY_LABELS[activity.step_type.value],
             "scheduled_wib": activity.scheduled_at.astimezone(ZoneInfo("Asia/Jakarta")).strftime(
                 "%d-%m-%Y %H:%M WIB"
             ),

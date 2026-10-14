@@ -26,6 +26,11 @@ from minori_frontend.utils.labels import STEP_LABELS
 def render_pipeline_page():
     apply_theme()
     client = BackendClient(FrontendSettings())
+    handoff = st.session_state.pop("placement_handoff_id", None)
+    if handoff:
+        st.session_state["selected_placement_id"] = handoff
+        st.session_state["plc_search"] = ""
+        st.session_state["placement_status_filter"] = None
     render_page_header(
         "Alur penempatan",
         "Kelola tahapan, jadwal kegiatan, dan persiapan keberangkatan setiap peserta.",
@@ -46,9 +51,51 @@ def render_pipeline_page():
                 client.list_vacancies,
             )
         }
+        approved = read_all(client.list_approved_candidates)
     except Exception as exc:
         show_api_error(exc)
         return
+    with st.container(border=True):
+        section("Kandidat disetujui staf", "Persetujuan tampil di sini sebelum penempatan dibuat.")
+        if approved:
+            waiting_options = {
+                row["match_id"]: f"{row['candidate_name']} · {row['vacancy_title']}"
+                for row in approved
+            }
+            approved_handoff = st.session_state.pop("approved_match_handoff", None)
+            if approved_handoff in waiting_options:
+                st.session_state["approved_match_selection"] = approved_handoff
+            if st.session_state.get("approved_match_selection") not in waiting_options:
+                st.session_state["approved_match_selection"] = next(iter(waiting_options))
+            chosen = st.selectbox(
+                "Persetujuan yang diproses",
+                list(waiting_options),
+                format_func=waiting_options.get,
+                key="approved_match_selection",
+            )
+            waiting = next(row for row in approved if row["match_id"] == chosen)
+            if waiting.get("reason"):
+                st.info(waiting["reason"])
+            if st.button(
+                "Mulai persiapan penempatan",
+                type="primary",
+                disabled=not is_admin() or not waiting["can_start"],
+            ):
+                try:
+                    created = client.create_placement(
+                        "PLC-" + uuid4().hex[:12].upper(), chosen, get_current_actor()
+                    )
+                    st.session_state["placement_handoff_id"] = created["id"]
+                    show_success(
+                        "Penempatan dibuat. Lanjutkan dengan menjadwalkan aktivitas peserta."
+                    )
+                    st.rerun()
+                except Exception as exc:
+                    show_api_error(exc)
+        else:
+            st.caption(
+                "Belum ada persetujuan yang menunggu penempatan. Kandidat yang sudah ditempatkan tampil di daftar di bawah."
+            )
     search, status_filter = st.columns([3, 1])
     with search:
         query = st.text_input(
@@ -65,6 +112,7 @@ def render_pipeline_page():
                 "Semua status" if value is None else format_status_label(value)
             ),
             label_visibility="collapsed",
+            key="placement_status_filter",
         )
     records = [
         p
@@ -106,8 +154,25 @@ def render_pipeline_page():
             ],
             key="placement_table",
             height=280,
+            default_first=False,
         )
-    placement = records[selected[0] if selected else 0]
+    options = {
+        p["id"]: candidates.get(p["candidate_id"], {}).get("full_name", "Kandidat")
+        + " · "
+        + vacancies.get(p["vacancy_id"], {}).get("title", "Lowongan")
+        for p in records
+    }
+    if selected:
+        signature = records[selected[0]]["id"]
+        if signature != st.session_state.get("placement_table_selection"):
+            st.session_state["selected_placement_id"] = signature
+            st.session_state["placement_table_selection"] = signature
+    if st.session_state.get("selected_placement_id") not in options:
+        st.session_state["selected_placement_id"] = records[0]["id"]
+    pid = st.selectbox(
+        "Peserta penempatan", list(options), format_func=options.get, key="selected_placement_id"
+    )
+    placement = next(p for p in records if p["id"] == pid)
     pid = placement["id"]
     candidate = candidates.get(placement.get("candidate_id"), {})
     vacancy = vacancies.get(placement.get("vacancy_id"), {})
@@ -131,6 +196,11 @@ def render_pipeline_page():
             ]
         )
         render_pipeline_stepper(activities)
+        if st.button("Buka pengingat dan email peserta", width="stretch"):
+            st.session_state["reminder_candidate_handoff"] = placement["candidate_id"]
+            from minori_frontend.components.navigation import navigate_to
+
+            navigate_to("reminder-center")
     listing, scheduling = st.columns([1.3, 1], gap="large")
     with listing:
         with st.container(border=True):

@@ -126,17 +126,24 @@ def get_placement_service(
 
 def get_candidate_service(
     session: Annotated[Session, Depends(get_db_session)],
+    matching: Annotated[MatchingService, Depends(get_matching_service)],
 ) -> CandidateService:
     ports = provide_repositories(session)
-    return CandidateService(ports.candidate, lambda: immediate_transaction(session))
+    return CandidateService(
+        ports.candidate, lambda: immediate_transaction(session), matching.refresh_candidate
+    )
 
 
 def get_vacancy_service(
     session: Annotated[Session, Depends(get_db_session)],
+    matching: Annotated[MatchingService, Depends(get_matching_service)],
 ) -> VacancyService:
     ports = provide_repositories(session)
     return VacancyService(
-        ports.vacancy, ports.vacancy_draft, lambda: immediate_transaction(session)
+        ports.vacancy,
+        ports.vacancy_draft,
+        lambda: immediate_transaction(session),
+        matching.refresh_vacancy,
     )
 
 

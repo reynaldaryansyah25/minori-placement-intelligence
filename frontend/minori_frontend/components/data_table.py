@@ -46,6 +46,7 @@ def render_interactive_table(
     height=380,
     hide_technical_columns=True,
     page_size=10,
+    default_first=True,
 ) -> list[int]:
     if not data:
         return []
@@ -101,4 +102,4 @@ def render_interactive_table(
             st.rerun()
     else:
         st.caption(f"{len(data)} data · Pilih baris untuk membuka rincian")
-    return [start + index for index in selected] or [start]
+    return [start + index for index in selected] or ([start] if default_first else [])

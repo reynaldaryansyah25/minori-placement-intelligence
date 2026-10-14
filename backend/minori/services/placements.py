@@ -58,6 +58,59 @@ class PlacementService:
     def list(self, **filters):
         return self.ports.placement.list(**filters)
 
+    def approved_candidates(self, *, limit=100, offset=0):
+        """Explicit staff approvals waiting for a placement, with current business gates."""
+        rows = []
+        candidate_offset = 0
+        now = self.clock()
+        while True:
+            candidates = self.ports.candidate.list(limit=100, offset=candidate_offset)
+            for candidate in candidates:
+                match_offset = 0
+                while True:
+                    matches = self.ports.match.list_for_candidate(
+                        candidate.id, limit=100, offset=match_offset
+                    )
+                    for match in matches:
+                        if match.status != MatchStatus.APPROVED or self.ports.placement.get_by_pair(
+                            candidate.id, match.vacancy_id
+                        ):
+                            continue
+                        vacancy = self.ports.vacancy.get(match.vacancy_id)
+                        eligibility = (
+                            MatchingEngine().evaluate(candidate, vacancy, now).eligibility_status
+                        )
+                        reason = None
+                        if eligibility != EligibilityStatus.ELIGIBLE:
+                            reason = (
+                                "Lengkapi dan verifikasi persyaratan kandidat sebelum penempatan."
+                            )
+                        elif self.ports.placement.candidate_active(candidate.id):
+                            reason = "Kandidat sudah memiliki penempatan aktif."
+                        elif self.ports.placement.capacity_used(vacancy.id) >= vacancy.quota:
+                            reason = "Kuota lowongan sudah terisi."
+                        rows.append(
+                            {
+                                "match_id": match.id,
+                                "candidate_id": candidate.id,
+                                "vacancy_id": vacancy.id,
+                                "candidate_name": candidate.full_name,
+                                "vacancy_title": vacancy.title,
+                                "employer_name": vacancy.employer_name,
+                                "can_start": reason is None,
+                                "reason": reason,
+                            }
+                        )
+                    if len(matches) < 100:
+                        break
+                    match_offset += len(matches)
+            if len(candidates) < 100:
+                break
+            candidate_offset += len(candidates)
+        return sorted(rows, key=lambda item: (item["candidate_name"], item["vacancy_title"]))[
+            offset : offset + limit
+        ]
+
     def _activities(self, identifier):
         rows = []
         while True:

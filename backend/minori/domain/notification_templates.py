@@ -8,13 +8,29 @@ TEMPLATE_CODES = {
     "medical_h1",
     "schedule_changed",
     "schedule_cancelled",
+    "documents_schedule",
+    "orientation_schedule",
+    "departure_schedule",
+}
+
+MANUAL_ACTIVITY_TEMPLATES = {
+    "documents": "documents_schedule",
+    "orientation": "orientation_schedule",
+    "departure": "departure_schedule",
+}
+ACTIVITY_LABELS = {
+    "interview": "wawancara",
+    "medical_check": "pemeriksaan kesehatan",
+    "documents": "pengurusan dokumen",
+    "orientation": "orientasi",
+    "departure": "keberangkatan",
 }
 
 
 def render_notification(template_code: str, candidate_name: str, context: dict) -> dict[str, str]:
     if template_code not in TEMPLATE_CODES:
         raise ValueError("Unknown notification template")
-    activity = "wawancara" if context["activity"] == "interview" else "medical check-up"
+    activity = ACTIVITY_LABELS[context["activity"]]
     when = datetime.fromisoformat(context["scheduled_at"]).astimezone(ZoneInfo(context["timezone"]))
     schedule = when.strftime("%d-%m-%Y %H:%M") + " " + context["timezone"]
     location = context.get("location") or "akan diinformasikan staf"
@@ -27,7 +43,13 @@ def render_notification(template_code: str, candidate_name: str, context: dict) 
         subject = f"Perubahan jadwal {activity}"
         body = f"Jadwal {activity} diperbarui menjadi {schedule}. Lokasi: {location}."
     else:
-        offset = "H-3" if template_code == "interview_h3" else "H-1"
+        offset = (
+            "H-3"
+            if template_code == "interview_h3"
+            else "H-1"
+            if template_code == "medical_h1"
+            else ""
+        )
         subject = f"Pengingat {activity} {offset}"
         body = (
             f"Anda dijadwalkan mengikuti {activity} pada {schedule}. Lokasi: {location}. "

@@ -42,6 +42,13 @@ def render_matching_page():
         )
         return
     options = {v["id"]: f"{v['title']} · {v['employer_name']}" for v in vacancies}
+    handoff = st.session_state.pop("matching_handoff", {})
+    if handoff.get("vacancy_id") in options:
+        st.session_state["matching_vac_select"] = handoff["vacancy_id"]
+    if handoff.get("candidate_id"):
+        st.session_state["selected_detail_candidate"] = handoff["candidate_id"]
+        st.session_state["matching_view"] = "Semua kandidat"
+        st.session_state.pop("matching_table_selection", None)
     preferred = st.session_state.get("selected_vacancy_id")
     selected_index = list(options).index(preferred) if preferred in options else 0
     selector, action = st.columns([4, 1], vertical_alignment="bottom")
@@ -74,7 +81,7 @@ def render_matching_page():
         )
     try:
         ranking = read_all(client.get_ranking, vacancy_id)
-        evaluations = read_all(client.list_matching_results, vacancy_id=vacancy_id)
+        evaluations = read_all(client.get_current_candidates, vacancy_id)
         candidates = {
             c["id"]: c
             for c in read_all(
@@ -93,9 +100,10 @@ def render_matching_page():
             )
             view = st.radio(
                 "Tampilan kandidat",
-                ["Peringkat", "Semua kandidat"],
+                ["Semua kandidat", "Peringkat"],
                 horizontal=True,
                 label_visibility="collapsed",
+                key="matching_view",
             )
             records = (
                 ranking
@@ -118,7 +126,9 @@ def render_matching_page():
                 }
                 for row in records
             ]
-            selected = render_interactive_table(rows, key="ranking_table", height=370)
+            selected = render_interactive_table(
+                rows, key="ranking_table", height=370, default_first=False
+            )
     available = list(dict.fromkeys(row["candidate_id"] for row in (records or evaluations)))
     if not available:
         return
@@ -180,6 +190,11 @@ def render_matching_page():
                             st.text("• " + item)
             with st.expander("Profil kandidat"):
                 render_candidate_profile(candidates.get(candidate_id, {}))
+                if st.button("Edit kualifikasi kandidat", disabled=not is_admin(), width="stretch"):
+                    st.session_state["candidate_saved_id"] = candidate_id
+                    from minori_frontend.components.navigation import navigate_to
+
+                    navigate_to("candidates")
             render_policy_note()
             status = result.get("staff_status", "proposed")
             render_status_badge(status)
@@ -195,11 +210,16 @@ def render_matching_page():
                     width="stretch",
                 ):
                     try:
-                        client.decide_match(
+                        decision = client.decide_match(
                             candidate_id, vacancy_id, "approved", get_current_actor()
                         )
-                        show_success("Persetujuan kandidat berhasil disimpan.")
-                        st.rerun()
+                        st.session_state["approved_match_handoff"] = decision["id"]
+                        show_success(
+                            "Persetujuan disimpan. Lanjutkan persiapan penempatan peserta."
+                        )
+                        from minori_frontend.components.navigation import navigate_to
+
+                        navigate_to("placement-pipeline")
                     except Exception as exc:
                         show_api_error(exc)
             with reject:
@@ -221,14 +241,34 @@ def render_matching_page():
                     except Exception as exc:
                         show_api_error(exc)
             if eligible and status == "approved" and result.get("match_id"):
-                if st.button("Buat penempatan", disabled=not is_admin(), width="stretch"):
+                try:
+                    existing = read_all(
+                        client.list_placements, candidate_id=candidate_id, vacancy_id=vacancy_id
+                    )
+                except Exception as exc:
+                    show_api_error(exc)
+                    return
+                existing = [
+                    p
+                    for p in existing
+                    if p["candidate_id"] == candidate_id and p["vacancy_id"] == vacancy_id
+                ]
+                if existing and st.button("Buka alur penempatan", width="stretch"):
+                    st.session_state["placement_handoff_id"] = existing[0]["id"]
+                    from minori_frontend.components.navigation import navigate_to
+
+                    navigate_to("placement-pipeline")
+                if not existing and st.button(
+                    "Buat penempatan", disabled=not is_admin(), width="stretch"
+                ):
                     try:
-                        client.create_placement(
+                        created = client.create_placement(
                             "PLC-" + uuid4().hex[:12].upper(),
                             result["match_id"],
                             get_current_actor(),
                         )
                         show_success("Penempatan berhasil dibuat.")
+                        st.session_state["placement_handoff_id"] = created["id"]
                         from minori_frontend.components.navigation import navigate_to
 
                         navigate_to("placement-pipeline")

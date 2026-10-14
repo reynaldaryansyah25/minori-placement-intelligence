@@ -11,6 +11,9 @@ def render_email_actions(client, reminder, routing):
     if not reminder.get("managed") or reminder.get("template_code") not in {
         "interview_h3",
         "medical_h1",
+        "documents_schedule",
+        "orientation_schedule",
+        "departure_schedule",
     }:
         return
     identifier = reminder["id"]

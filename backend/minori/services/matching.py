@@ -100,6 +100,24 @@ class MatchingService:
             self.candidates.replace(identifier, data)
             return self._evaluate(identifier, None, self.clock())
 
+    def refresh_candidate(self, identifier: UUID):
+        """Refresh within the caller's candidate-write transaction."""
+        return self._evaluate(identifier, None, self.clock())
+
+    def refresh_vacancy(self, identifier: UUID):
+        """Refresh within the caller's vacancy-write transaction."""
+        return self._evaluate(None, identifier, self.clock())
+
+    def current_candidates(self, vacancy_id, *, limit=100, offset=0):
+        vacancy = self._require(self.vacancies.get(vacancy_id), vacancy_id)
+        now = self.clock()
+        return [
+            self._view(
+                self.engine.evaluate(candidate, vacancy, now), candidate, vacancy, now, current=True
+            )
+            for candidate in self._all(self.candidates)[offset : offset + limit]
+        ]
+
     def replace_vacancy(self, identifier: UUID, data: VacancyData) -> list[dict]:
         with self.transaction():
             self.vacancies.replace(identifier, data)

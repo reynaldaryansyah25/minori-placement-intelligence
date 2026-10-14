@@ -276,6 +276,13 @@ class BackendClient:
         return self._request("POST", f"/vacancies/drafts/{draft_id}/publish")
 
     # --- Matching ---
+    def get_current_candidates(self, vacancy_id, *, limit=100, offset=0):
+        return self._request(
+            "GET",
+            f"/matching/vacancies/{vacancy_id}/candidates",
+            params={"limit": limit, "offset": offset},
+        )
+
     def evaluate_matching(
         self,
         *,
@@ -348,6 +355,16 @@ class BackendClient:
         return self._request("POST", "/matching/decisions", json=payload)
 
     # --- Placements ---
+    def list_approved_candidates(self, *, limit=100, offset=0):
+        return self._request(
+            "GET", "/placements/approved-candidates", params={"limit": limit, "offset": offset}
+        )
+
+    def prepare_activity_email(self, placement_id, activity_id):
+        return self._request(
+            "POST", f"/placements/{placement_id}/activities/{activity_id}/email/prepare"
+        )
+
     def list_placements(
         self,
         *,

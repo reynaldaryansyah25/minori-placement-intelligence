@@ -24,6 +24,17 @@ class PlacementRequest(InputSchema):
     planned_departure_at: AwareDatetime | None = None
 
 
+class ApprovedPlacementCandidate(InputSchema):
+    match_id: UUID
+    candidate_id: UUID
+    vacancy_id: UUID
+    candidate_name: str
+    vacancy_title: str
+    employer_name: str
+    can_start: bool
+    reason: str | None
+
+
 class PlacementUpdate(InputSchema):
     actor_reference: Code = Field(max_length=80)
     status: PlacementStatus | None = None

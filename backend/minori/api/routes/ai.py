@@ -124,6 +124,14 @@ def email_template(notification_id: UUID, service: Reminder, staff: Staff):
     return invoke(service.draft_email, notification_id)
 
 
+@router.post(
+    "/placements/{placement_id}/activities/{activity_id}/email/prepare",
+    response_model=NotificationRead,
+)
+def prepare_activity_email(placement_id: UUID, activity_id: UUID, service: Reminder, staff: Staff):
+    return invoke(service.prepare_activity_email, placement_id, activity_id)
+
+
 @router.post("/reminders/{notification_id}/email/draft", response_model=EmailPreview)
 def email_draft(notification_id: UUID, service: Reminder, gateway: Gateway, staff: Staff):
     return ai_invoke(service.draft_email, notification_id, gateway)

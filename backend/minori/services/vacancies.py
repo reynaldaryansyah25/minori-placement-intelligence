@@ -24,10 +24,12 @@ class VacancyService:
         vacancies: VacancyRepository,
         drafts: VacancyDraftRepository,
         transaction: TransactionFactory,
+        refresh_matching: Callable[[UUID], object] | None = None,
     ) -> None:
         self._vacancies = vacancies
         self._drafts = drafts
         self._transaction = transaction
+        self._refresh_matching = refresh_matching
 
     def list(
         self,
@@ -60,15 +62,24 @@ class VacancyService:
 
     def create(self, data: VacancyData) -> VacancyRecord:
         with self._transaction():
-            return self._vacancies.create(data)
+            vacancy = self._vacancies.create(data)
+            if self._refresh_matching:
+                self._refresh_matching(vacancy.id)
+            return vacancy
 
     def replace(self, identifier: UUID, data: VacancyData) -> VacancyRecord:
         with self._transaction():
-            return self._vacancies.replace(identifier, data)
+            vacancy = self._vacancies.replace(identifier, data)
+            if self._refresh_matching:
+                self._refresh_matching(vacancy.id)
+            return vacancy
 
     def close(self, identifier: UUID) -> VacancyRecord:
         with self._transaction():
-            return self._vacancies.archive(identifier)
+            vacancy = self._vacancies.archive(identifier)
+            if self._refresh_matching:
+                self._refresh_matching(vacancy.id)
+            return vacancy
 
     def list_drafts(
         self,
@@ -201,4 +212,6 @@ class VacancyService:
                 analysis_metadata=draft.analysis_metadata,
             )
             self._drafts.replace(draft_id, updated_draft_data)
+            if self._refresh_matching:
+                self._refresh_matching(vacancy.id)
             return vacancy

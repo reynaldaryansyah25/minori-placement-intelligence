@@ -24,6 +24,7 @@ from minori.schemas.placement_management import (
     ActivityRequest,
     ActivityUpdate,
     ActorRequest,
+    ApprovedPlacementCandidate,
     PlacementRequest,
     PlacementUpdate,
     StaffDecision,
@@ -65,6 +66,15 @@ def decide(request: StaffDecision, service: Service):
         request.actor_reference,
         request.reason_code,
     )
+
+
+@router.get(
+    "/placements/approved-candidates",
+    response_model=list[ApprovedPlacementCandidate],
+    dependencies=read_auth,
+)
+def approved_candidates(service: Service, limit: Limit = 100, offset: Offset = 0):
+    return invoke(service.approved_candidates, limit=limit, offset=offset)
 
 
 @router.post("/placements", response_model=PlacementRead, dependencies=authenticated)

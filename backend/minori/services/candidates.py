@@ -19,9 +19,11 @@ class CandidateService:
         self,
         repository: CandidateRepository,
         transaction: TransactionFactory,
+        refresh_matching: Callable[[UUID], object] | None = None,
     ) -> None:
         self._repository = repository
         self._transaction = transaction
+        self._refresh_matching = refresh_matching
 
     def list(
         self,
@@ -54,12 +56,21 @@ class CandidateService:
 
     def create(self, data: CandidateData) -> CandidateRecord:
         with self._transaction():
-            return self._repository.create(data)
+            record = self._repository.create(data)
+            if self._refresh_matching:
+                self._refresh_matching(record.id)
+            return record
 
     def replace(self, identifier: UUID, data: CandidateData) -> CandidateRecord:
         with self._transaction():
-            return self._repository.replace(identifier, data)
+            record = self._repository.replace(identifier, data)
+            if self._refresh_matching:
+                self._refresh_matching(record.id)
+            return record
 
     def archive(self, identifier: UUID) -> CandidateRecord:
         with self._transaction():
-            return self._repository.archive(identifier)
+            record = self._repository.archive(identifier)
+            if self._refresh_matching:
+                self._refresh_matching(record.id)
+            return record

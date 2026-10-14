@@ -73,6 +73,15 @@ def result(evaluation_id: UUID, service: Service):
 
 
 @router.get(
+    "/vacancies/{vacancy_id}/candidates",
+    response_model=list[MatchingResultRead],
+    dependencies=read_auth,
+)
+def current_candidates(vacancy_id: UUID, service: Service, limit: Limit = 100, offset: Offset = 0):
+    return invoke(service.current_candidates, vacancy_id, limit=limit, offset=offset)
+
+
+@router.get(
     "/vacancies/{vacancy_id}/ranking",
     response_model=list[RankedMatchingRead],
     dependencies=read_auth,
