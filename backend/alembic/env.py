@@ -10,7 +10,7 @@ from minori.db.session import Database, resolve_database_url
 
 # Models are registered above so autogenerate sees every business table.
 target_metadata = Base.metadata
-settings = get_settings()
+settings = context.config.attributes.get("settings") or get_settings()
 configure_logging(settings.log_level)
 
 

@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import streamlit as st
 from minori_frontend.api_client import BackendClient, read_all
-from minori_frontend.auth import is_admin
+from minori_frontend.auth import can_operate
 from minori_frontend.components.data_table import render_interactive_table
 from minori_frontend.components.empty_state import render_empty_state
 from minori_frontend.components.feedback import show_api_error, show_success
@@ -42,7 +42,7 @@ def render_vacancies_page():
         "Lowongan",
         "Temukan kebutuhan tenaga kerja, persyaratan, dan kuota penerimaan dari pemberi kerja.",
     )
-    if is_admin() and st.button("Tambah lowongan", type="primary", icon=":material/add:"):
+    if can_operate() and st.button("Tambah lowongan", type="primary", icon=":material/add:"):
         show_create_vacancy_dialog(client)
     filters = render_filter_bar(
         search_placeholder="Cari posisi atau perusahaan…",
@@ -122,7 +122,7 @@ def render_vacancies_page():
                 from minori_frontend.components.navigation import navigate_to
 
                 navigate_to("candidate-matching")
-            if is_admin() and vacancy.get("status") == "open":
+            if can_operate() and vacancy.get("status") == "open":
                 with st.popover("Tutup lowongan", width="stretch"):
                     st.write("Lowongan ini tidak lagi menerima kandidat baru.")
                     if st.button("Konfirmasi penutupan", width="stretch"):

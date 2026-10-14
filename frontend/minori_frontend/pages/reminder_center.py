@@ -2,7 +2,7 @@
 
 import streamlit as st
 from minori_frontend.api_client import BackendClient, read_all
-from minori_frontend.auth import is_admin
+from minori_frontend.auth import can_operate
 from minori_frontend.components.activity_email import render_activity_email_picker
 from minori_frontend.components.ai_email import render_email_actions
 from minori_frontend.components.data_table import render_interactive_table
@@ -64,21 +64,26 @@ def render_reminder_page():
         ]
     )
     controls = st.columns(3)
-    if controls[0].button("Sinkronkan jadwal", disabled=not is_admin(), width="stretch"):
+    if controls[0].button("Sinkronkan jadwal", disabled=not can_operate(), width="stretch"):
         try:
             result = client.generate_reminders()
             show_success(f"{len(result)} pengingat telah disinkronkan dengan jadwal kegiatan.")
             st.rerun()
         except Exception as exc:
             show_api_error(exc)
-    if controls[1].button("Pulihkan antrean", disabled=not is_admin(), width="stretch"):
+    if controls[1].button("Pulihkan antrean", disabled=not can_operate(), width="stretch"):
         try:
             result = client.recover_reminders()
             show_success(f"{result.get('recovered_count', 0)} pengingat selesai diperiksa.")
             st.rerun()
         except Exception as exc:
             show_api_error(exc)
-    if controls[2].button("Uji simulasi", type="primary", disabled=not is_admin(), width="stretch"):
+    sandbox_mode = FrontendSettings().interactive_demo_mode
+    if sandbox_mode and controls[2].button("Perbarui riwayat", width="stretch"):
+        st.rerun()
+    if not sandbox_mode and controls[2].button(
+        "Uji simulasi", type="primary", disabled=not can_operate(), width="stretch"
+    ):
         try:
             result = client.simulate_reminder()
             if result:

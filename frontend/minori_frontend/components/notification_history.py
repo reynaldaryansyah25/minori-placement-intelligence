@@ -45,7 +45,7 @@ def render_reminder_details(notification, attempts, routing=None):
             )
         )
     with st.expander("Tujuan pengiriman", expanded=True):
-        if FrontendSettings().public_reviewer_mode:
+        if FrontendSettings().public_reviewer_mode and not FrontendSettings().interactive_demo_mode:
             st.caption("Tujuan dan isi email hanya tersedia bagi staf.")
         elif routing is None:
             st.caption("Informasi tujuan pengiriman belum tersedia.")

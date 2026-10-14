@@ -20,6 +20,7 @@ from minori.api.routes.placements import router as placement_router
 from minori.api.routes.reminders import internal_router
 from minori.api.routes.reminders import router as reminder_router
 from minori.api.routes.vacancies import router as vacancy_router
+from minori.api.sandbox_limits import SandboxBoundaryMiddleware
 from minori.core.config import Settings, get_settings
 from minori.core.logging import configure_logging
 from minori.db.session import Database
@@ -34,12 +35,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+        if configuration.sandbox_enabled:
+            from minori.integrations.demo_sandbox import DemoSandbox
+
+            application.state.sandbox = DemoSandbox(configuration)
         database = Database(configuration)
         application.state.database = database
         logger.info("MINORI backend started")
         try:
             yield
         finally:
+            if configuration.sandbox_enabled:
+                application.state.sandbox.close()
             database.dispose()
             logger.info("MINORI backend stopped")
 
@@ -54,6 +61,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.settings = configuration
 
     application.add_middleware(AiInputLimitMiddleware)
+    application.add_middleware(SandboxBoundaryMiddleware)
+    if configuration.sandbox_enabled:
+        from minori.api.routes.sandbox import router as sandbox_router
+
+        application.include_router(sandbox_router)
 
     @application.exception_handler(RequestValidationError)
     async def safe_ai_validation(request: Request, exc: RequestValidationError):

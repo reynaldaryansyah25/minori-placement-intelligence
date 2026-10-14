@@ -2,7 +2,7 @@
 
 import streamlit as st
 from minori_frontend.api_client import read_all
-from minori_frontend.auth import is_admin
+from minori_frontend.auth import can_operate
 from minori_frontend.components.feedback import show_api_error, show_success
 from minori_frontend.components.presentation import section
 from minori_frontend.utils.dates import format_datetime_id, now_wib, parse_to_wib
@@ -77,7 +77,7 @@ def render_activity_email_picker(client, candidates):
                 if st.button(
                     "Siapkan email untuk jadwal ini",
                     type="primary",
-                    disabled=not is_admin(),
+                    disabled=not can_operate(),
                     width="stretch",
                 ):
                     reminder = client.prepare_activity_email(placement["id"], activity_id)

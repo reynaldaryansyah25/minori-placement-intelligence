@@ -14,6 +14,7 @@ bearer = HTTPBearer(auto_error=False)
 class UserRole(StrEnum):
     ADMIN = "admin"
     REVIEWER = "reviewer"
+    DEMO_OPERATOR = "demo_operator"
 
 
 @dataclass(frozen=True)
@@ -23,13 +24,18 @@ class AuthSession:
 
     @property
     def can_write(self) -> bool:
-        return self.role == UserRole.ADMIN
+        return self.role in {UserRole.ADMIN, UserRole.DEMO_OPERATOR}
 
 
 def get_current_user(
     request: Request, credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)]
 ) -> AuthSession:
     settings = request.app.state.settings
+    if settings.sandbox_enabled:
+        row = getattr(request.state, "sandbox_session", None)
+        if row is None or getattr(request.state, "sandbox_worker", False):
+            raise HTTPException(401, "Sesi peserta sandbox diperlukan.")
+        return AuthSession(UserRole.DEMO_OPERATOR, "demo." + row.identifier[:12])
     admin_token = settings.internal_api_token
     reviewer_token = settings.reviewer_api_token
 
@@ -79,7 +85,7 @@ def require_read_access(
 def require_staff_access(
     user: Annotated[AuthSession, Depends(get_current_user)],
 ) -> AuthSession:
-    if user.role != UserRole.ADMIN:
+    if not user.can_write:
         raise HTTPException(
             status_code=403,
             detail="Reviewer role has read-only access. Staff or administrator credentials required.",
@@ -90,6 +96,10 @@ def require_staff_access(
 def require_internal_token(
     request: Request, credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)]
 ) -> None:
+    if request.app.state.settings.sandbox_enabled:
+        if not getattr(request.state, "sandbox_worker", False):
+            raise HTTPException(403, "Akses worker sandbox diperlukan.")
+        return
     configured = request.app.state.settings.internal_api_token
     if configured is None:
         raise HTTPException(status_code=503, detail="Internal API authentication is not configured")

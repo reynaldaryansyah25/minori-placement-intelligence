@@ -33,6 +33,11 @@ def operational_clock(settings):
 
 
 def get_db_session(request: Request) -> Iterator[Session]:
+    if request.app.state.settings.sandbox_enabled and request.url.path != "/health":
+        if not hasattr(request.state, "sandbox_session"):
+            raise HTTPException(status_code=401, detail="Sesi sandbox diperlukan.")
+        yield from request.state.sandbox_session.database.sessions()
+        return
     yield from request.app.state.database.sessions()
 
 

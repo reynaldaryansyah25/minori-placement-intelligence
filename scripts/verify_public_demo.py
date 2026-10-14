@@ -49,9 +49,14 @@ def verify():
     environment = dict(entry.split("=", 1) for entry in container["Config"]["Env"])
     assert "INTERNAL_API_TOKEN" not in names
     assert not names & {"NINE_ROUTER_API_KEY", "N8N_ENCRYPTION_KEY", "DATABASE_URL"}
-    assert "REVIEWER_API_TOKEN" in names and container["HostConfig"]["ReadonlyRootfs"]
+    assert container["HostConfig"]["ReadonlyRootfs"]
     assert environment["PUBLIC_REVIEWER_MODE"] == "true"
-    assert environment["REVIEWER_API_TOKEN"] == reviewer
+    if environment.get("INTERACTIVE_DEMO_MODE") == "true":
+        assert "REVIEWER_API_TOKEN" not in names
+        assert environment["SANDBOX_GATEWAY_TOKEN"] == cfg["SANDBOX_GATEWAY_TOKEN"]
+        assert environment["BACKEND_BASE_URL"] == "http://backend-sandbox:8000"
+    else:
+        assert environment["REVIEWER_API_TOKEN"] == reviewer
     assert environment["PUBLIC_DEMO_USERNAME"] == cfg["PUBLIC_DEMO_USERNAME"]
     assert environment["PUBLIC_DEMO_PASSWORD_HASH"] == cfg["PUBLIC_DEMO_PASSWORD_HASH"]
     assert environment["STREAMLIT_SERVER_ENABLE_CORS"] == "true"

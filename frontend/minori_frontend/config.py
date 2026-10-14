@@ -22,6 +22,8 @@ class FrontendSettings(BaseSettings):
     reviewer_api_token: SecretStr | None = None
     demo_mode: bool = True
     public_reviewer_mode: bool = False
+    interactive_demo_mode: bool = False
+    sandbox_gateway_token: SecretStr | None = None
     public_demo_username: SecretStr | None = None
     public_demo_password_hash: SecretStr | None = None
     public_session_idle_seconds: int = Field(default=900, ge=30, le=3600)
@@ -32,12 +34,27 @@ class FrontendSettings(BaseSettings):
 
     @model_validator(mode="after")
     def isolate_public_credentials(self):
+        if self.interactive_demo_mode:
+            if (
+                not self.public_reviewer_mode
+                or self.reviewer_api_token
+                or not self.sandbox_gateway_token
+            ):
+                raise ValueError(
+                    "Sandbox publik memerlukan login dan kredensial sandbox tersendiri."
+                )
+            if self.backend_base_url.host != "backend-sandbox":
+                raise ValueError("Frontend sandbox hanya dapat terhubung ke backend-sandbox.")
         if self.public_reviewer_mode:
             # Fail closed even if an operator accidentally injects an admin credential.
             if self.internal_api_token is not None:
                 raise ValueError("Frontend publik tidak boleh menerima kredential administrator.")
             if (
-                not self.reviewer_api_token
+                not (
+                    self.sandbox_gateway_token
+                    if self.interactive_demo_mode
+                    else self.reviewer_api_token
+                )
                 or not self.public_demo_username
                 or not self.public_demo_password_hash
             ):

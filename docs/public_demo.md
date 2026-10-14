@@ -1,5 +1,7 @@
 # Demo publik dengan Tailscale Funnel pada Windows
 
+Mode interaktif terbaru menggunakan isolasi per sesi dan backend terpisah. Ikuti [panduan sandbox](interactive_sandbox.md) untuk konfigurasi aktif. Bagian read-only di bawah mendokumentasikan mode reviewer sebelumnya, yang tetap tersedia bila sandbox tidak diaktifkan.
+
 ## Batas akses
 
 `frontend-public` melayani `127.0.0.1:8502` pada project/jaringan Docker existing.

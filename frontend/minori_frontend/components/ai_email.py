@@ -3,13 +3,13 @@
 from uuid import uuid4
 
 import streamlit as st
-from minori_frontend.auth import is_admin
+from minori_frontend.auth import can_operate
 from minori_frontend.components.feedback import show_api_error, show_success
 from minori_frontend.config import FrontendSettings
 
 
 def render_email_actions(client, reminder, routing):
-    if FrontendSettings().public_reviewer_mode:
+    if FrontendSettings().public_reviewer_mode and not FrontendSettings().interactive_demo_mode:
         return
     if not reminder.get("managed") or reminder.get("template_code") not in {
         "interview_h3",
@@ -35,7 +35,9 @@ def render_email_actions(client, reminder, routing):
             st.text(reminder["approved_message"]["body"])
         return
     disabled = (
-        not is_admin() or reminder.get("status") != "pending" or bool(reminder.get("attempt_count"))
+        not can_operate()
+        or reminder.get("status") != "pending"
+        or bool(reminder.get("attempt_count"))
     )
     ai_col, fallback = st.columns(2)
     choice = (
@@ -95,7 +97,11 @@ def render_email_actions(client, reminder, routing):
                             "idempotency_key": st.session_state[prefix + "_request_key"],
                         },
                     )
-                    show_success("Pesan disetujui dan menunggu pengiriman melalui antrean n8n.")
+                    show_success(
+                        "Pesan disetujui dan menunggu worker sandbox ke Mailpit lokal."
+                        if FrontendSettings().interactive_demo_mode
+                        else "Pesan disetujui dan menunggu pengiriman melalui antrean n8n."
+                    )
                     st.session_state.pop(state, None)
                     st.rerun()
                 except Exception as exc:

@@ -3,7 +3,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import AwareDatetime
 
 from minori.api.dependencies import get_reminder_service
@@ -84,13 +84,20 @@ def recover(service: Service):
 
 
 @internal_router.get("/due", response_model=list[NotificationRead])
-def due(service: Service, limit: Limit = 100, offset: Offset = 0):
-    return invoke(service.due, limit=limit, offset=offset)
+def due(request: Request, service: Service, limit: Limit = 100, offset: Offset = 0):
+    rows = invoke(service.due, limit=limit, offset=offset)
+    if request.app.state.settings.sandbox_enabled:
+        return [row for row in rows if row.approved_message]
+    return rows
 
 
 @internal_router.post("/claim", response_model=ClaimRead | None)
-def claim(request: ClaimRequest, service: Service):
-    return invoke(service.claim, request.notification_id)
+def claim(request: ClaimRequest, http: Request, service: Service):
+    return invoke(
+        service.claim,
+        request.notification_id,
+        require_approval=http.app.state.settings.sandbox_enabled,
+    )
 
 
 @internal_router.post("/{notification_id}/complete", response_model=NotificationRead)

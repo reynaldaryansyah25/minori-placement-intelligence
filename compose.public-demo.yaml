@@ -1,15 +1,98 @@
-# Standalone addition to the existing project/network; never recreates backend or staff services.
+# Isolated interactive sandbox. Never attach the primary database or default project network.
 name: minori-placement-intelligence
 services:
+  backend-sandbox:
+    build:
+      context: .
+      target: backend
+    command: ["python", "-m", "uvicorn", "minori.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+    environment:
+      APP_ENV: demo
+      SANDBOX_ENABLED: "true"
+      SANDBOX_ROOT: /app/data/sandbox
+      DATABASE_URL: sqlite:////app/data/sandbox/template.db
+      SANDBOX_GATEWAY_TOKEN: ${SANDBOX_GATEWAY_TOKEN:?Run scripts/setup_sandbox.py}
+      SANDBOX_WORKER_TOKEN: ${SANDBOX_WORKER_TOKEN:?Run scripts/setup_sandbox.py}
+      SANDBOX_SESSION_SECONDS: ${PUBLIC_SESSION_MAX_SECONDS:-3600}
+      SANDBOX_IDLE_SECONDS: ${PUBLIC_SESSION_IDLE_SECONDS:-900}
+      SANDBOX_AI_LIMIT: ${SANDBOX_AI_LIMIT:-12}
+      SANDBOX_WRITE_LIMIT: ${SANDBOX_WRITE_LIMIT:-80}
+      SANDBOX_EMAIL_LIMIT: ${SANDBOX_EMAIL_LIMIT:-5}
+      SANDBOX_UPLOAD_LIMIT: ${SANDBOX_UPLOAD_LIMIT:-10}
+      LLM_ENABLED: ${LLM_ENABLED:-false}
+      NINE_ROUTER_BASE_URL: ${NINE_ROUTER_DOCKER_BASE_URL:-http://host.docker.internal:20128/v1}
+      NINE_ROUTER_API_KEY: ${NINE_ROUTER_API_KEY:-}
+      NINE_ROUTER_MODEL: ${NINE_ROUTER_MODEL:-}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-120}
+      LLM_MAX_RETRIES: "0"
+      NOTIFICATION_DRY_RUN: "false"
+      NOTIFICATION_DELIVERY_MODE: mailpit
+      MAILPIT_INBOX_EMAIL: mailpit@minori.local
+      NOTIFICATION_RETRY_BASE_SECONDS: "10"
+      NOTIFICATION_RETRY_MAX_SECONDS: "60"
+    volumes:
+      - sandbox_data:/app/data/sandbox
+    networks: [sandbox_app, sandbox_router]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 15s
+      timeout: 6s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:uid=10001,gid=10001,mode=0700,size=64m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 768m
+    cpus: 1.0
+    pids_limit: 128
+  worker-sandbox:
+    build:
+      context: .
+      target: backend
+    command: ["python", "scripts/sandbox_worker.py"]
+    environment:
+      SANDBOX_WORKER_TOKEN: ${SANDBOX_WORKER_TOKEN:?Run scripts/setup_sandbox.py}
+    depends_on:
+      backend-sandbox: {condition: service_healthy}
+      mailpit-sandbox: {condition: service_healthy}
+    networks: [sandbox_app, sandbox_mail]
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 192m
+    cpus: 0.5
+    pids_limit: 64
+  mailpit-sandbox:
+    image: axllent/mailpit@sha256:94f6b70c1436defae6799d9ac7ff0eeff9540465b842026d5cdb018f1c0234ea
+    environment:
+      MP_MAX_MESSAGES: "100"
+      MP_DISABLE_VERSION_CHECK: "true"
+    networks: [sandbox_mail]
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 192m
+    cpus: 0.5
+    pids_limit: 64
   frontend-public:
     build:
       context: .
       target: frontend
     environment:
       PUBLIC_REVIEWER_MODE: "true"
-      BACKEND_BASE_URL: http://backend:8000
+      INTERACTIVE_DEMO_MODE: "true"
+      BACKEND_BASE_URL: http://backend-sandbox:8000
       HTTP_TIMEOUT_SECONDS: "30"
-      REVIEWER_API_TOKEN: ${REVIEWER_API_TOKEN:?Configure the existing read-only backend token}
+      SANDBOX_GATEWAY_TOKEN: ${SANDBOX_GATEWAY_TOKEN:?Run scripts/setup_sandbox.py}
       PUBLIC_DEMO_USERNAME: ${PUBLIC_DEMO_USERNAME:?Run python scripts/setup_public_demo.py}
       PUBLIC_DEMO_PASSWORD_HASH: ${PUBLIC_DEMO_PASSWORD_HASH:?Run python scripts/setup_public_demo.py}
       PUBLIC_SESSION_IDLE_SECONDS: ${PUBLIC_SESSION_IDLE_SECONDS:-900}
@@ -25,7 +108,10 @@ services:
       STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION: "true"
       STREAMLIT_SERVER_ENABLE_STATIC_SERVING: "false"
       STREAMLIT_SERVER_FILE_WATCHER_TYPE: none
-      STREAMLIT_SERVER_MAX_UPLOAD_SIZE: "5"
+      STREAMLIT_SERVER_MAX_UPLOAD_SIZE: "2"
+    networks: [sandbox_app, sandbox_public]
+    depends_on:
+      backend-sandbox: {condition: service_healthy}
     ports:
       - "127.0.0.1:8502:8501"
     healthcheck:
@@ -43,3 +129,12 @@ services:
     mem_limit: 512m
     cpus: 1.0
     pids_limit: 128
+volumes:
+  sandbox_data:
+networks:
+  sandbox_app:
+    internal: true
+  sandbox_mail:
+    internal: true
+  sandbox_router:
+  sandbox_public:

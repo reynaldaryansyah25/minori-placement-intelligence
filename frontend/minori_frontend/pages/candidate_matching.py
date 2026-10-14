@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import streamlit as st
 from minori_frontend.api_client import BackendClient, read_all
-from minori_frontend.auth import get_current_actor, is_admin
+from minori_frontend.auth import can_operate, get_current_actor
 from minori_frontend.components.candidate_profile import render_candidate_profile
 from minori_frontend.components.data_table import render_interactive_table
 from minori_frontend.components.empty_state import render_empty_state
@@ -61,7 +61,7 @@ def render_matching_page():
             key="matching_vac_select",
         )
     with action:
-        if st.button("Evaluasi ulang", type="primary", disabled=not is_admin(), width="stretch"):
+        if st.button("Evaluasi ulang", type="primary", disabled=not can_operate(), width="stretch"):
             try:
                 with st.spinner("Mengevaluasi kualifikasi kandidat…"):
                     client.evaluate_matching(vacancy_id=vacancy_id)
@@ -156,7 +156,7 @@ def render_matching_page():
                 return
             render_matching_explanation(result)
             ai_key = "matching_ai_" + candidate_id + "_" + vacancy_id
-            if st.button("Jelaskan dengan AI", disabled=not is_admin(), width="stretch"):
+            if st.button("Jelaskan dengan AI", disabled=not can_operate(), width="stretch"):
                 try:
                     with st.spinner("Menjelaskan hasil resmi…"):
                         st.session_state[ai_key] = client.explain_with_ai(candidate_id, vacancy_id)
@@ -190,7 +190,9 @@ def render_matching_page():
                             st.text("• " + item)
             with st.expander("Profil kandidat"):
                 render_candidate_profile(candidates.get(candidate_id, {}))
-                if st.button("Edit kualifikasi kandidat", disabled=not is_admin(), width="stretch"):
+                if st.button(
+                    "Edit kualifikasi kandidat", disabled=not can_operate(), width="stretch"
+                ):
                     st.session_state["candidate_saved_id"] = candidate_id
                     from minori_frontend.components.navigation import navigate_to
 
@@ -204,7 +206,7 @@ def render_matching_page():
                 if st.button(
                     "Setujui kandidat",
                     type="primary",
-                    disabled=not is_admin()
+                    disabled=not can_operate()
                     or status == "approved"
                     or result.get("eligibility_status") == "NOT_ELIGIBLE",
                     width="stretch",
@@ -225,7 +227,7 @@ def render_matching_page():
             with reject:
                 if st.button(
                     "Tolak kandidat",
-                    disabled=not is_admin() or status == "rejected",
+                    disabled=not can_operate() or status == "rejected",
                     width="stretch",
                 ):
                     try:
@@ -259,7 +261,7 @@ def render_matching_page():
 
                     navigate_to("placement-pipeline")
                 if not existing and st.button(
-                    "Buat penempatan", disabled=not is_admin(), width="stretch"
+                    "Buat penempatan", disabled=not can_operate(), width="stretch"
                 ):
                     try:
                         created = client.create_placement(

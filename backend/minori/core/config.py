@@ -50,6 +50,19 @@ class Settings(BaseSettings):
     internal_api_token: SecretStr | None = None
     reviewer_api_token: SecretStr | None = None
     demo_clock_at: AwareDatetime | None = None
+    sandbox_enabled: bool = False
+    sandbox_root: Path = Path("/app/data/sandbox")
+    sandbox_gateway_token: SecretStr | None = None
+    sandbox_worker_token: SecretStr | None = None
+    sandbox_session_seconds: int = Field(default=3600, ge=60, le=28800)
+    sandbox_idle_seconds: int = Field(default=900, ge=30, le=3600)
+    sandbox_max_sessions: int = Field(default=8, ge=1, le=20)
+    sandbox_ai_limit: int = Field(default=12, ge=1, le=30)
+    sandbox_write_limit: int = Field(default=80, ge=1, le=200)
+    sandbox_email_limit: int = Field(default=5, ge=1, le=10)
+    sandbox_upload_limit: int = Field(default=10, ge=1, le=20)
+    sandbox_hourly_ai_limit: int = Field(default=60, ge=1, le=200)
+    sandbox_hourly_email_limit: int = Field(default=30, ge=1, le=60)
 
     @field_validator("demo_clock_at", mode="before")
     @classmethod
@@ -116,6 +129,28 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_router_configuration(self) -> Self:
+        if self.sandbox_enabled:
+            if (
+                self.app_env not in {"demo", "test"}
+                or self.internal_api_token
+                or self.reviewer_api_token
+            ):
+                raise ValueError("Sandbox requires demo/test and separate sandbox credentials")
+            tokens = (self.sandbox_gateway_token, self.sandbox_worker_token)
+            if not all(token and len(token.get_secret_value()) >= 32 for token in tokens):
+                raise ValueError(
+                    "Sandbox gateway and worker secrets must have at least 32 characters"
+                )
+            if tokens[0] == tokens[1]:
+                raise ValueError("Sandbox gateway and worker credentials must differ")
+            if self.notification_delivery_mode != "mailpit" or self.notification_dry_run:
+                raise ValueError("Sandbox delivery must use isolated Mailpit")
+            root = self.sandbox_root.resolve()
+            database = Path(make_url(self.database_url).database or "").resolve()
+            if not database.is_relative_to(root) or database.name != "template.db":
+                raise ValueError("Sandbox template database must be inside SANDBOX_ROOT")
+            if self.demo_clock_at:
+                raise ValueError("Sandbox uses real time; no inherited demo clock")
         if self.app_env == "production" and self.notification_delivery_mode != "dry_run":
             raise ValueError(
                 "Production email delivery requires a separately authorized verified-recipient adapter"

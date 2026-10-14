@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from minori_frontend.api_client import BackendClient
     from minori_frontend.config import FrontendSettings
 
-RoleType = Literal["admin", "reviewer"]
+RoleType = Literal["admin", "reviewer", "demo_operator"]
 
 
 @dataclass(frozen=True)
@@ -22,6 +22,12 @@ class UserProfile:
 
 
 PROFILES: dict[RoleType, UserProfile] = {
+    "demo_operator": UserProfile(
+        "demo_operator",
+        "Peserta Demo Interaktif",
+        "demo.participant",
+        "Operasi hanya pada data sintetis dalam sesi sandbox.",
+    ),
     "admin": UserProfile(
         role="admin",
         display_name="Staf Rekrutmen",
@@ -40,10 +46,13 @@ PROFILES: dict[RoleType, UserProfile] = {
 def init_auth_state(settings: "FrontendSettings") -> None:
     """Ensure session state contains valid authentication profile."""
     st.session_state["public_reviewer_mode"] = settings.public_reviewer_mode
+    st.session_state["interactive_demo_mode"] = settings.interactive_demo_mode
     if settings.public_reviewer_mode:
         # Never keep a caller-supplied role/token when opening the public frontend.
         st.session_state.auth_role = "reviewer"
-        st.session_state.actor_reference = PROFILES["reviewer"].actor_reference
+        st.session_state.actor_reference = PROFILES[
+            "demo_operator" if settings.interactive_demo_mode else "reviewer"
+        ].actor_reference
         st.session_state.pop("auth_token", None)
         return
     if "auth_initialized" not in st.session_state:
@@ -59,12 +68,21 @@ def init_auth_state(settings: "FrontendSettings") -> None:
 
 def get_current_role() -> RoleType:
     if st.session_state.get("public_reviewer_mode"):
-        return "reviewer"
+        return (
+            "demo_operator"
+            if st.session_state.get("interactive_demo_mode")
+            and st.session_state.get("sandbox_session_token")
+            else "reviewer"
+        )
     return st.session_state.get("auth_role", "admin")
 
 
 def is_admin() -> bool:
     return get_current_role() == "admin"
+
+
+def can_operate() -> bool:
+    return get_current_role() in {"admin", "demo_operator"}
 
 
 def get_current_token() -> str | None:
@@ -131,6 +149,19 @@ def require_public_login(settings: "FrontendSettings") -> None:
     from minori_frontend.public_auth import LOGIN_THROTTLE, credential_fingerprint, session_valid
 
     if session_valid(st.session_state, settings):
+        if settings.interactive_demo_mode:
+            from minori_frontend.api_client import BackendClient
+
+            try:
+                BackendClient(settings).sandbox_status()
+            except Exception as exc:
+                from minori_frontend.api_client import ApiClientError
+
+                if isinstance(exc, ApiClientError) and exc.status_code == 401:
+                    st.session_state.clear()
+                    st.rerun()
+                st.warning("Sandbox sementara belum tersedia. Coba muat ulang beberapa saat lagi.")
+                st.stop()
         st.session_state.public_last_activity = time.monotonic()
         return
     expired = "public_authenticated_at" in st.session_state
@@ -140,7 +171,11 @@ def require_public_login(settings: "FrontendSettings") -> None:
     st.session_state.public_reviewer_mode = True
     st.session_state.auth_role = "reviewer"
     st.title("MINORI Placement Intelligence")
-    st.caption("Masuk sebagai peninjau demo. Akses hanya untuk membaca data sintetis.")
+    st.caption(
+        "Masuk untuk mencoba fitur dengan data sintetis di sandbox pribadi."
+        if settings.interactive_demo_mode
+        else "Masuk sebagai peninjau demo. Akses hanya untuk membaca data sintetis."
+    )
     if expired:
         st.info("Sesi berakhir. Silakan masuk kembali.")
     with st.form("public_login", clear_on_submit=True):
@@ -160,8 +195,14 @@ def require_public_login(settings: "FrontendSettings") -> None:
 
             try:
                 # A misconfigured reviewer token must never turn into an admin session.
-                identity = BackendClient(settings).verify_public_reviewer()
-                if identity.get("role") != "reviewer":
+                identity = (
+                    BackendClient(settings).open_sandbox_session()
+                    if settings.interactive_demo_mode
+                    else BackendClient(settings).verify_public_reviewer()
+                )
+                if identity.get("role") != (
+                    "demo_operator" if settings.interactive_demo_mode else "reviewer"
+                ):
                     raise ValueError("Invalid reviewer role")
             except Exception:
                 st.error("Akses peninjau belum tersedia. Hubungi pengelola demo.")
@@ -169,18 +210,28 @@ def require_public_login(settings: "FrontendSettings") -> None:
                 st.session_state.clear()
                 st.session_state.update(
                     public_reviewer_mode=True,
+                    interactive_demo_mode=settings.interactive_demo_mode,
                     auth_role="reviewer",
                     actor_reference=PROFILES["reviewer"].actor_reference,
                     public_authenticated_at=time.monotonic(),
                     public_last_activity=time.monotonic(),
                     public_credential_fingerprint=credential_fingerprint(settings),
                 )
+                if settings.interactive_demo_mode:
+                    st.session_state.sandbox_session_token = identity["session_token"]
                 st.rerun()
     st.stop()
 
 
-def render_public_logout(settings):
-    if settings.public_reviewer_mode and st.button("Keluar dari demo", width="stretch"):
+def render_public_logout(settings, *, key="public_logout_sidebar"):
+    if settings.public_reviewer_mode and st.button("Keluar dari demo", width="stretch", key=key):
+        if settings.interactive_demo_mode:
+            from minori_frontend.api_client import BackendClient
+
+            try:
+                BackendClient(settings)._request("POST", "/sandbox/logout")
+            except Exception:
+                pass
         st.session_state.clear()
         st.rerun()
 

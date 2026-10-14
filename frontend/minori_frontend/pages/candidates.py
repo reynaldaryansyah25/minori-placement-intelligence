@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import streamlit as st
 from minori_frontend.api_client import BackendClient, read_all
-from minori_frontend.auth import is_admin
+from minori_frontend.auth import can_operate
 from minori_frontend.components.candidate_form import candidate_fields
 from minori_frontend.components.candidate_profile import render_candidate_profile
 from minori_frontend.components.data_table import render_interactive_table
@@ -84,7 +84,7 @@ def render_candidates_page():
     render_page_header(
         "Kandidat", "Kelola profil, kualifikasi, dan kesiapan kandidat untuk penempatan di Jepang."
     )
-    if is_admin() and st.button("Tambah kandidat", type="primary", icon=":material/add:"):
+    if can_operate() and st.button("Tambah kandidat", type="primary", icon=":material/add:"):
         show_create_candidate_dialog(client)
     filters = render_filter_bar(
         search_placeholder="Cari nama kandidat…",
@@ -151,14 +151,14 @@ def render_candidates_page():
     with detail:
         with st.container(border=True):
             render_candidate_profile(selected_candidate)
-            if is_admin() and st.button("Edit profil dan kualifikasi", width="stretch"):
+            if can_operate() and st.button("Edit profil dan kualifikasi", width="stretch"):
                 show_create_candidate_dialog(client, selected_candidate)
             if st.button("Tinjau pencocokan kandidat", width="stretch"):
                 st.session_state["matching_handoff"] = {"candidate_id": selected_candidate["id"]}
                 from minori_frontend.components.navigation import navigate_to
 
                 navigate_to("candidate-matching")
-            if is_admin() and selected_candidate.get("status") != "inactive":
+            if can_operate() and selected_candidate.get("status") != "inactive":
                 with st.popover("Arsipkan kandidat", width="stretch"):
                     st.write(
                         "Kandidat akan menjadi nonaktif. Jadwal baru tidak dapat dibuat untuk kandidat ini."

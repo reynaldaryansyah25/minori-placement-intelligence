@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import streamlit as st
 from minori_frontend.api_client import BackendClient, read_all
-from minori_frontend.auth import get_current_actor, is_admin
+from minori_frontend.auth import can_operate, get_current_actor
 from minori_frontend.components.data_table import render_interactive_table
 from minori_frontend.components.empty_state import render_empty_state
 from minori_frontend.components.feedback import show_api_error, show_success
@@ -79,7 +79,7 @@ def render_pipeline_page():
             if st.button(
                 "Mulai persiapan penempatan",
                 type="primary",
-                disabled=not is_admin() or not waiting["can_start"],
+                disabled=not can_operate() or not waiting["can_start"],
             ):
                 try:
                     created = client.create_placement(
@@ -213,7 +213,7 @@ def render_pipeline_page():
                     and scheduled
                     and scheduled <= now_wib()
                 )
-                if is_admin() and can_complete:
+                if can_operate() and can_complete:
                     if st.button("Tandai selesai", key="comp_" + activity["id"]):
                         try:
                             client.update_activity(
@@ -267,7 +267,7 @@ def render_pipeline_page():
                 if st.form_submit_button(
                     "Simpan jadwal",
                     type="primary",
-                    disabled=not is_admin() or not eligible_to_schedule,
+                    disabled=not can_operate() or not eligible_to_schedule,
                     width="stretch",
                 ):
                     target = datetime.combine(day, at, tzinfo=now_wib().tzinfo)

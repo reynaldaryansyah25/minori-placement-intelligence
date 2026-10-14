@@ -53,7 +53,9 @@ def credential_fingerprint(settings) -> str:
     parts = [
         settings.public_demo_username,
         settings.public_demo_password_hash,
-        settings.reviewer_api_token,
+        settings.sandbox_gateway_token
+        if settings.interactive_demo_mode
+        else settings.reviewer_api_token,
     ]
     return hashlib.sha256("\0".join(p.get_secret_value() for p in parts).encode()).hexdigest()
 

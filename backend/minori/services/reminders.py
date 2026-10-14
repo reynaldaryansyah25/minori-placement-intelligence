@@ -387,10 +387,16 @@ class ReminderService:
             identifier, limit=limit, offset=offset
         )
 
-    def claim(self, identifier=None, *, dry_run_only=False):
+    def claim(self, identifier=None, *, dry_run_only=False, require_approval=False):
         now = self.clock()
         with self.transaction():
             self._maintenance(now)
+            if require_approval and (
+                identifier is None or not self._get(identifier).approved_message
+            ):
+                raise BusinessConflictError(
+                    "Persetujuan peserta demo diperlukan sebelum pengiriman."
+                )
             token = secrets.token_urlsafe(32)
             digest = hashlib.sha256(token.encode()).hexdigest()
             row = self.ports.queue.claim(

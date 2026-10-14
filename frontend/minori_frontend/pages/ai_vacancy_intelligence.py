@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import streamlit as st
 from minori_frontend.api_client import BackendClient, read_all
-from minori_frontend.auth import is_admin
+from minori_frontend.auth import can_operate
 from minori_frontend.components.ai_vacancy import analysis_review, source_controls
 from minori_frontend.components.data_table import render_interactive_table
 from minori_frontend.components.feedback import show_api_error, show_success
@@ -113,12 +113,12 @@ def render_ai_vacancy_page():
                 )
                 save_col, publish_col = st.columns(2)
                 save = save_col.form_submit_button(
-                    "Simpan draf", disabled=not is_admin() or bool(published), width="stretch"
+                    "Simpan draf", disabled=not can_operate() or bool(published), width="stretch"
                 )
                 publish = publish_col.form_submit_button(
                     "Terbitkan lowongan",
                     type="primary",
-                    disabled=not is_admin() or bool(published),
+                    disabled=not can_operate() or bool(published),
                     width="stretch",
                 )
                 if (save or publish) and not confirmed:

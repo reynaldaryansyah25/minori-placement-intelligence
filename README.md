@@ -4,6 +4,11 @@ Aplikasi operasional rekrutmen dan penempatan tenaga kerja ke Jepang dengan arsi
 **Modular Monolith dan prinsip Clean Architecture**, dilengkapi antarmuka frontend
 **Japanese Minimalist Enterprise** berbasis Python 3.12 dan Streamlit.
 
+Demo publik interaktif pada port `8502` menggunakan login publik existing, database
+per sesi, budget penggunaan, AI 9Router, dan worker email ke Mailpit terisolasi.
+Lihat [panduan menjalankan sandbox](docs/interactive_sandbox.md). Dashboard staf
+dan database utama tetap terpisah.
+
 Sistem menyediakan operasional penempatan menyeluruh:
 - **Operational Command Center (Overview):** Metrik KPI real-time, action center, dan log audit.
 - **Candidates Directory:** Profil kandidat, skor JLPT/JFT-Basic, sertifikasi kompetensi, dan riwayat kerja.

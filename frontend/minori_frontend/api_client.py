@@ -38,6 +38,12 @@ class BackendClient:
     def _headers(self, token: str | None = None) -> dict[str, str]:
         headers = {"Accept": "application/json"}
         if self._settings.public_reviewer_mode:
+            if self._settings.interactive_demo_mode:
+                import streamlit as st
+
+                chosen = token or st.session_state.get("sandbox_session_token", "")
+                headers["Authorization"] = "Bearer " + chosen
+                return headers
             headers["Authorization"] = (
                 "Bearer " + self._settings.reviewer_api_token.get_secret_value()
             )
@@ -67,6 +73,16 @@ class BackendClient:
 
         if not session_valid(st.session_state, self._settings):
             raise ApiClientError(401, "Silakan masuk kembali untuk membuka demo.")
+        if self._settings.interactive_demo_mode:
+            if path in {
+                "/internal/reminders/generate",
+                "/internal/reminders/recover",
+                "/internal/reminders/simulate",
+            }:
+                path = path.replace("/internal/", "/sandbox/", 1)
+            elif path.startswith("/internal/"):
+                raise ApiClientError(403, "Akses internal tidak tersedia dalam demo.")
+            return self._transport_request(method, path, **kwargs)
         if method != "GET" or path.startswith("/internal/"):
             raise ApiClientError(403, "Demo publik hanya menyediakan akses baca.")
         from minori_frontend.public_data import PublicDemoData
@@ -79,6 +95,21 @@ class BackendClient:
         if not self._settings.public_reviewer_mode:
             raise ApiClientError(403, "Akses peninjau publik tidak diaktifkan.")
         return self._transport_request("GET", "/auth/me")
+
+    def open_sandbox_session(self):
+        if not self._settings.interactive_demo_mode:
+            raise ApiClientError(403, "Sandbox tidak diaktifkan.")
+        return self._transport_request(
+            "POST",
+            "/sandbox/sessions",
+            token=self._settings.sandbox_gateway_token.get_secret_value(),
+        )
+
+    def sandbox_status(self):
+        return self._request("GET", "/sandbox/session")
+
+    def reset_sandbox(self):
+        return self._request("POST", "/sandbox/reset", json={"confirmed": True})
 
     def _transport_request(
         self,

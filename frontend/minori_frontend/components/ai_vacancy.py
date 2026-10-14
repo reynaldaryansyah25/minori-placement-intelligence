@@ -3,8 +3,9 @@
 import hashlib
 
 import streamlit as st
-from minori_frontend.auth import is_admin
+from minori_frontend.auth import can_operate
 from minori_frontend.components.feedback import show_api_error
+from minori_frontend.config import FrontendSettings
 from minori_frontend.utils.constants import PROGRAMS
 from minori_frontend.utils.labels import SECTOR_LABELS, catalog_label
 
@@ -51,14 +52,15 @@ def extraction_label(field, value):
 
 
 def source_controls(client):
+    maximum = 2 if FrontendSettings().interactive_demo_mode else 5
     upload = st.file_uploader(
         "Upload dokumen",
         type=["pdf", "docx", "xlsx", "csv", "txt"],
-        max_upload_size=5,
-        disabled=not is_admin(),
-        help="Maksimal 5 MB. Excel/CSV: satu lembar, judul kolom dan maksimal 100 baris.",
+        max_upload_size=maximum,
+        disabled=not can_operate(),
+        help=f"Maksimal {maximum} MB. Excel/CSV: satu lembar, judul kolom dan maksimal 100 baris.",
     )
-    if upload and st.button("Pratinjau dokumen", disabled=not is_admin()):
+    if upload and st.button("Pratinjau dokumen", disabled=not can_operate()):
         try:
             preview = client.preview_document(upload.name, upload.getvalue(), upload.type)
             st.session_state["ai_document_preview"] = preview
@@ -92,7 +94,7 @@ def source_controls(client):
     if st.button(
         "Analisis dengan AI",
         type="primary",
-        disabled=not is_admin() or not texts or not all(texts),
+        disabled=not can_operate() or not texts or not all(texts),
         width="stretch",
     ):
         try:

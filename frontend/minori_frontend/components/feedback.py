@@ -11,6 +11,8 @@ def show_api_error(exc: Exception) -> None:
         404: "Data tidak lagi tersedia. Muat ulang halaman untuk melihat data terbaru.",
         409: "Tindakan belum dapat diproses. Periksa status kandidat, persetujuan, kuota, dan jadwal kegiatan.",
         422: "Periksa kembali kolom wajib dan format data sebelum menyimpan.",
+        413: "Ukuran unggahan sandbox maksimal 2 MB.",
+        429: "Batas penggunaan demo tercapai. Tunggu sesi atau kuota layanan tersedia kembali; reset data tidak menghapus batas pemakaian.",
         503: "Layanan sedang tidak tersedia. Silakan coba beberapa saat lagi.",
         504: "Layanan memerlukan waktu lebih lama. Silakan coba lagi.",
     }

@@ -36,6 +36,10 @@ def main() -> None:
     nav = st.navigation(pages, position="hidden")
     with st.sidebar:
         render_public_logout(settings)
+        if settings.interactive_demo_mode:
+            from minori_frontend.components.sandbox import render_sandbox_controls
+
+            render_sandbox_controls(client)
         html(
             '<div class="brand"><div class="brand-mark">M</div><div>'
             '<div class="brand-title">MINORI Group</div>'
@@ -58,10 +62,15 @@ def main() -> None:
             '<div style="margin-top:6px">Waktu operasional · WIB (UTC+7)</div></div>'
         )
     demo = '<span class="demo-pill">Lingkungan demo</span>' if settings.demo_mode else ""
+    if settings.interactive_demo_mode:
+        demo = '<span class="demo-pill">Sandbox · Data sintetis</span>'
     with st.container(key="mobile_nav"):
         with st.popover("Menu", icon=":material/menu:"):
             for page in pages:
                 st.page_link(page, label=page.title, icon=page.icon)
+            if settings.interactive_demo_mode:
+                render_public_logout(settings, key="public_logout_mobile")
+                render_sandbox_controls(client, key_prefix="sandbox_mobile")
     html(
         f'<div class="topbar"><span>MINORI / <b>{text(nav.title)}</b></span>'
         f'<div class="topbar-right"><span class="top-date">{text(format_datetime_id(now_wib().isoformat()))}</span>{demo}</div></div>'
