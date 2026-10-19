@@ -16,7 +16,8 @@ function allowed(request) {
 
 function options(request) {
   return { ...upstream, path: request.url, method: request.method,
-    headers: { ...request.headers, host: 'mailpit-sandbox:8025' } };
+    headers: { ...request.headers, host: 'mailpit-sandbox:8025',
+      ...(request.headers.origin ? { origin: 'http://mailpit-sandbox:8025' } : {}) } };
 }
 
 const server = http.createServer((request, response) => {
