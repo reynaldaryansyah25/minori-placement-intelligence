@@ -74,6 +74,28 @@ Status sent berarti server email menerima pesan, bukan inbox kandidat.
 Pusat Pengingat menampilkan jenis pengiriman, jumlah percobaan, status, dan riwayat
 dari database sesi Anda. Sesi lain tidak dapat membaca bukti tersebut.
 
+## Membuka inbox Mailpit sandbox di laptop
+
+Email dari frontend publik masuk `mailpit-sandbox`, terpisah dari Mailpit staf
+di `localhost:8025`. Untuk membuka inbox sandbox lewat browser laptop:
+
+```powershell
+docker compose -f compose.public-demo.yaml -f compose.mailpit-view.yaml up -d --no-deps --wait mailpit-sandbox-view
+```
+
+Buka `http://localhost:18036`, lalu klik subject pesan untuk melihat isinya.
+Viewer meneruskan akses ke inbox sandbox yang sudah berjalan, tanpa restart,
+salinan pesan, atau perubahan backend/n8n. Semua sesi demo memakai sink Mailpit ini;
+akses operator ini hanya di laptop dan tidak boleh diteruskan ke Funnel.
+Reviewer publik tetap memakai Pusat Pengingat untuk melihat riwayat sesinya.
+
+```powershell
+docker compose -f compose.public-demo.yaml -f compose.mailpit-view.yaml stop mailpit-sandbox-view
+```
+
+Mailpit menyimpan pesan di memori. Restart container Mailpit mengosongkan inbox;
+riwayat pengiriman pada backend sesi adalah pencatatan terpisah.
+
 ## Reset dan pembaruan
 
 Gunakan **Penggunaan & reset sesi**, konfirmasi, lalu reset.

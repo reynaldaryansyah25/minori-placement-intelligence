@@ -1,0 +1,26 @@
+# Optional operator inbox. Only publish this loopback port, never through Funnel.
+services:
+  mailpit-sandbox-view:
+    image: docker.n8n.io/n8nio/n8n:2.43.4@sha256:c34ee9107a42b837e25cec0c8a927ab90a45b776aa2ccbf15e5b9cda466fad2c
+    entrypoint: ["node", "/opt/minori/mailpit_sandbox_view.cjs"]
+    user: "1000:1000"
+    volumes:
+      - ./scripts/mailpit_sandbox_view.cjs:/opt/minori/mailpit_sandbox_view.cjs:ro
+    networks: [sandbox_mail, sandbox_inspector]
+    ports:
+      - "127.0.0.1:18036:8025"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8025/api/v1/info').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 6s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 32
+networks:
+  sandbox_inspector:
